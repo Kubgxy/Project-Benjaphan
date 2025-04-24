@@ -6,10 +6,10 @@ import jwt from 'jsonwebtoken';
 import User from '../Models/User';
 
 export const registerUser = async ( req: Request, res: Response, _next: NextFunction ): Promise<void> => {
-  const { name, email, password } = req.body;
+  const { firstName, lastName, email, password } = req.body;
 
-  if (!name || !email || !password) {
-    res.status(400).json({ message: '❌ Please provide name, email, and password' });
+  if (!firstName || !lastName || !email || !password) {
+    res.status(400).json({ message: '❌ Please provide firstName, lastName, email, and password' });
     return; // ✅ return แค่หยุด function, ไม่ return ค่า
   }
 
@@ -25,7 +25,8 @@ export const registerUser = async ( req: Request, res: Response, _next: NextFunc
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const newUser = new User({ 
-    name, 
+    firstName, 
+    lastName,
     email, 
     password: hashedPassword // ใช้ password ที่ hash แล้ว
     });
@@ -35,10 +36,10 @@ export const registerUser = async ( req: Request, res: Response, _next: NextFunc
         message: '✅ User registered successfully', 
         user: {
             _id: newUser._id,
-            name: newUser.name,
+            firstName: newUser.firstName,
+            lastName: newUser.lastName,
             email: newUser.email,
             role: newUser.role,
-            created_at: newUser.created_at
         }
     });
 
@@ -92,7 +93,8 @@ export const loginUser = async (
           message: '✅ User logged in successfully',
           user: {
             _id: user._id,
-            name: user.name,
+            firstName: user.firstName,
+            lastName: user.lastName,
             email: user.email,
             role: user.role
           }
