@@ -3,32 +3,79 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useAuth } from "@/context/auth-context"
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button"
+import { showSuccess, showError } from "@/lib/swal";
+import Swal from "sweetalert2";
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const { login } = useAuth()
+  const router = useRouter();
+
+
+  const login = async (email: string, password: string): Promise<"customer" | "admin" | null> => {
+    try {
+      const res = await fetch("http://localhost:3000/api/user/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: "include", // ✅ สำคัญมาก!
+      });
+  
+      const data = await res.json();
+  
+      if (!res.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+  
+      // ✅ ดึง role ที่ Backend ส่งกลับมา
+      return data.user.role as "customer" | "admin";
+    } catch (error) {
+      console.error("❌ Login error:", error);
+      return null;
+    }
+  };
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
-
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+  
     try {
-      const success = await login(email, password)
-      if (!success) {
-        setError("Invalid email or password")
+      const role = await login(email, password);
+  
+      if (!role) {
+        showError("เข้าสู่ระบบไม่สําเร็จ!");
+        return;
+      }
+  
+      await Swal.fire({
+        icon: 'success',
+        title: 'เข้าสู่ระบบสําเร็จ!',
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false
+      });
+  
+      if (role === "customer") {
+        window.location.href = "http://localhost:5173/";
+      } else if (role === "admin") {
+        window.location.href = "http://localhost:5174/";
+      } else {
       }
     } catch (err) {
-      setError("An error occurred. Please try again.")
+      showError("กรุณาลองอีกครั้ง!");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
+  
 
   return (
     <form onSubmit={handleSubmit}>

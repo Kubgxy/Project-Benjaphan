@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
-
+import path from 'path';
 // โหลดค่า .env
 dotenv.config();
 
@@ -13,8 +13,11 @@ const port = process.env.PORT || 3000;
 const mongoURI = process.env.MONGODB_URI as string;
 
 // Middleware
-app.use(cors());
-app.use(express.json()); // ให้รองรับ JSON Request
+app.use(cors({
+  origin: 'http://localhost:5173', 
+  credentials: true              
+}));
+app.use(express.json()); 
 app.use(cookieParser());
 
 // Connect MongoDB
@@ -31,6 +34,10 @@ app.get('/', (_req, res) => {
 import user from './routes/user.route';
 // Use routes
 app.use('/api/user', user);
+
+
+// Serve static files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Start server
 app.listen(port, () => {

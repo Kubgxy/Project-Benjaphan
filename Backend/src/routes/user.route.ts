@@ -1,6 +1,9 @@
 import { Router } from 'express';
-import { registerUser, loginUser } from '../controllers/user.controller';
+import { registerUser, loginUser, logoutUser } from '../controllers/user.controller';
+import { updateMe, getUserProfile } from '../controllers/user.controller';
 import { verifyToken } from '../middlewares/verifyToken';
+import { upload } from '../middlewares/upload.middleware';
+
 
 const user = Router();
 
@@ -14,5 +17,8 @@ user.get('/me', verifyToken, (req, res) => {
 
 user.post('/register', registerUser);
 user.post('/login', loginUser);
+user.post('/logout', logoutUser);
+user.get('/getuser', verifyToken, getUserProfile);
+user.patch('/edituser',verifyToken, upload.single('avatar'),  updateMe);
 
 export default user;
