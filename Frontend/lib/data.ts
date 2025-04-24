@@ -300,7 +300,7 @@ export const products: Product[] = [
   },
   {
     id: "chalom-001",
-    name: "แหวนทองคำแท้ ลายเกลียว",
+    name: "ชะลอมเบญจภัณฑ์ 399",
     category: "cat-chaloms",
     price: 399,
     formattedPrice: "฿399",
@@ -321,7 +321,7 @@ export const products: Product[] = [
   },
   {
     id: "chalom-002",
-    name: "แหวนทองคำแท้ ลายเกลียว",
+    name: "ชะลอมเบญจภัณฑ์ 599",
     category: "cat-chaloms",
     price: 599,
     formattedPrice: "฿599",
@@ -342,7 +342,7 @@ export const products: Product[] = [
   },
   {
     id: "chalom-003",
-    name: "แหวนทองคำแท้ ลายเกลียว",
+    name: "ชะลอมเบญจภัณฑ์ 799",
     category: "cat-chaloms",
     price: 799,
     formattedPrice: "฿799",
@@ -350,8 +350,7 @@ export const products: Product[] = [
     details: ["น้ำหนัก: 0.5 บาท", "ทองคำแท้ผสม", "ดีไซน์ลายเกลียว", "รับประกันสินค้าตลอดชีพ", "มีใบรับประกันสินค้า"],
     features: ["ทองคำแท้คุณภาพสูง", "ดีไซน์ทันสมัย", "ผลิตโดยช่างฝีมือ"],
     images: [
-      "/product/ชะลอม3.jpg",
-      "/product/ของในชะลอม.jpg"
+      "/product/ชะลอม3.jpg"
     ],
     rating: 4.7,
     reviews: 64,
