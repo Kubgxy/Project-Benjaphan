@@ -221,7 +221,8 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
             </div>
           )}
 
-          <div className="pt-8 border-t border-gray-200">
+          {/* // ส่วน Materials */}
+          {/* <div className="pt-8 border-t border-gray-200">
             <h3 className="text-sm font-medium text-gray-900 mb-2">Materials</h3>
             <div className="flex flex-wrap gap-2">
               {product.materials.map((material, index) => (
@@ -230,7 +231,7 @@ export function ProductDetail({ product, relatedProducts }: ProductDetailProps) 
                 </span>
               ))}
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 

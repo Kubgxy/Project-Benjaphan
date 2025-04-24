@@ -64,7 +64,7 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
         <div className="mt-4">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Popular Searches</h3>
           <div className="flex flex-wrap gap-2">
-            {["Diamond Ring", "Gold Necklace", "Pearl Earrings", "Wedding Band", "Bracelet"].map((term) => (
+            {["Diamond Ring", "Gold Necklace", "Pearl bencharm", "Wedding Band", "Bracelet"].map((term) => (
               <button
                 key={term}
                 onClick={() => {
