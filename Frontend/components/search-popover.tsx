@@ -13,95 +13,131 @@ interface Product {
 
 interface SearchPopoverProps {
   isOpen: boolean
-  anchorRef: React.RefObject<HTMLButtonElement>
+  anchorRef: React.RefObject<HTMLButtonElement | null>
   onClose: () => void
-  products: Product[]
+  product: Product[]
   onResultClick?: (product: Product) => void
 }
 
-const POPULAR = [
-  "Diamond Ring",
-  "Gold Necklace",
-  "Pearl bencharm",
-  "Wedding Band",
-  "Bracelet",
-]
-
-export function SearchPopover({ isOpen, anchorRef, onClose, products, onResultClick }: SearchPopoverProps) {
+export function SearchPopover({ isOpen, anchorRef, onClose, product, onResultClick }: SearchPopoverProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<Product[]>([])
-  const [position, setPosition] = useState<{top: number, left: number}>({top: 0, left: 0})
+  const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({})
+  const [show, setShow] = useState(false)
+  const [activeIndex, setActiveIndex] = useState<number>(-1)
+  const POPOVER_WIDTH = 400
+  const POPOVER_WIDTH_MOBILE = 320
 
-  // ตำแหน่ง popover ใต้ไอคอน (ขวาบน)
+  // Responsive position for popover to be centered under the icon and not overflow the screen
   useEffect(() => {
-    if (isOpen && anchorRef.current) {
+    function calcPosition() {
+      if (!isOpen || !anchorRef.current) return setPopoverStyle({ display: "none" })
       const rect = anchorRef.current.getBoundingClientRect()
-      setPosition({
-        top: rect.bottom + window.scrollY + 10, // 10px margin below icon
-        left: rect.right + window.scrollX - 400, // 400 = box width, box ชิดขวากับ icon
+      const isMobile = window.innerWidth < 500
+      const width = isMobile ? POPOVER_WIDTH_MOBILE : POPOVER_WIDTH
+      let left = rect.left + rect.width / 2 - width / 2 + window.scrollX
+      // Prevent overflow left/right
+      left = Math.max(8, Math.min(left, window.innerWidth - width - 8))
+      setPopoverStyle({
+        top: rect.bottom + window.scrollY + 10,
+        left,
+        width,
+        display: "block"
       })
+    }
+    if (isOpen) {
+      calcPosition()
+      setShow(true)
       setTimeout(() => inputRef.current?.focus(), 120)
+    } else {
+      setTimeout(() => setShow(false), 180)
     }
-    if (!isOpen) {
-      setQuery("")
-      setResults([])
-    }
-  }, [isOpen, anchorRef])
+    window.addEventListener("resize", calcPosition)
+    return () => window.removeEventListener("resize", calcPosition)
+    // eslint-disable-next-line
+  }, [isOpen, anchorRef.current])
 
-  // ฟังก์ชันค้นหา
-  const handleSearch = (q: string) => {
-    const keyword = q.trim().toLowerCase()
-    if (!keyword) {
+  // Auto filter
+  useEffect(() => {
+    if (!query.trim()) {
       setResults([])
+      setActiveIndex(-1)
       return
     }
+    const keyword = query.trim().toLowerCase()
     setResults(
-      products.filter(
+      product.filter(
         (p) =>
           p.name?.toLowerCase().includes(keyword) ||
           p.description?.toLowerCase().includes(keyword)
-      )
+      ).slice(0, 8)
     )
+    setActiveIndex(-1)
+  }, [query, product])
+
+  // Keyboard navigation
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (results.length === 0) return
+    if (e.key === "ArrowDown") {
+      e.preventDefault()
+      setActiveIndex((prev) => prev < results.length - 1 ? prev + 1 : 0)
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault()
+      setActiveIndex((prev) => prev > 0 ? prev - 1 : results.length - 1)
+    } else if (e.key === "Enter") {
+      if (activeIndex >= 0) {
+        e.preventDefault()
+        onResultClick?.(results[activeIndex])
+      }
+    }
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (activeIndex >= 0 && results[activeIndex]) {
+      onResultClick?.(results[activeIndex])
+    } else if (query.trim() !== "") {
+      onResultClick?.({ id: "__search__", name: query.trim() })
+    }
   }
 
   return (
     <div
-      className={`fixed z-[80] transition-all duration-200 ${
-        isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+      className={`fixed z-[80] transition-all duration-200 ease-in-out ${
+        isOpen || show ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
       }`}
-      style={{
-        top: position.top,
-        left: position.left,
-        width: 400,
-      }}
+      style={popoverStyle}
     >
-      {/* สามเหลี่ยม */}
-      <div className="absolute -top-3 right-8 w-6 h-6 pointer-events-none">
+      {/* สามเหลี่ยม, ตรงกลาง popover */}
+      <div
+        className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 pointer-events-none"
+        style={{ zIndex: 1 }}
+      >
         <svg width="24" height="24" className="block" viewBox="0 0 24 24">
           <polygon points="12,0 24,24 0,24" className="fill-white stroke-gold-200" />
         </svg>
       </div>
       {/* Popover box */}
-      <div className="rounded-xl shadow-xl border border-gold-200 bg-white px-6 py-5 relative">
+      <div className={`
+        rounded-xl shadow-xl border border-gold-200 bg-white px-6 py-5 relative
+        transition-all duration-300 ease-in-out
+        ${isOpen ? "translate-y-0 opacity-100 visible" : "-translate-y-6 opacity-0 invisible"}
+      `}>
         <form
           className="w-full flex items-center gap-2"
-          onSubmit={e => {
-            e.preventDefault()
-            handleSearch(query)
-          }}
+          onSubmit={handleSubmit}
         >
           <Search className="h-5 w-5 text-gold-600" />
           <input
             ref={inputRef}
             type="text"
             value={query}
-            onChange={e => {
-              setQuery(e.target.value)
-              handleSearch(e.target.value)
-            }}
+            onChange={e => setQuery(e.target.value)}
             placeholder="ค้นหาสินค้าหรือข้อมูล"
             className="flex-1 border-none outline-none px-2 py-2 text-base focus:ring-0 bg-transparent"
+            onKeyDown={handleKeyDown}
+            autoComplete="off"
           />
           {query && (
             <button
@@ -109,6 +145,7 @@ export function SearchPopover({ isOpen, anchorRef, onClose, products, onResultCl
               onClick={() => {
                 setQuery("")
                 setResults([])
+                setActiveIndex(-1)
                 inputRef.current?.focus()
               }}
               className="text-gold-400 hover:text-gold-600"
@@ -134,38 +171,22 @@ export function SearchPopover({ isOpen, anchorRef, onClose, products, onResultCl
             <X className="h-6 w-6" />
           </button>
         </form>
-        {/* popular search */}
-        <div className="mt-2">
-          <div className="text-xs font-semibold text-gray-500 mb-1">Popular Searches</div>
-          <div className="flex flex-wrap gap-2">
-            {POPULAR.map((term) => (
-              <button
-                key={term}
-                type="button"
-                onClick={() => {
-                  setQuery(term)
-                  handleSearch(term)
-                  inputRef.current?.focus()
-                }}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm rounded-full transition-colors"
-              >
-                {term}
-              </button>
-            ))}
-          </div>
-        </div>
-        {/* ผลลัพธ์ */}
+        {/* ผลลัพธ์แนะนำ */}
         {query && (
           <div className="mt-4 max-h-48 overflow-y-auto border-t border-gold-100 pt-2">
             {results.length === 0 ? (
               <div className="text-center text-brown-600 py-3 text-sm">ไม่พบข้อมูล</div>
             ) : (
               <ul>
-                {results.map((item) => (
+                {results.map((item, idx) => (
                   <li
                     key={item.id}
-                    className="py-2 px-2 rounded hover:bg-cream-50 cursor-pointer"
+                    className={`
+                      py-2 px-2 rounded flex flex-col cursor-pointer
+                      ${activeIndex === idx ? "bg-gold-50" : "hover:bg-cream-50"}
+                    `}
                     onClick={() => onResultClick?.(item)}
+                    onMouseEnter={() => setActiveIndex(idx)}
                   >
                     <div className="font-medium">{item.name}</div>
                     {item.description && <div className="text-xs text-gray-500">{item.description}</div>}
