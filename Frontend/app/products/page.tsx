@@ -5,17 +5,19 @@ import { Footer } from "@/components/footer";
 import { ProductCard } from "@/components/product-card";
 import { products, categories } from "@/lib/data";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+<<<<<<< HEAD
 import { Filter, SlidersHorizontal } from "lucide-react"; 
+=======
+import { Filter, SlidersHorizontal } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
-export default function ProductsPage({
-  searchParams,
-}: {
-  searchParams: { category?: string; sort?: string };
-}) {
+export default function ProductsPage() {
+  const searchParams = useSearchParams();
+>>>>>>> 678419c43b93f283e323ecd3dff835013f5e84fa
+
   // Get filter parameters from URL
-  const categoryFilter = searchParams.category;
-  const { sort = "featured", category } = searchParams;
-  const sortOption = sort;
+  const categoryFilter = searchParams.get("category");
+  const sortOption = searchParams.get("sort") || "featured";
 
   // Filter products by category if category parameter exists
   let filteredProducts = categoryFilter

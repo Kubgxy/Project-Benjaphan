@@ -45,8 +45,8 @@ export function Footer() {
             <h3 className="text-lg font-heading font-medium text-brown-800 mb-4">หมวดหมู่สินค้า</h3>
             <ul className="space-y-2 text-brown-600">
               <li>
-                <Link href="/products?category=rings" className="hover:text-gold-600 transition-colors">
-                  แหวน
+                <Link href="/products?category=chaloms" className="hover:text-gold-600 transition-colors">
+                  ชะลอมและธูปเทียน
                 </Link>
               </li>
               <li>
@@ -55,23 +55,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=earrings" className="hover:text-gold-600 transition-colors">
-                  ต่างหู
-                </Link>
-              </li>
-              <li>
-                <Link href="/products?category=necklaces" className="hover:text-gold-600 transition-colors">
-                  สร้อยคอ
-                </Link>
-              </li>
-              <li>
-                <Link href="/products?category=pendants" className="hover:text-gold-600 transition-colors">
-                  จี้
-                </Link>
-              </li>
-              <li>
-                <Link href="/auspicious" className="hover:text-gold-600 transition-colors">
-                  เครื่องประดับมงคล
+                <Link href="/products?category=bencharm" className="hover:text-gold-600 transition-colors">
+                  น้ำหอม
                 </Link>
               </li>
             </ul>
