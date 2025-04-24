@@ -7,7 +7,7 @@ import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
 
 export function ProfileForm() {
-  const { user, updateProfile } = useAuth()
+  const { user, updateProfile, logout } = useAuth();
   const [firstName, setFirstName] = useState(user?.firstName || "")
   const [lastName, setLastName] = useState(user?.lastName || "")
   const [email, setEmail] = useState(user?.email || "")
@@ -39,6 +39,7 @@ export function ProfileForm() {
       setIsLoading(false)
     }
   }
+
 
   return (
     <form onSubmit={handleSubmit}>

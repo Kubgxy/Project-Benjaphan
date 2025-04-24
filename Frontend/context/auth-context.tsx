@@ -18,6 +18,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>
   register: (email: string, password: string, firstName: string, lastName: string) => Promise<boolean>
   logout: () => void
+  setUser: (user: User) => void
   updateProfile: (userData: Partial<User>) => Promise<boolean>
 }
 
@@ -50,30 +51,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check if user is already logged in
   useEffect(() => {
-    try {
-      const savedUser = localStorage.getItem("luxe-jewels-user")
-      if (savedUser) {
-        setUser(JSON.parse(savedUser))
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/user/me", {
+          method: "GET",
+          credentials: "include", // ✅ ใช้ cookie-based auth
+        });
+  
+        if (!res.ok) {
+          throw new Error("Not authenticated");
+        }
+  
+        const data = await res.json();
+        setUser(data.user); // <-- จาก backend ส่ง req.user กลับมา
+      } catch (error) {
+        setUser(null); // ถ้า token หมดอายุ หรือไม่มี cookie
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to load user from localStorage:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+    };
+  
+    checkAuth();
+  }, []);
+  
 
   // Save user to localStorage whenever it changes
-  useEffect(() => {
+  const logout = async () => {
     try {
-      if (user) {
-        localStorage.setItem("luxe-jewels-user", JSON.stringify(user))
-      } else {
-        localStorage.removeItem("luxe-jewels-user")
-      }
+      await fetch("http://localhost:3000/api/user/logout", {
+        method: "POST",
+        credentials: "include", // ✅ cookie-based auth สำคัญ!
+      });
     } catch (error) {
-      console.error("Failed to save user to localStorage:", error)
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null); // เคลียร์ context
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
     }
-  }, [user])
+  };
+  
 
   const login = async (email: string, password: string): Promise<boolean> => {
     // Simulate API call
@@ -131,30 +150,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return true
   }
 
-  const logout = () => {
-    setUser(null)
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out.",
-    })
-  }
+
 
   const updateProfile = async (userData: Partial<User>): Promise<boolean> => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    if (user) {
-      const updatedUser = { ...user, ...userData }
-      setUser(updatedUser)
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been successfully updated.",
-      })
-      return true
+    try {
+      const res = await fetch("http://localhost:3000/api/user/edituser", {
+        method: "PATCH",
+        credentials: "include", // ✅ ใช้ cookie-based auth
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+  
+      if (!res.ok) {
+        console.error("Failed to update profile");
+        return false;
+      }
+  
+      const data = await res.json();
+      console.log("✅ Profile updated:", data);
+  
+      // 🟢 Refresh context ด้วย user ใหม่ที่ได้จาก backend
+      setUser(data.user); 
+      return true;
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      return false;
     }
-
-    return false
-  }
+  };
+  
+  
 
   return (
     <AuthContext.Provider
@@ -166,6 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         logout,
         updateProfile,
+        setUser,
       }}
     >
       {children}
