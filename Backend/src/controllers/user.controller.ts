@@ -9,7 +9,7 @@ export const registerUser = async ( req: Request, res: Response, _next: NextFunc
   const { firstName, lastName, email, password } = req.body;
 
   if (!firstName || !lastName || !email || !password) {
-    res.status(400).json({ message: '❌ Please provide firstName, lastName, email, and password' });
+    res.status(400).json({ message: '❌ Please provide name, email, and password' });
     return; // ✅ return แค่หยุด function, ไม่ return ค่า
   }
 
