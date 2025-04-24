@@ -29,7 +29,7 @@ export default function Home() {
       <section className="relative h-[90vh] flex items-center">
         <div className="absolute inset-0 z-0">
           <Image
-            src="https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?q=80&w=1374&auto=format&fit=crop"
+            src="/production.jpg"
             alt="เครื่องประดับทองคำแท้"
             fill
             className="object-cover"
@@ -44,7 +44,7 @@ export default function Home() {
               เบญจภัณฑ์ ๕
             </h1>
             <h2 className="text-4xl gold-text-gradient">
-              เครื่องประดับเสริมบุญ เสริมบารมี เพิ่มเสน่ห์อย่างมีระดับ
+              ของดีมีศรัทธา เสริมบุญหนา วาสนาเปล่งประกาย
             </h2>
             <p className="text-lg md:text-lg mb-8 text-white/90 font-light">
             เปล่งประกายทั้งภายนอกและภายใน เสริมโชคลาภ ดึงดูดความสำเร็จ ให้ชีวิตงดงามทุกก้าว

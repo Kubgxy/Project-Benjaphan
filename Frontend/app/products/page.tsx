@@ -5,7 +5,7 @@ import { Footer } from "@/components/footer";
 import { ProductCard } from "@/components/product-card";
 import { products, categories } from "@/lib/data";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Filter, SlidersHorizontal } from "lucide-react";
+import { Filter, SlidersHorizontal } from "lucide-react"; 
 
 export default function ProductsPage({
   searchParams,

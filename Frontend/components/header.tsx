@@ -54,8 +54,8 @@ export function Header() {
                   <Image src="/logo-bencharm.png" alt="เบญจภัณฑ์๕" fill className="object-contain" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-display font-medium text-gold-600">เบญจภัณฑ์๕</h1>
-                  <p className="text-xs text-brown-600">เครื่องประดับมงคล เสริมดวง</p>
+                  <h1 className="text-2xl font-display font-medium text-gold-600">เบญจภัณฑ์ ๕</h1>
+                  <p className="text-xs text-brown-600">ของดีมีศรัทธา เสริมบุญหนา วาสนาเปล่งประกาย</p>
                 </div>
               </Link>
             </div>
