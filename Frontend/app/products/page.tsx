@@ -6,16 +6,14 @@ import { ProductCard } from "@/components/product-card";
 import { products, categories } from "@/lib/data";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Filter, SlidersHorizontal } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
-export default function ProductsPage({
-  searchParams,
-}: {
-  searchParams: { category?: string; sort?: string };
-}) {
+export default function ProductsPage() {
+  const searchParams = useSearchParams();
+
   // Get filter parameters from URL
-  const categoryFilter = searchParams.category;
-  const { sort = "featured", category } = searchParams;
-  const sortOption = sort;
+  const categoryFilter = searchParams.get("category");
+  const sortOption = searchParams.get("sort") || "featured";
 
   // Filter products by category if category parameter exists
   let filteredProducts = categoryFilter
