@@ -37,6 +37,8 @@
 
     --radius: 0.5rem;
 
+    --row-highlight: 214 100% 97%;
+
     --sidebar-background: 43 74% 39%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 43 74% 59%;
@@ -75,6 +77,8 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 43 74% 49%;
+
+    --row-highlight: 214 32% 18%;
 
     --sidebar-background: 43 40% 15%;
     --sidebar-foreground: 0 0% 95%;
