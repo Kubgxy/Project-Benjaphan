@@ -6,10 +6,6 @@ interface JwtPayload {
   role: string;
 }
 
-
-
-
-
 // 🟢 Middleware นี้ใช้ตรวจสอบ token ใน cookie
 export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
   const token = req.cookies.token;

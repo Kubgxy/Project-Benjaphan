@@ -32,9 +32,10 @@ app.get('/', (_req, res) => {
 
 // Import routes
 import user from './routes/user.route';
+import product from './routes/product.route';
 // Use routes
 app.use('/api/user', user);
-
+app.use('/api/product', product);
 
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
