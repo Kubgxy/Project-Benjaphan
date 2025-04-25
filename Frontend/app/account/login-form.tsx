@@ -66,7 +66,7 @@ export function LoginForm() {
       if (role === "customer") {
         window.location.href = "http://localhost:5173/";
       } else if (role === "admin") {
-        window.location.href = "http://localhost:5174/";
+        window.location.href = "http://localhost:8081/";
       } else {
       }
     } catch (err) {
