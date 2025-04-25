@@ -3,19 +3,86 @@
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ProductCard } from "@/components/product-card";
-import { products, categories } from "@/lib/data";
+import { categories } from "@/lib/data";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Filter, SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+
+// ✅ ใช้ interface Product แบบที่น้องกำหนดไว้ได้เลย
+interface Product {
+  id_product: string;
+  name: string;
+  category: string;
+  price: number;
+  description: string;
+  images: string[];
+  details: string[];
+  isNewArrival: boolean;
+  isBestseller: boolean;
+  isOnSale: boolean;
+
+  // ⭐ เพิ่มตรงนี้!!
+  rating?: number;                     // <-- เพิ่ม optional
+  reviews?: number;                    // <-- เพิ่ม optional
+  materials?: string[];                // <-- เพิ่ม optional
+}
+
+
+// 🟢 สร้าง Function แปลง Product → ProductCardProps
+const mapProductToCardProduct = (product: Product) => ({
+  id: product.id_product,
+  name: product.name,
+  price: product.price,
+  description: product.description,
+  images: product.images,
+  details: product.details || [],
+  features: [],                                         // ✅ ไม่มีส่ง []
+  formattedPrice: `฿${product.price.toFixed(2)}`,
+  isNewArrival: product.isNewArrival,                   // ✅ ส่งไว้ก่อน เผื่อ component ใช้
+  isBestseller: product.isBestseller,
+  isOnSale: product.isOnSale,
+
+  rating: product.rating ?? 0,                          // ✅ ใช้ ?? ป้องกัน undefined
+  reviews: product.reviews ?? 0,
+  isNew: product.isNewArrival || false,                 // ✅ สร้าง isNew ให้ตรง spec
+  materials: product.materials || [],                   // ✅ ป้องกัน undefined
+});
+
+
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
-
-  // Get filter parameters from URL
   const categoryFilter = searchParams.get("category");
   const sortOption = searchParams.get("sort") || "featured";
 
-  // Filter products by category if category parameter exists
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // ✅ ดึงสินค้าทั้งหมดจาก API จริง
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/product/getAllProducts", {
+          credentials: "include",
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setProducts(data.products);
+        } else {
+          console.error("Error loading products:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  // ✅ Filter by category
   let filteredProducts = categoryFilter
     ? products.filter((product) => {
         const category = categories.find((cat) => cat.slug === categoryFilter);
@@ -23,34 +90,24 @@ export default function ProductsPage() {
       })
     : products;
 
-  // Sort products based on sort parameter
+  // ✅ Sort products
   switch (sortOption) {
     case "price-low-high":
-      filteredProducts = [...filteredProducts].sort(
-        (a, b) => a.price - b.price
-      );
+      filteredProducts = [...filteredProducts].sort((a, b) => a.price - b.price);
       break;
     case "price-high-low":
-      filteredProducts = [...filteredProducts].sort(
-        (a, b) => b.price - a.price
-      );
+      filteredProducts = [...filteredProducts].sort((a, b) => b.price - a.price);
       break;
     case "newest":
-      filteredProducts = [...filteredProducts].filter(
-        (product) => product.isNew
-      );
+      filteredProducts = filteredProducts.filter((product) => product.isNewArrival);
       break;
     case "bestselling":
-      filteredProducts = [...filteredProducts].filter(
-        (product) => product.isBestseller
-      );
+      filteredProducts = filteredProducts.filter((product) => product.isBestseller);
       break;
     default:
-      // Default sorting (featured)
       break;
   }
 
-  // Get the current category name for display
   const currentCategory = categoryFilter
     ? categories.find((cat) => cat.slug === categoryFilter)?.name
     : "สินค้าทั้งหมด";
@@ -103,7 +160,7 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Category tabs for easy filtering */}
+        {/* Category Tabs */}
         <div className="mb-8 bg-white p-4 rounded-lg shadow-sm">
           <Tabs defaultValue={categoryFilter || "all"} className="w-full">
             <TabsList className="w-full overflow-x-auto flex flex-nowrap justify-start mb-4 pb-2 bg-cream-50 p-1 rounded-md">
@@ -136,13 +193,19 @@ export default function ProductsPage() {
           </Tabs>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-
-        {filteredProducts.length === 0 && (
+        {/* Show products */}
+        {loading ? (
+          <p className="text-center text-brown-800">กำลังโหลดสินค้า...</p>
+        ) : filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filteredProducts.map((product) => (
+              <ProductCard
+                key={product.id_product}
+                product={mapProductToCardProduct(product)}
+              />
+            ))}
+          </div>
+        ) : (
           <div className="text-center py-12 bg-white rounded-lg shadow-sm">
             <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-cream-100 flex items-center justify-center">
               <svg
