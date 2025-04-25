@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       const res = await axios.post(
-        "http://localhost:3000/api/user/login",
+        "http://localhost:3000/api/user/loginUser",
         { email, password },
         { withCredentials: true } // ⭐⭐ สำคัญ!
       );

@@ -1,19 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Edit, Trash2, Plus, Search, ArrowUp, ArrowDown, FileDown, Eye } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, FileDown, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from '@/hooks/use-toast';
+import axios from 'axios';
 
 interface Product {
   _id: string;
@@ -29,8 +24,10 @@ interface Product {
   isNewArrival: boolean;
   isBestseller: boolean;
   isOnSale: boolean;
-  availableSizes: string[];
-  stock: number;
+  availableSizes: {
+    size: string;
+    quantity: number;
+  }[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -42,39 +39,63 @@ interface SortConfig {
 
 const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [newProduct, setNewProduct] = useState({
+    id_product: '',
+    name: '',
+    category: '',
+    price: 0,
+    availableSizes: [] as { size: string; quantity: number }[],
+    description: '',
+    images: [] as File[],
+    isNewArrival: false,
+    isBestseller: false,
+    isOnSale: false,
+  });
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'name', direction: 'asc' });
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
-  // โหลดสินค้าจาก API
-
-
-
-  // Handle sorting
-  const requestSort = (key: string) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/api/product/getAllProducts', { withCredentials: true });
+      setProducts(response.data.products);
+      console.log(response.data.products);
+    } catch (error) {
+      console.error('Error fetching products:', error);
     }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const requestSort = (key: string) => {
+    const direction = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
     setSortConfig({ key, direction });
   };
 
-  // Apply filters and sorting
+  const calculateStock = (availableSizes: any) => {
+    if (!availableSizes || !Array.isArray(availableSizes)) return 0;
+    return availableSizes.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  };
+  
+  // ✅ ใช้ได้แล้วตรงนี้
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter ? product.category === categoryFilter : true;
-    const matchesStatus = statusFilter
-      ? statusFilter === 'Active'
-        ? product.stock > 0
-        : product.stock === 0
-      : true;
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());  // ✅ ตรงนี้!
+    const matchesCategory = categoryFilter !== 'all' ? product.category === categoryFilter : true;
+    const matchesStatus =
+      statusFilter !== 'all'
+        ? statusFilter === 'Active'
+          ? calculateStock(product.availableSizes) > 0
+          : calculateStock(product.availableSizes) === 0
+        : true;
     return matchesSearch && matchesCategory && matchesStatus;
-  });
+  });  
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     if (a[sortConfig.key as keyof Product] < b[sortConfig.key as keyof Product]) {
@@ -86,12 +107,39 @@ const Products: React.FC = () => {
     return 0;
   });
 
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const formData = new FormData();
+      formData.append('id_product', newProduct.id_product);
+      formData.append('name', newProduct.name);
+      formData.append('category', newProduct.category);
+      formData.append('price', newProduct.price.toString());
+      formData.append('description', newProduct.description);
+      formData.append('availableSizes', JSON.stringify(newProduct.availableSizes));
+      formData.append('isNewArrival', newProduct.isNewArrival.toString());
+      formData.append('isBestseller', newProduct.isBestseller.toString());
+      formData.append('isOnSale', newProduct.isOnSale.toString());
+      newProduct.images.forEach((image) => formData.append('images', image));
+
+      await axios.post('http://localhost:3000/api/product/addProducts', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        withCredentials: true,
+      });
+
+      toast({ title: '✅ เพิ่มสินค้าสำเร็จ!' });
+      setAddDialogOpen(false);
+      fetchProducts();
+    } catch (error) {
+      console.error('❌ Error adding product:', error);
+      toast({ title: '❌ เพิ่มสินค้าไม่สำเร็จ' });
+    }
+  };
+
   const handleDeleteClick = (productId: string) => {
     setProductToDelete(productId);
     setDeleteDialogOpen(true);
   };
-
-
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -113,7 +161,7 @@ const Products: React.FC = () => {
     toast({ title: "CSV Export ยังไม่ทำ" });
   };
 
-
+  const IMAGE_BASE_URL = 'http://localhost:3000'
 
   const uniqueCategories = Array.from(new Set(products.map(p => p.category)));
 
@@ -144,15 +192,17 @@ const Products: React.FC = () => {
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger><SelectValue placeholder="หมวดหมู่" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">ทั้งหมด</SelectItem>
-            {uniqueCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            <SelectItem value="all">ทั้งหมด</SelectItem> {/* ตรงนี้ต้องมี all */}
+            {uniqueCategories.filter(Boolean).map(c => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger><SelectValue placeholder="สถานะ" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">ทั้งหมด</SelectItem>
+            <SelectItem value="all">ทั้งหมด</SelectItem>
             <SelectItem value="Active">เปิดใช้งาน</SelectItem>
             <SelectItem value="Inactive">ปิดใช้งาน</SelectItem>
           </SelectContent>
@@ -203,15 +253,18 @@ const Products: React.FC = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      <img src={product.images[0]} className="h-12 w-12 object-cover rounded" />
+                      <img
+                        src={`${IMAGE_BASE_URL}${product.images[0]}`}
+                        className="h-16 w-16 object-cover rounded"
+                      />
                     </TableCell>
                     <TableCell>{product.name}</TableCell>
                     <TableCell>{product.category}</TableCell>
                     <TableCell>฿{product.price.toLocaleString()}</TableCell>
-                    <TableCell>{product.stock}</TableCell>
+                    <TableCell>{calculateStock(product.availableSizes)}</TableCell> {/* ✅ ใช้ฟังก์ชันคำนวณ stock */}
                     <TableCell>
-                      <Badge className={product.stock > 0 ? 'bg-emerald' : 'bg-muted'}>
-                        {product.stock > 0 ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
+                      <Badge className={calculateStock(product.availableSizes) > 0 ? 'bg-emerald' : 'bg-muted'}>
+                        {calculateStock(product.availableSizes) > 0 ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
                       </Badge>
                     </TableCell>
                     <TableCell className="space-x-1">
@@ -256,21 +309,137 @@ const Products: React.FC = () => {
 
       {/* Add Product Dialog */}
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>เพิ่มสินค้าใหม่</DialogTitle></DialogHeader>
-          {/* <form onSubmit={handleAddProduct} className="space-y-4"> */}
-            <Input name="id_product" placeholder="รหัสสินค้า" required />
-            <Input name="name" placeholder="ชื่อสินค้า" required />
-            <Input name="category" placeholder="หมวดหมู่" required />
-            <Input name="price" type="number" placeholder="ราคา" required />
-            <Input name="stock" type="number" placeholder="คงเหลือ" required />
-            <Input name="availableSizes" placeholder="ขนาด (เช่น S,M,L)" />
-            <Input name="description" placeholder="รายละเอียด" />
-            <Input name="images" type="file" accept="image/*" multiple />
-            <Button type="submit">บันทึก</Button>
-          {/* </form> */}
-        </DialogContent>
-      </Dialog>
+      <DialogContent>
+  <DialogHeader>
+    <DialogTitle>เพิ่มสินค้าใหม่</DialogTitle>
+  </DialogHeader>
+  <form onSubmit={handleAddProduct} className="space-y-4">
+    <Input
+      name="id_product"
+      placeholder="รหัสสินค้า"
+      required
+      value={newProduct.id_product}
+      onChange={(e) => setNewProduct({ ...newProduct, id_product: e.target.value })}
+    />
+    <Input
+      name="name"
+      placeholder="ชื่อสินค้า"
+      required
+      value={newProduct.name}
+      onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+    />
+    <Input
+      name="category"
+      placeholder="หมวดหมู่"
+      required
+      value={newProduct.category}
+      onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+    />
+    <Input
+      name="price"
+      placeholder="ราคา"
+      required
+      value={newProduct.price}
+      onChange={(e) => setNewProduct({ ...newProduct, price: Number(e.target.value) })}
+    />
+    {/* ❌ ลบ stock ออก */}
+    
+    {/* ✅ เพิ่ม availableSizes แบบใหม่ (เช่น S:10,M:5,L:7) */}
+    {/* เพิ่ม Sizes แบบ Dynamic */}
+    <div className="space-y-2">
+      <label className="font-medium">ขนาดและจำนวน:</label>
+      {newProduct.availableSizes.map((sizeObj, index) => (
+        <div key={index} className="flex space-x-2 items-center">
+          <Input
+            placeholder="ไซส์ (เช่น S, M, L)"
+            value={sizeObj.size}
+            onChange={(e) => {
+              const updated = [...newProduct.availableSizes];
+              updated[index].size = e.target.value;
+              setNewProduct({ ...newProduct, availableSizes: updated });
+            }}
+          />
+          <Input
+            placeholder="จำนวน"
+            type="text"
+            value={sizeObj.quantity}
+            onChange={(e) => {
+              const updated = [...newProduct.availableSizes];
+              updated[index].quantity = Number(e.target.value);
+              setNewProduct({ ...newProduct, availableSizes: updated });
+            }}
+          />
+          <Button
+            variant="destructive"
+            size="icon"
+            onClick={() => {
+              const updated = newProduct.availableSizes.filter((_, i) => i !== index);
+              setNewProduct({ ...newProduct, availableSizes: updated });
+            }}
+          >
+            🗑️
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        onClick={() =>
+          setNewProduct({
+            ...newProduct,
+            availableSizes: [...newProduct.availableSizes, { size: '', quantity: 0 }],
+          })
+        }
+      >
+        ➕ เพิ่มไซส์
+      </Button>
+    </div>
+
+    <Input
+      name="description"
+      placeholder="รายละเอียด"
+      value={newProduct.description}
+      onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+    />
+    <Input
+      name="images"
+      type="file"
+      accept="image/*"
+      multiple
+      onChange={(e) =>
+        setNewProduct({
+          ...newProduct,
+          images: e.target.files ? Array.from(e.target.files) : [],
+        })
+      }
+    />
+    <div className="flex items-center space-x-4">
+      <label className="flex items-center space-x-2">
+        <Checkbox
+          checked={newProduct.isNewArrival}
+          onCheckedChange={(checked) => setNewProduct({ ...newProduct, isNewArrival: !!checked })}
+        />
+        <span>ใหม่</span>
+      </label>
+      <label className="flex items-center space-x-2">
+        <Checkbox
+          checked={newProduct.isBestseller}
+          onCheckedChange={(checked) => setNewProduct({ ...newProduct, isBestseller: !!checked })}
+        />
+        <span>ขายดี</span>
+      </label>
+      <label className="flex items-center space-x-2">
+        <Checkbox
+          checked={newProduct.isOnSale}
+          onCheckedChange={(checked) => setNewProduct({ ...newProduct, isOnSale: !!checked })}
+        />
+        <span>ลดราคา</span>
+      </label>
+    </div>
+    <Button type="submit">บันทึก</Button>
+  </form>
+</DialogContent>
+
+</Dialog>
     </div>
   );
 };
