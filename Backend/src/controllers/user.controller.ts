@@ -132,7 +132,6 @@ export const logoutUser = async (
   }
 };
 
-
 // Get user profile
 export const getUserProfile = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
   try {
