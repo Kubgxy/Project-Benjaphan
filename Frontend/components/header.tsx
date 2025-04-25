@@ -45,8 +45,8 @@ export function Header() {
       <div className="bg-gold-600 text-white py-2 text-center text-sm font-medium">
         <div className="container mx-auto px-4">
           <p>
-            โปรโมชั่นพิเศษ: ซื้อทองครบ 5,000 บาท รับฟรี! จี้พระพุทธรูปมงคล
-            มูลค่า 599 บาท
+            โปรโมชั่นพิเศษ: ซื้อกำไลครบ 6,999 บาท รับฟรี! จี้น้ำหอม (เลือกกลิ่นได้)
+            มูลค่า 659 บาท
           </p>
         </div>
       </div>
