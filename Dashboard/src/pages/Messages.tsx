@@ -276,7 +276,7 @@ const Messages = () => {
                 sortedMessages.map((message) => (
                   <TableRow 
                     key={message.id} 
-                    className={message.read ? '' : 'bg-blue-50 hover:bg-blue-100'}
+                    className={message.read ? '' : 'bg-rowhighlight'}
                   >
                     <TableCell>
                       {message.read ? 
