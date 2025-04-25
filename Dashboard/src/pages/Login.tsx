@@ -10,7 +10,7 @@ import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +23,7 @@ const Login: React.FC = () => {
     setIsLoading(true);
     
     try {
-      await login(username, password);
+      await login(email, password);
       // The redirect is handled in the login function
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to login');
@@ -61,8 +61,8 @@ const Login: React.FC = () => {
                 <Input
                   id="username"
                   placeholder="Enter your username (admin)"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isLoading}
                 />
