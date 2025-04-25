@@ -1,11 +1,11 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from '@/hooks/use-toast';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
+import axios from "axios";
 
 interface User {
   id: string;
-  username: string;
+  firstName: string;
   role: string;
 }
 
@@ -22,12 +22,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -38,9 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         await checkAuth();
       } catch (error) {
-        console.error('Authentication initialization error:', error);
-      } finally {
-        setLoading(false);
+        console.error("Authentication initialization error:", error);
       }
     };
 
@@ -50,20 +50,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Function to check if the user is authenticated
   const checkAuth = async (): Promise<boolean> => {
     try {
-      // In a real app, this would be an API call to verify the JWT token
-      // For demo purposes, we'll check localStorage
-      const userData = localStorage.getItem('admin_user');
-      
-      if (userData) {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        return true;
-      } else {
-        setUser(null);
-        return false;
-      }
+      const res = await axios.get("http://localhost:3000/api/user/me", {
+        withCredentials: true, // ⭐⭐ สำคัญ!
+      });
+      const user = res.data.user;
+
+      setUser({
+        id: user._id,
+        firstName: user.firstName,
+        role: user.role,
+      });
+
+      return true;
     } catch (error) {
-      console.error('Error verifying authentication:', error);
       setUser(null);
       return false;
     } finally {
@@ -72,35 +71,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Function to log in
-  const login = async (username: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string): Promise<void> => {
     setLoading(true);
     try {
-      // Hard-coded admin credentials for testing
-      if (username === 'admin' && password === 'password123') {
-        // Mock successful login
-        const mockUser = {
-          id: '1',
-          username: 'admin',
-          role: 'admin'
-        };
-        
-        // Store user in localStorage (in a real app, we'd store the JWT token)
-        localStorage.setItem('admin_user', JSON.stringify(mockUser));
-        
-        setUser(mockUser);
-        toast({
-          title: 'Login Successful',
-          description: `Welcome back, ${mockUser.username}!`,
-        });
-        navigate('/dashboard');
-      } else {
-        throw new Error('Invalid credentials');
+      const res = await axios.post(
+        "http://localhost:3000/api/user/login",
+        { email, password },
+        { withCredentials: true } // ⭐⭐ สำคัญ!
+      );
+
+      const isAuthenticated = await checkAuth();
+      if (!isAuthenticated) {
+        throw new Error("Failed to fetch user profile");
       }
+
+      const user = res.data.user;
+
+      if (user.role !== "admin") {
+        throw new Error("Access denied: Not an admin");
+      }
+
+      setUser({
+        id: user._id,
+        firstName: user.firstName, 
+        role: user.role,
+      });
+
+      toast({
+        title: "Login Successful",
+        description: `Welcome back, ${user.firstName}!`,
+      });
+
+      navigate("/dashboard");
     } catch (error) {
       toast({
-        title: 'Login Failed',
-        description: error instanceof Error ? error.message : 'Invalid credentials',
-        variant: 'destructive',
+        title: "Login Failed",
+        description:
+          error instanceof Error ? error.message : "Invalid credentials",
+        variant: "destructive",
       });
       throw error;
     } finally {
@@ -112,22 +120,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async (): Promise<void> => {
     setLoading(true);
     try {
-      // In a real app, this would be an API call to invalidate the JWT token
-      // For demo purposes, we'll just clear localStorage
-      localStorage.removeItem('admin_user');
-
+      await axios.post(
+        "http://localhost:3000/api/user/logout",
+        {},
+        { withCredentials: true }
+      );
       setUser(null);
       toast({
-        title: 'Logout Successful',
-        description: 'You have been logged out.',
+        title: "Logout Successful",
+        description: "You have been logged out.",
       });
-      navigate('/login');
+      navigate("/login");
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
       toast({
-        title: 'Logout Failed',
-        description: 'Failed to logout. Please try again.',
-        variant: 'destructive',
+        title: "Logout Failed",
+        description: "Failed to logout. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -141,36 +150,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const ProtectedRoute: React.FC<{ 
-  children: React.ReactNode,
-  requiredRole?: string
-}> = ({ children, requiredRole = 'admin' }) => {
+export const ProtectedRoute: React.FC<{
+  children: React.ReactNode;
+  requiredRole?: string;
+}> = ({ children, requiredRole = "admin" }) => {
   const { user, loading, checkAuth } = useAuth();
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     const verifyAccess = async () => {
-      if (!loading) {
+      if (!loading && !user) {
         const isAuthenticated = await checkAuth();
-        
+
         if (!isAuthenticated) {
           toast({
-            title: 'Authentication Required',
-            description: 'Please login to access this page.',
-            variant: 'destructive',
+            title: "Authentication Required",
+            description: "Please login to access this page.",
+            variant: "destructive",
           });
-          navigate('/login');
+          navigate("/login");
           return;
         }
-        
+
         if (requiredRole && user?.role !== requiredRole) {
           toast({
-            title: 'Access Denied',
-            description: 'You do not have permission to access this page.',
-            variant: 'destructive',
+            title: "Access Denied",
+            description: "You do not have permission to access this page.",
+            variant: "destructive",
           });
-          navigate('/dashboard');
+          navigate("/dashboard");
           return;
         }
       }
@@ -193,4 +202,3 @@ export const ProtectedRoute: React.FC<{
 
   return <>{children}</>;
 };
-
