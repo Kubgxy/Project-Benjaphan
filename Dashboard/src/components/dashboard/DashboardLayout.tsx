@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -11,14 +10,15 @@ const DashboardLayout: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const isMobile = useIsMobile();
 
-  // Initialize dark mode from localStorage or system preference
+  // Initialize theme: default is light mode (system), only use dark if user chose dark
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+    if (savedTheme === 'dark') {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
     }
   }, []);
 
@@ -26,7 +26,6 @@ const DashboardLayout: React.FC = () => {
   const handleDarkModeToggle = (isDark: boolean) => {
     setIsDarkMode(isDark);
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    
     if (isDark) {
       document.documentElement.classList.add('dark');
     } else {

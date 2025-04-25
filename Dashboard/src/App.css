@@ -41,3 +41,10 @@ html, body, #root {
 .dark ::-webkit-scrollbar-thumb:hover {
   background-color: rgba(255, 255, 255, 0.4);
 }
+
+.dark .bg-background {
+  background-color: hsl(var(--background)) !important;
+}
+.dark .bg-card {
+  background-color: hsl(var(--card)) !important;
+}
