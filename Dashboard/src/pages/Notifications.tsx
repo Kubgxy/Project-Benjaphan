@@ -411,7 +411,7 @@ const Notifications = () => {
                 sortedNotifications.map((notification) => (
                   <TableRow 
                     key={notification.id}
-                    className={notification.read ? '' : 'bg-blue-50 hover:bg-blue-100'}
+                    className={notification.read ? '' : 'bg-rowhighlight'}
                   >
                     <TableCell>
                       <Badge className={typeColors[notification.type]}>
