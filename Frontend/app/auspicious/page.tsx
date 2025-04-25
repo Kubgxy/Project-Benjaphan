@@ -156,17 +156,127 @@ export default function AuspiciousPage() {
         </div>
       </section>
 
-      {/* Zodiac Section */}
-      <section className="py-16 bg-white">
+      {/* naga Section */}
+      <section className="py-16  bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-heading font-medium text-brown-800 text-center mb-4">
             ความหมายของพญานาค 4 ตระกูล
           </h2>
-          <p className="text-brown-600 text-center max-w-2xl mx-auto mb-12">
+          <p className="text-brown-600 text-center max-w-7xl mx-auto mb-12">
             เลือกเครื่องประดับที่เหมาะกับราศีของคุณ
             เพื่อเสริมดวงชะตาและพลังมงคลให้ตรงกับธาตุประจำราศี
           </p>
-          
+          <div className="ml-[200px] max-w-[1500px]">
+            {/* เนื้อหาส่วนที่ 1 */}
+            <div className="flex flex-col md:flex-row items-center mb-16 ml-4">
+              <div className="w-[350px] h-[350px] mb-6 md:mb-0 pt-[55px]">
+                <img
+                  src="/naga1.png"
+                  alt="พญานาคตระกูล 1"
+                  className="w-full rounded-lg shadow-lg"
+                />
+              </div>
+              <div className="w-full md:w-1/2 md:pl-12">
+                <h3 className="text-2xl font-semibold text-brown-800 mb-4">
+                  ตระกูลวิรูปักข์
+                </h3>
+                <p className="text-brown-600 leading-relaxed">
+                  พญานาคตระกูลที่มีผิวกายหรือเกล็ดเป็นสีทองงดงามมาก
+                  เป็นนาคชั้นสูงสุด ถือกำเนิดแบบโอปปาติกะ
+                  คือเกิดขึ้นเองแล้วโตเลย มากด้วยอิทธิฤทธิ์และบุญบารมี
+                  มักถูกจัดอยู่ในชั้นเทพ พำนักอาศัยอยู่ในทิพย์วิมาน
+                  อีกทั้งยังเป็นชนชั้นปกครองที่คอยปกครองนาคทั้งหลาย
+                  ไม่เกรงกลัวแม้มนต์สะกดอาลัมพายน์ของพญาครุฑ
+                  พญานาคในตระกูลนี้ที่รู้จักกันดี อาทิ พญาสุวรรณนาคราช
+                  พญามุจลินท์นาคราช
+                </p>
+              </div>
+            </div>
+
+            {/* เนื้อหาส่วนที่ 2 */}
+            <div className="flex flex-col md:flex-row items-center mb-16">
+              <div className="w-full md:w-1/2 md:pr-12 order-2 md:order-1">
+                <h3 className="text-2xl font-semibold text-brown-800 mb-4">
+                  ตระกูลเอราปถะ
+                </h3>
+                <p className="text-brown-600 leading-relaxed">
+                  พญานาคตระกูลที่มีผิวกายหรือเกล็ดเป็นสีเขียว
+                  ถือว่าเป็นพญานาคชั้นสูง
+                  มักจะถือกำเนิดแบบโอปปาติกะคำเนิดขึ้นเอง
+                  หรือแบบอัณฑะชะคือกำเนิดจากฟองไข่
+                  มีขนาดใหญ่โตใกล้เคียงกับพญานาคตระกูลสีทอง
+                  อาศัยอยู่เมืองบาดาลไม่ลึกมาก
+                  เป็นตระกูลที่พบได้มากที่สุดและใกล้ชิดมนุษย์มากที่สุด
+                  ชอบขึ้นมาเที่ยวบนโลกมนุษย์จนเกิดเป็นตำนานรักมากมายกับเหล่ามนุษย์
+                  และหากบำเพ็ญเพียงบารมีจนแกร่งกล้า ก็จะสามารถแผ่เศียรได้ถึง 9
+                  เศียรได้เช่นกัน ก็สามารถขึ้นเป็นพญานาคชั้นปกครองได้เช่นกัน
+                  พญานาคในตระกูลนี้ที่รู้จักกันดี คือ
+                  พญาศรีสุทโธนาคราชแห่งเวียงวังนาคินทร์คำโชนด
+                </p>
+              </div>
+              <div className="w-[350px] h-[350px] order-1 md:order-2 mb-6 md:mb-0 pt-[55px]">
+                <img
+                  src="/naga2.png"
+                  alt="พญานาคตระกูล 2"
+                  className="w-full rounded-lg shadow-lg"
+                />
+              </div>
+            </div>
+
+            {/* เนื้อหาส่วนที่ 3 */}
+            <div className="flex flex-col md:flex-row items-center mb-16">
+              <div className="w-[350px] h-[350px] mb-6 md:mb-0 pt-[55px]">
+                <img
+                  src="/naga3.png"
+                  alt="พญานาคตระกูล 1"
+                  className="w-full rounded-lg shadow-lg"
+                />
+              </div>
+              <div className="w-full md:w-1/2 md:pl-12">
+                <h3 className="text-2xl font-semibold text-brown-800 mb-4">
+                  ตระกูลฉัพพยาปุตตะ
+                </h3>
+                <p className="text-brown-600 leading-relaxed">
+                  พญานาคตระกูลที่มีผิวกายหรือเกล็ดเป็นสีรุ้ง
+                  ส่วนใหญ่ถือกำเนิดแบบชลาพุชะ คือกำเนิดจากครรภ์
+                  อาศัยอยู่ในนครบาดาลหรือป่าลึก
+                  เป็นพญานาคที่มีความงดงามมากเพราะมักจะมีเกล็ดเหลื่อมหลากสี
+                  สวยเหมือนสีรุ้ง มีอิทธิฤทธิ์มาก แต่มักพบได้ยาก
+                  เพราะมักอาศัยอยู่นที่ลึกลับ
+                </p>
+              </div>
+            </div>
+
+            {/* เนื้อหาส่วนที่ 4 */}
+            <div className="flex flex-col md:flex-row items-center mb-16">
+              <div className="w-full md:w-1/2 md:pr-12 order-2 md:order-1">
+                <h3 className="text-2xl font-semibold text-brown-800 mb-4">
+                  ตระกูลกัณหาโคตะมะ
+                </h3>
+                <p className="text-brown-600 leading-relaxed">
+                  พญานาคตระกูลที่มีผิวกายหรือเกล็ดเป็นสีดำนิลกาฬ
+                  ส่วนใหญ่ถือกำเนิดแบบสังเสทชะคือเกิดจากเหงื่อไคลและสิ่งหมักหมมต่างๆ
+                  หรือแบบอัณฑชะคือเกิดจากไข่ มักมีร่างกายกำยำบึกบึน
+                  แม้ไม่ถือว่าเป็นนาคชั้นสูง
+                  แต่ก็มีอำนาจและอิทธิฤทธ์ปฏิหารย์ไม่แพ้ตระกูลอื่น พบเจอได้ยาก
+                  ชอบอาศัยในท้องน้ำลึกและที่เร้นลับ
+                  มักจะมีหน้าที่เฝ้าสมบัติของเมืองบาดาล
+                  และแม้จะเกิดในตระกูลที่ต่ำกว่าตระกูลอื่น
+                  แต่หากหมั่นบำเพ็ญเพียรจนมากญาณบารมี
+                  ก็สามารถเป็นพญานาคชั้นปกครองได้เช่นกัน
+                  พญานาคในตระกูลนี้ที่รู้จักกันดี คือ องค์ดำแสนสิริจันทรานาคราช
+                  กษัตริย์นาคราชยอดนักรบแห่งเมืองบาดาล
+                </p>
+              </div>
+              <div className="w-[350px] h-[350px] order-1 md:order-2 mb-6 md:mb-0 pt-[55px]">
+                <img
+                  src="/naga4.png"
+                  alt="พญานาคตระกูล 2"
+                  className="w-full rounded-lg shadow-lg"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
