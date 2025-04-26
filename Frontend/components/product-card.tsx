@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
 export interface AvailableSize {
-  _id: string
-  size: string
-  quantity: number
+  _id: string;
+  size: string;
+  quantity: number;
 }
 export interface ProductCardData {
   id: string;
@@ -35,8 +35,8 @@ export interface ProductCardData {
   discount?: number;
   category: string;
   stock: number;
-  availableSizes?: AvailableSize[];                // ✅ เพิ่มตรงนี้!
-  availableColors?: { name: string; value: string }[];  // ✅ เพิ่มตรงนี้!
+  availableSizes?: AvailableSize[]; // ✅ เพิ่มตรงนี้!
+  availableColors?: { name: string; value: string }[]; // ✅ เพิ่มตรงนี้!
 }
 
 interface ProductCardProps {
@@ -57,24 +57,21 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-  
+
     if (inWishlist) {
-      removeFromWishlist(product.id);  // ✅ ส่งแค่ id พอเลยครับ!
+      removeFromWishlist(product.id); // ✅ ส่งแค่ id พอเลยครับ!
       toast({
         title: "Removed from Favorites",
         description: `${product.name} has been removed from your favorites.`,
       });
     } else {
-      addToWishlist({ ...product, id_product: product.id });  // ✅ ตรงนี้ถูกแล้ว!
+      addToWishlist({ ...product, id_product: product.id }); // ✅ ตรงนี้ถูกแล้ว!
       toast({
         title: "Added to Favorites",
         description: `${product.name} has been added to your favorites.`,
       });
     }
-    
   };
-  
-
 
   return (
     <div className="group">
@@ -85,12 +82,15 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
       >
         <Image
           src={
-            `http://localhost:3000${product.images[0]}` || "/placeholder.svg"
+            product.images && product.images.length > 0 && product.images[0]
+              ? `http://localhost:3000${product.images[0]}`
+              : "/placeholder.svg"
           }
           alt={product.name}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-700"
         />
+
         {product.isNewArrival && (
           <span className="absolute top-4 left-4 bg-yellow-600 text-white text-xs px-2 py-1 uppercase tracking-wider rounded-md">
             New
@@ -104,7 +104,7 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
         <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-2">
           <Link
             href={`/product/${product.id}`}
-            className="bg-white text-brown-800 px-6 py-3 text-sm font-medium hover:bg-yellow-600 hover:text-white transition-colors transform -translate-y-2 group-hover:translate-y-0 transition-transform duration-300 rounded-md"
+            className="bg-white text-brown-800 px-6 py-3 text-sm font-medium hover:bg-yellow-600 hover:text-white  transform -translate-y-2 group-hover:translate-y-0 transition-transform duration-300 rounded-md"
           >
             View Details
           </Link>
