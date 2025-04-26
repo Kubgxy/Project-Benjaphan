@@ -176,10 +176,12 @@ export default function ContactPage() {
       {/* Map Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-heading font-medium text-brown-800 text-center mb-8">แผนที่และการเดินทาง</h2>
+          <h2 className="text-3xl font-heading font-medium text-brown-800 text-center mb-8">
+            แผนที่และการเดินทาง
+          </h2>
           <div className="h-[400px] rounded-lg overflow-hidden shadow-md">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3875.5438161035395!2d100.50123!3d13.742!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTPCsDQ0JzMxLjIiTiAxMDDCsDMwJzA0LjQiRQ!5e0!3m2!1sen!2sth!4v1617038260897!5m2!1sen!2sth"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d289.74270393237305!2d100.69918988825583!3d13.829082330209603!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x311d632830550dd9%3A0x4c6196941e9d712d!2sPKT%20Mall!5e1!3m2!1sth!2sth!4v1745687482617!5m2!1sth!2sth"
               width="100%"
               height="100%"
               style={{ border: 0 }}
