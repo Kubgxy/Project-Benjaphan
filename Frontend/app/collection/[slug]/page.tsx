@@ -5,6 +5,7 @@ import { collections, getProductsByCollection } from "@/lib/data"
 import { notFound } from "next/navigation"
 import Image from "next/image"
 
+
 export default function CollectionPage({ params }: { params: { slug: string } }) {
   // Find the collection by slug
   const collection = collections.find((col) => col.slug === params.slug)
@@ -35,7 +36,7 @@ export default function CollectionPage({ params }: { params: { slug: string } })
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {collectionProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product._id} product={product} />
           ))}
         </div>
 

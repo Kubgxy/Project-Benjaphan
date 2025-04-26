@@ -7,7 +7,7 @@ export const categories: Category[] = [
     name: "ชะลอม",
     slug: "chaloms",
     description: "แหวนทองคำแท้หลากหลายดีไซน์ เหมาะสำหรับทุกโอกาส",
-    image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1470&auto=format&fit=crop",
+    image: "/product/ชะลอมรวม.jpg",
     featured: true,
   },
   {
@@ -15,7 +15,7 @@ export const categories: Category[] = [
     name: "กำไลและสร้อยข้อมือ",
     slug: "bracelets",
     description: "กำไลและสร้อยข้อมือทองคำแท้ ออกแบบอย่างประณีต",
-    image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=1470&auto=format&fit=crop",
+    image: "/product/รวมกำไลทุกตะกูล.jpg",
     featured: true,
   },
   {
@@ -23,7 +23,7 @@ export const categories: Category[] = [
     name: "น้ำหอม",
     slug: "bencharm",
     description: "ต่างหูทองคำแท้ดีไซน์สวยงาม เหมาะกับทุกโอกาส",
-    image: "https://images.unsplash.com/photo-1589128777073-263566ae5e4d?q=80&w=1374&auto=format&fit=crop",
+    image: "/product/น้ำหอมรวม.jpg",
     featured: true,
   },
 ]

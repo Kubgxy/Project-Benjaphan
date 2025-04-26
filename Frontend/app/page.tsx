@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -5,21 +8,55 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
-import {
-  getNewProducts,
-  getBestsellers,
-  categories,
-  testimonials,
-} from "@/lib/data";
+import { categories, testimonials } from "@/lib/data";
+import type { Product } from "@/lib/types";
 
 export default function Home() {
   // Get featured products from our mock data
-  const newProducts = getNewProducts(3);
-  const bestsellers = getBestsellers(4);
+  const [newProducts, setNewProducts] = useState<Product[]>([]); // ✅ สร้าง state
+  const [loading, setLoading] = useState(true);
+  const [bestsellers, setBestsellers] = useState<Product[]>([]);
+  const [loadingBestsellers, setLoadingBestsellers] = useState(true);
   const featuredCategories = categories
     .filter((cat) => cat.featured)
     .slice(0, 4);
   const featuredTestimonials = testimonials.slice(0, 3);
+
+  const fetchNewProducts = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:3000/api/product/getNewProducts"
+      );
+      const data = await response.json();
+      setNewProducts(data.products); // ✅ เซ็ตข้อมูลที่ได้มาเข้า state
+    } catch (error) {
+      console.error("Error fetching new products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNewProducts(); // ✅ ดึงข้อมูลตอน mount
+  }, []);
+
+  const fetchBestsellers = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:3000/api/product/getBestsellerProducts"
+      );
+      const data = await response.json();
+      setBestsellers(data.products);
+    } catch (error) {
+      console.error("Error fetching bestsellers:", error);
+    } finally {
+      setLoadingBestsellers(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBestsellers();
+  }, []);
 
   return (
     <div className="min-h-screen bg-cream-50">
@@ -47,7 +84,8 @@ export default function Home() {
               ของดีมีศรัทธา เสริมบุญหนา วาสนาเปล่งประกาย
             </h2>
             <p className="text-lg md:text-lg mb-8 text-white/90 font-light">
-            เปล่งประกายทั้งภายนอกและภายใน เสริมโชคลาภ ดึงดูดความสำเร็จ ให้ชีวิตงดงามทุกก้าว
+              เปล่งประกายทั้งภายนอกและภายใน เสริมโชคลาภ ดึงดูดความสำเร็จ
+              ให้ชีวิตงดงามทุกก้าว
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
@@ -134,20 +172,20 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-heading font-medium text-brown-800 mb-4">
               หมวดหมู่สินค้า
             </h2>
-            <p className="text-brown-600 max-w-2xl mx-auto">
+            <p className="text-brown-600 max-w-4xl mx-auto">
               เลือกชมเครื่องประดับทองคำแท้คุณภาพสูง
               ออกแบบด้วยความประณีตและใส่ใจในทุกรายละเอียด
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[150px] items-center justify-center ml-[250px]">
             {featuredCategories.map((category) => (
               <Link
                 key={category.id}
                 href={`/products?category=${category.slug}`}
                 className="group"
               >
-                <div className="relative h-80 overflow-hidden rounded-lg shadow-md">
+                <div className="relative h-80 w-[280px] overflow-hidden rounded-lg shadow-md">
                   <Image
                     src={category.image || "/placeholder.svg"}
                     alt={category.name}
@@ -186,7 +224,7 @@ export default function Home() {
               </p>
             </div>
             <Link
-              href="/products?sort=newest"
+              href="/products"
               className="hidden md:flex items-center text-gold-600 hover:text-gold-700 transition-colors"
             >
               <span className="mr-2">ดูทั้งหมด</span>
@@ -195,9 +233,15 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {newProducts.map((product) => (
-              <ProductCard key={product.id} product={product} featured />
-            ))}
+            {loading ? (
+              <p>กำลังโหลดสินค้ามาใหม่...</p> // ✅ ใส่ loading (optional)
+            ) : newProducts.length > 0 ? (
+              newProducts.map((product) => (
+                <ProductCard key={product.id} product={product} featured />
+              ))
+            ) : (
+              <p>ยังไม่มีสินค้ามาใหม่ตอนนี้</p> // ✅ กรณีไม่มีสินค้า
+            )}
           </div>
 
           <div className="mt-8 text-center md:hidden">
@@ -251,25 +295,31 @@ export default function Home() {
       </section>
 
       {/* Bestsellers Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-heading font-medium text-brown-800 mb-4">
-              สินค้าขายดี
-            </h2>
-            <p className="text-brown-600 max-w-2xl mx-auto">
-              เครื่องประดับทองคำแท้ยอดนิยม
-              ที่ลูกค้าให้ความไว้วางใจเลือกซื้อมากที่สุด
-            </p>
-          </div>
+      {bestsellers.length > 0 && (
+  <section className="py-20 bg-white">
+    <div className="container mx-auto px-4">
+      <div className="text-center mb-12">
+        <h2 className="text-3xl md:text-4xl font-heading font-medium text-brown-800 mb-4">
+          สินค้าขายดี
+        </h2>
+        <p className="text-brown-600 max-w-2xl mx-auto">
+          เครื่องประดับทองคำแท้ยอดนิยม ที่ลูกค้าให้ความไว้วางใจเลือกซื้อมากที่สุด
+        </p>
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {bestsellers.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      </section>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {loadingBestsellers ? (
+          <p>กำลังโหลดสินค้าขายดี...</p>
+        ) : (
+          bestsellers.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))
+        )}
+      </div>
+    </div>
+  </section>
+)}
+
 
       {/* คุณค่าของแบรนด์ */}
       <section className="py-20 bg-cream-50">
