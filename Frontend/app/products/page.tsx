@@ -38,9 +38,6 @@ const mapProductToCardProduct = (product: Product) => ({
   availableColors: product.availableColors,
 });
 
-
-
-
 export default function ProductsPage() {
   const searchParams = useSearchParams();
   const categoryFilter = searchParams.get("category");
@@ -53,9 +50,12 @@ export default function ProductsPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/product/getAllProducts", {
-          credentials: "include",
-        });
+        const response = await fetch(
+          "http://localhost:3000/api/product/getAllProducts",
+          {
+            credentials: "include",
+          }
+        );
         const data = await response.json();
         if (response.ok) {
           setProducts(data.products);
@@ -74,25 +74,41 @@ export default function ProductsPage() {
 
   // ✅ Filter by category
   let filteredProducts = categoryFilter
-    ? products.filter((product) => {
-        const category = categories.find((cat) => cat.slug === categoryFilter);
-        return category ? product.category === category.id : true;
-      })
-    : products;
+  ? products.filter((product) => product.category === categoryFilter)   
+  : products;
+
+
+  console.log("categoryFilter:", categoryFilter);
+  console.log(
+    "product.category:",
+    products.map((p) => p.category)
+  );
+  console.log(
+    "matched category name:",
+    categories.find((cat) => cat.slug === categoryFilter)?.name
+  );
 
   // ✅ Sort products
   switch (sortOption) {
     case "price-low-high":
-      filteredProducts = [...filteredProducts].sort((a, b) => a.price - b.price);
+      filteredProducts = [...filteredProducts].sort(
+        (a, b) => a.price - b.price
+      );
       break;
     case "price-high-low":
-      filteredProducts = [...filteredProducts].sort((a, b) => b.price - a.price);
+      filteredProducts = [...filteredProducts].sort(
+        (a, b) => b.price - a.price
+      );
       break;
     case "newest":
-      filteredProducts = filteredProducts.filter((product) => product.isNewArrival);
+      filteredProducts = filteredProducts.filter(
+        (product) => product.isNewArrival
+      );
       break;
     case "bestselling":
-      filteredProducts = filteredProducts.filter((product) => product.isBestseller);
+      filteredProducts = filteredProducts.filter(
+        (product) => product.isBestseller
+      );
       break;
     default:
       break;
@@ -101,6 +117,7 @@ export default function ProductsPage() {
   const currentCategory = categoryFilter
     ? categories.find((cat) => cat.slug === categoryFilter)?.name
     : "สินค้าทั้งหมด";
+    
 
   return (
     <div className="min-h-screen bg-cream-50">
@@ -190,9 +207,9 @@ export default function ProductsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
               <ProductCard
-              key={product.id_product}
-              product={mapProductToCardProduct(product)}
-            />            
+                key={product.id_product}
+                product={mapProductToCardProduct(product)}
+              />
             ))}
           </div>
         ) : (

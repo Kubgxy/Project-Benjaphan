@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -19,7 +20,7 @@ import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { mapProductToCardProduct } from "@/lib/product";
-
+import { useToast } from "@/components/ui/use-toast";
 
 interface ProductDetailProps {
   product: Product;
@@ -29,8 +30,7 @@ interface ProductDetailProps {
 export function ProductDetail({
   product,
   relatedProducts,
-}: ProductDetailProps) {
-  const { addItem } = useCart();
+}: { params: { id: string } } & ProductDetailProps) {
   const {
     addItem: addToWishlist,
     isInWishlist,
@@ -41,34 +41,75 @@ export function ProductDetail({
   const [selectedSize, setSelectedSize] = useState<string | undefined>(
     product?.availableSizes ? product.availableSizes[0].size : undefined
   );
-
   const [selectedColor, setSelectedColor] = useState<string | undefined>(
     product?.availableColors ? product.availableColors[0].name : undefined
   );
   const [addedToCart, setAddedToCart] = useState(false);
+  const productInWishlist = isInWishlist(product._id);
+  const { toast } = useToast();
 
-  const productInWishlist = isInWishlist(product.id);
+  const selectedSizeObj = product.availableSizes?.find(
+    (sizeObj) => sizeObj.size === selectedSize
+  );
+  const availableStock = selectedSizeObj ? selectedSizeObj.quantity : 0;
 
-  const handleAddToCart = () => {
-    addItem(product, quantity, selectedSize, selectedColor);
-    setAddedToCart(true);
+  const handleAddToCart = async () => {
+    if (!selectedSize) {
+      toast({ title: "⚠️ กรุณาเลือกขนาดสินค้า", variant: "destructive" });
+      return;
+    }
 
-    // Reset the added to cart message after 3 seconds
-    setTimeout(() => {
-      setAddedToCart(false);
-    }, 3000);
+    try {
+      await axios.post(
+        "http://localhost:3000/api/cart/addToCart",
+        {
+          productId: product.id_product, // ✅ ใช้ _id ของ product (MongoDB ObjectId)
+          quantity: quantity, // ✅ ส่ง quantity ที่เลือก
+          size: selectedSize, // ✅ ส่ง size ที่เลือก
+        },
+        {
+          withCredentials: true, // ✅ สำคัญ! เพื่อส่ง cookie-based token ไป backend
+        }
+      );
+
+      if (!selectedSize) {
+        toast({ title: "⚠️ กรุณาเลือกขนาดสินค้า", variant: "destructive" });
+        return;
+      }
+
+      setAddedToCart(true);
+      toast({ title: "✅ เพิ่มสินค้าลงตะกร้าสำเร็จ!" });
+
+      setTimeout(() => {
+        setAddedToCart(false);
+      }, 3000);
+    } catch (error: any) {
+      console.error("❌ Error adding to cart:", error);
+      toast({
+        title: "❌ ไม่สามารถเพิ่มสินค้าลงตะกร้าได้",
+        description:
+          error.response?.data?.message ||
+          "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleWishlist = () => {
     if (productInWishlist) {
-      removeFromWishlist(product.id);
+      removeFromWishlist(product._id);
     } else {
       addToWishlist(product);
     }
   };
 
   const incrementQuantity = () => {
-    if (quantity < product.stock) {
+    const selectedSizeObj = product.availableSizes?.find(
+      (sizeObj) => sizeObj.size === selectedSize
+    );
+    const availableStock = selectedSizeObj ? selectedSizeObj.quantity : 0;
+
+    if (quantity < availableStock) {
       setQuantity(quantity + 1);
     }
   };
@@ -218,25 +259,36 @@ export function ProductDetail({
               <button
                 className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-l"
                 onClick={decrementQuantity}
-                disabled={quantity <= 1}
               >
                 <Minus className="h-4 w-4" />
               </button>
               <input
-                type="text"
+                type="number"
                 value={quantity}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  if (!isNaN(value)) {
+                    if (value >= 1 && value <= availableStock) {
+                      setQuantity(value);
+                    } else if (value > availableStock) {
+                      setQuantity(availableStock); // ✅ ถ้ากรอกเกิน ให้เซ็ตเป็น stock สูงสุด
+                    } else {
+                      setQuantity(1); // ✅ ถ้าต่ำกว่า 1 ให้กลับมาเป็น 1
+                    }
+                  }
+                }}
                 className="w-16 h-10 text-center border-t border-b border-gray-300"
-                readOnly
               />
+
               <button
                 className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-r"
                 onClick={incrementQuantity}
-                disabled={quantity >= product.stock}
+                disabled={quantity >= availableStock}
               >
                 <Plus className="h-4 w-4" />
               </button>
               <span className="ml-4 text-sm text-gray-600">
-                {product.stock} items available
+                {availableStock} items available
               </span>
             </div>
           </div>
@@ -246,10 +298,11 @@ export function ProductDetail({
               variant="luxury"
               size="lg"
               className="flex-1"
-              onClick={handleAddToCart}
+              onClick={handleAddToCart} // ✅ เปลี่ยนมาใช้ API จริง!
             >
               เพิ่มลงตะกร้า
             </Button>
+
             <Button
               variant={productInWishlist ? "outline" : "luxuryOutline"}
               size="lg"
@@ -278,15 +331,15 @@ export function ProductDetail({
 
           {/* // ส่วน Materials */}
           {/* <div className="pt-8 border-t border-gray-200">
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Materials</h3>
-              <div className="flex flex-wrap gap-2">
-                {product.materials.map((material, index) => (
-                  <span key={index} className="px-3 py-1 bg-gray-100 text-gray-800 text-sm rounded-full">
-                    {material}
-                  </span>
-                ))}
-              </div>
-            </div> */}
+                <h3 className="text-sm font-medium text-gray-900 mb-2">Materials</h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.materials.map((material, index) => (
+                    <span key={index} className="px-3 py-1 bg-gray-100 text-gray-800 text-sm rounded-full">
+                      {material}
+                    </span>
+                  ))}
+                </div>
+              </div> */}
         </div>
       </div>
 

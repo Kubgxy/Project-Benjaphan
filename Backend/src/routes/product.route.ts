@@ -4,7 +4,9 @@ import {
   getProductById,
   addProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  getNewProducts,
+  getBestsellerProducts
 } from "../controllers/product.controller";
 
 // ✅ Middleware
@@ -46,4 +48,12 @@ product.delete(
   deleteProduct
 );
 
+// Get New Products (ไม่ต้อง login ก็เรียกดูได้)
+product.get("/getNewProducts", getNewProducts);
+
+// Get Bestsellers Products (ไม่ต้อง login ก็เรียกดูได้)
+product.get("/getBestsellerProducts", getBestsellerProducts);
+
 export default product;
+
+

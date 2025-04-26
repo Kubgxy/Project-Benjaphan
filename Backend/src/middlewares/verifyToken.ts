@@ -8,7 +8,7 @@ interface JwtPayload {
 
 // 🟢 Middleware นี้ใช้ตรวจสอบ token ใน cookie
 export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
-  const token = req.cookies.token;
+  const token = req.cookies?.token;
   console.log('typeof req.user:', typeof req.user);
   if (!token) {
     res.status(401).json({ message: '❌ No token provided' });
