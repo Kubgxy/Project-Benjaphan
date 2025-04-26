@@ -322,7 +322,7 @@ const Products: React.FC = () => {
                     <TableCell>
                       <img
                         src={`${IMAGE_BASE_URL}${product.images[0]}`}
-                        className="h-16 w-16 object-cover rounded"
+                        className="h-12 w-12 object-cover rounded"
                       />
                     </TableCell>
                     <TableCell>{product.name}</TableCell>
@@ -490,6 +490,7 @@ const Products: React.FC = () => {
               ))}
               <Button
                 type="button"
+                style={{ marginLeft: "10px" }}
                 onClick={() =>
                   setNewProduct({
                     ...newProduct,
@@ -500,7 +501,7 @@ const Products: React.FC = () => {
                   })
                 }
               >
-                ➕ เพิ่มไซส์
+                เพิ่มไซส์
               </Button>
             </div>
 
