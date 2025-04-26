@@ -18,7 +18,7 @@ import { useWishlist } from "@/context/wishlist-context";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
-
+import { mapProductToCardProduct } from "@/lib/product";
 
 
 interface ProductDetailProps {
@@ -39,8 +39,9 @@ export function ProductDetail({
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(
-    product?.availableSizes ? product.availableSizes[0] : undefined
+    product?.availableSizes ? product.availableSizes[0].size : undefined
   );
+
   const [selectedColor, setSelectedColor] = useState<string | undefined>(
     product?.availableColors ? product.availableColors[0].name : undefined
   );
@@ -92,7 +93,10 @@ export function ProductDetail({
         <div className="space-y-4">
           <div className="relative h-[600px] bg-gray-50">
             <Image
-              src={product.images[selectedImage] || "/placeholder.svg"}
+              src={
+                `http://localhost:3000${product.images[selectedImage]}` ||
+                "/placeholder.svg"
+              }
               alt={product.name}
               fill
               className="object-contain"
@@ -110,7 +114,9 @@ export function ProductDetail({
                 onClick={() => setSelectedImage(index)}
               >
                 <Image
-                  src={image || "/placeholder.svg"}
+                  src={
+                    image ? `http://localhost:3000${image}` : "/placeholder.svg"
+                  }
                   alt={`${product.name} view ${index + 1}`}
                   fill
                   className="object-contain"
@@ -161,17 +167,20 @@ export function ProductDetail({
             <div className="mb-8">
               <h3 className="text-sm font-medium text-gray-900 mb-2">Size</h3>
               <div className="flex flex-wrap gap-2">
-                {product.availableSizes.map((size) => (
+                {product.availableSizes.map((sizeObj) => (
                   <button
-                    key={size}
-                    className={`h-10 w-10 rounded-full border flex items-center justify-center text-sm focus:outline-none ${
-                      selectedSize === size
+                    key={sizeObj._id}
+                    className={`h-16 w-16 rounded-full border flex flex-col items-center justify-center text-sm focus:outline-none ${
+                      selectedSize === sizeObj.size
                         ? "border-gold-500 bg-gold-50 text-gold-600"
                         : "border-gray-300 hover:border-gold-500"
                     }`}
-                    onClick={() => setSelectedSize(size)}
+                    onClick={() => setSelectedSize(sizeObj.size)}
                   >
-                    {size}
+                    <span>{sizeObj.size}</span>
+                    <span className="text-xs text-gray-500">
+                      {sizeObj.quantity} ชิ้น
+                    </span>
                   </button>
                 ))}
               </div>

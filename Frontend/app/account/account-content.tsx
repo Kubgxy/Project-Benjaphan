@@ -42,7 +42,7 @@ export function AccountContent() {
   }, [isAuthenticated]);
   const refreshUser = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/user/getuser", {
+      const res = await fetch("http://localhost:3000/api/user/getUserProfile", {
         method: "GET",
         credentials: "include",
       });
@@ -75,7 +75,7 @@ export function AccountContent() {
     formData.append("avatar", file);
 
     try {
-      const res = await fetch("http://localhost:3000/api/user/edituser", {
+      const res = await fetch("http://localhost:3000/api/user/updateuser", {
         method: "PATCH",
         body: formData,
         credentials: "include", // ✅ ใช้ cookie-based auth

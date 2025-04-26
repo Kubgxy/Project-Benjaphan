@@ -26,7 +26,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     lastName: string
   ): Promise<boolean> => {
     try {
-      const res = await fetch("http://localhost:3000/api/user/register", {
+      const res = await fetch("http://localhost:3000/api/user/registerUser", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

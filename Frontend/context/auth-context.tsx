@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Save user to localStorage whenever it changes
   const logout = async () => {
     try {
-      await fetch("http://localhost:3000/api/user/logout", {
+      await fetch("http://localhost:3000/api/user/logoutUser", {
         method: "POST",
         credentials: "include", // ✅ cookie-based auth สำคัญ!
       });
@@ -154,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateProfile = async (userData: Partial<User>): Promise<boolean> => {
     try {
-      const res = await fetch("http://localhost:3000/api/user/edituser", {
+      const res = await fetch("http://localhost:3000/api/user/updateUser", {
         method: "PATCH",
         credentials: "include", // ✅ ใช้ cookie-based auth
         headers: {

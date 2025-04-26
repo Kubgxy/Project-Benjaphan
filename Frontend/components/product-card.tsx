@@ -1,17 +1,22 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import Image from "next/image"
-import Link from "next/link"
-import { Heart, Star, ShoppingBag } from "lucide-react"
-import type { Product } from "@/lib/types"
-import { formatPrice } from "@/lib/utils"
-import { useWishlist } from "@/context/wishlist-context"
-import { useCart } from "@/context/cart-context"
-import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/use-toast"
+import Image from "next/image";
+import Link from "next/link";
+import { Heart, Star, ShoppingBag } from "lucide-react";
+import type { Product } from "@/lib/types";
+import { formatPrice } from "@/lib/utils";
+import { useWishlist } from "@/context/wishlist-context";
+import { useCart } from "@/context/cart-context";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
+export interface AvailableSize {
+  _id: string
+  size: string
+  quantity: number
+}
 export interface ProductCardData {
   id: string;
   name: string;
@@ -26,12 +31,12 @@ export interface ProductCardData {
   isOnSale: boolean;
   rating: number;
   reviews: number;
-  isNew: boolean;
   materials: string[];
   discount?: number;
-
   category: string;
   stock: number;
+  availableSizes?: AvailableSize[];                // ✅ เพิ่มตรงนี้!
+  availableColors?: { name: string; value: string }[];  // ✅ เพิ่มตรงนี้!
 }
 
 interface ProductCardProps {
@@ -40,51 +45,53 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, featured = false }: ProductCardProps) {
-  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist()
-  const { addItem: addToCart } = useCart()
-  const { toast } = useToast()
-  const inWishlist = isInWishlist(product.id)
+  const {
+    addItem: addToWishlist,
+    removeItem: removeFromWishlist,
+    isInWishlist,
+  } = useWishlist();
+  const { addItem: addToCart } = useCart();
+  const { toast } = useToast();
+  const inWishlist = isInWishlist(product.id);
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-
+    e.preventDefault();
+    e.stopPropagation();
+  
     if (inWishlist) {
-      removeFromWishlist(product.id)
+      removeFromWishlist(product.id);  // ✅ ส่งแค่ id พอเลยครับ!
       toast({
         title: "Removed from Favorites",
         description: `${product.name} has been removed from your favorites.`,
-      })
+      });
     } else {
-      addToWishlist(product)
+      addToWishlist({ ...product, id_product: product.id });  // ✅ ตรงนี้ถูกแล้ว!
       toast({
         title: "Added to Favorites",
         description: `${product.name} has been added to your favorites.`,
-      })
+      });
     }
-  }
+    
+  };
+  
 
-  // const handleAddToCart = (e: React.MouseEvent) => {
-  //   e.preventDefault()
-  //   e.stopPropagation()
-
-  //   addToCart(product, 1)
-  //   toast({
-  //     title: "Added to Cart",
-  //     description: `${product.name} has been added to your cart.`,
-  //   })
-  // }
 
   return (
     <div className="group">
-      <div className={`relative ${featured ? "h-96" : "h-80"} bg-white rounded-lg overflow-hidden shadow-md mb-4`}>
+      <div
+        className={`relative ${
+          featured ? "h-96" : "h-80"
+        } bg-white rounded-lg overflow-hidden shadow-md mb-4`}
+      >
         <Image
-          src={product.images[0] || "/placeholder.svg"}
+          src={
+            `http://localhost:3000${product.images[0]}` || "/placeholder.svg"
+          }
           alt={product.name}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-700"
         />
-        {product.isNew && (
+        {product.isNewArrival && (
           <span className="absolute top-4 left-4 bg-yellow-600 text-white text-xs px-2 py-1 uppercase tracking-wider rounded-md">
             New
           </span>
@@ -126,16 +133,25 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                className={`h-3 w-3 ${i < Math.floor(product.rating) ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}`}
+                className={`h-3 w-3 ${
+                  i < Math.floor(product.rating)
+                    ? "text-yellow-500 fill-yellow-500"
+                    : "text-gray-300"
+                }`}
               />
             ))}
-            <span className="text-xs text-brown-500 ml-1">({product.reviews})</span>
+            <span className="text-xs text-brown-500 ml-1">
+              ({product.reviews})
+            </span>
           </div>
-          <h3 className="text-lg font-medium text-brown-800 hover:text-yellow-600 transition-colors">{product.name}</h3>
-          <p className="text-yellow-600 font-medium">{formatPrice(product.price)}</p>
+          <h3 className="text-lg font-medium text-brown-800 hover:text-yellow-600 transition-colors">
+            {product.name}
+          </h3>
+          <p className="text-yellow-600 font-medium">
+            {formatPrice(product.price)}
+          </p>
         </div>
       </Link>
     </div>
-  )
+  );
 }
-
