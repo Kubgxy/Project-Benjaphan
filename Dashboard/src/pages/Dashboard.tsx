@@ -19,6 +19,18 @@ import {
 import { ShoppingBag, Package, Users, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+function getThemeColors() {
+  const styles = getComputedStyle(document.documentElement);
+  // สามารถใส่ fallback สีไว้กรณี SSR หรือโหลด theme ไม่ทัน
+  return [
+    styles.getPropertyValue('--primary')?.trim() ? `hsl(${styles.getPropertyValue('--primary')})` : '#3B82F6', // Blue
+    styles.getPropertyValue('--accent')?.trim() ? `hsl(${styles.getPropertyValue('--accent')})` : '#10B981',  // Green
+    '#A855F7', // Violet (ถ้าอยาก dynamic เพิ่ม custom var)
+    '#F59E42', // Orange (ถ้าอยาก dynamic เพิ่ม custom var)
+  ];
+}
+
+
 // Mock data - In a real app, this would come from an API
 const salesData = [
   { name: 'ม.ค.', value: 4000 },
@@ -41,6 +53,7 @@ const COLORS = ['#D4AF37', '#A67C00', '#F5D76E', '#3B82F6'];
 
 const Dashboard: React.FC = () => {
   const [timeRange, setTimeRange] = useState('weekly');
+  const themeColors = getThemeColors();
 
   // Stats cards data
   const statsCards = [
@@ -141,7 +154,7 @@ const Dashboard: React.FC = () => {
                   <Line 
                     type="monotone" 
                     dataKey="value" 
-                    stroke="#D4AF37" 
+                    stroke="#375cd4" 
                     strokeWidth={2} 
                     activeDot={{ r: 8 }} 
                   />
@@ -166,15 +179,21 @@ const Dashboard: React.FC = () => {
                     labelLine={false}
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                     outerRadius={80}
-                    fill="#8884d8"
+                    fill={themeColors[0]}
                     dataKey="value"
                   >
                     {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={themeColors[index % themeColors.length]} />
                     ))}
                   </Pie>
                   <Legend />
-                  <Tooltip formatter={(value) => `฿${value}`} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'var(--card, #fff)',
+                      color: 'var(--foreground, #222)'
+                    }}
+                    formatter={(value: number) => `฿${value}`}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -194,7 +213,7 @@ const Dashboard: React.FC = () => {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip formatter={(value) => `฿${value}`} />
-                <Bar dataKey="value" fill="#D4AF37" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" fill="#375CD4" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
