@@ -1,5 +1,17 @@
+export interface AvailableSize {
+  _id: string
+  size: string
+  quantity: number
+}
+
+export interface AvailableColor {
+  name: string;
+  value: string;
+}
+
 export interface Product {
   id: string
+  id_product: string
   name: string
   category: string
   price: number
@@ -10,15 +22,12 @@ export interface Product {
   images: string[]
   rating: number
   reviews: number
-  isNew: boolean
+  isNewArrival: boolean
   isBestseller: boolean
   isOnSale: boolean
   discount?: number
-  availableSizes?: string[]
-  availableColors?: {
-    name: string
-    value: string
-  }[]
+  availableSizes?: AvailableSize[] 
+  availableColors?: AvailableColor[]
   materials: string[]
   stock: number
 }

@@ -18,7 +18,7 @@ export function LoginForm() {
 
   const login = async (email: string, password: string): Promise<"customer" | "admin" | null> => {
     try {
-      const res = await fetch("http://localhost:3000/api/user/login", {
+      const res = await fetch("http://localhost:3000/api/user/loginUser", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

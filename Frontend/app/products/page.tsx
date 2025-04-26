@@ -8,26 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Filter, SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-
-// ✅ ใช้ interface Product แบบที่น้องกำหนดไว้ได้เลย
-interface Product {
-  id_product: string;
-  name: string;
-  category: string;
-  price: number;
-  description: string;
-  images: string[];
-  details: string[];
-  isNewArrival: boolean;
-  isBestseller: boolean;
-  isOnSale: boolean;
-
-  // ⭐ เพิ่มตรงนี้!!
-  rating?: number;                     // <-- เพิ่ม optional
-  reviews?: number;                    // <-- เพิ่ม optional
-  materials?: string[];                // <-- เพิ่ม optional
-}
-
+import { Product, AvailableSize, AvailableColor } from "@/lib/types";
 
 // 🟢 สร้าง Function แปลง Product → ProductCardProps
 const mapProductToCardProduct = (product: Product) => ({
@@ -37,17 +18,26 @@ const mapProductToCardProduct = (product: Product) => ({
   description: product.description,
   images: product.images,
   details: product.details || [],
-  features: [],                                         // ✅ ไม่มีส่ง []
+  features: [],
   formattedPrice: `฿${product.price.toFixed(2)}`,
-  isNewArrival: product.isNewArrival,                   // ✅ ส่งไว้ก่อน เผื่อ component ใช้
+  isNewArrival: product.isNewArrival,
   isBestseller: product.isBestseller,
   isOnSale: product.isOnSale,
-
-  rating: product.rating ?? 0,                          // ✅ ใช้ ?? ป้องกัน undefined
+  category: product.category,
+  rating: product.rating ?? 0,
   reviews: product.reviews ?? 0,
-  isNew: product.isNewArrival || false,                 // ✅ สร้าง isNew ให้ตรง spec
-  materials: product.materials || [],                   // ✅ ป้องกัน undefined
+  isNew: product.isNewArrival || false,
+  materials: product.materials || [],
+  stock: product.availableSizes
+    ? product.availableSizes.reduce(
+        (sum: number, size: AvailableSize) => sum + size.quantity,
+        0
+      )
+    : 0,
+  availableSizes: product.availableSizes,
+  availableColors: product.availableColors,
 });
+
 
 
 
@@ -200,9 +190,9 @@ export default function ProductsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
               <ProductCard
-                key={product.id_product}
-                product={mapProductToCardProduct(product)}
-              />
+              key={product.id_product}
+              product={mapProductToCardProduct(product)}
+            />            
             ))}
           </div>
         ) : (
@@ -233,7 +223,6 @@ export default function ProductsPage() {
           </div>
         )}
       </div>
-
       <Footer />
     </div>
   );
