@@ -20,6 +20,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+// เพิ่ม import สำหรับ useNavigate ถ้าต้องการนำทาง หรือใช้ context สำหรับการค้นหา
+import { useNavigate, useLocation } from "react-router-dom";
+
+// ตัวอย่าง: สมมติว่ามีข้อมูลสำหรับค้นหา (กรณีจริงควรดึงข้อมูลหรือใช้ context/store)
+const mockSearchIndex = [
+  { type: "product", label: "สินค้า", value: "iPhone 15", url: "/dashboard/products/iphone-15" },
+  { type: "order", label: "ออเดอร์", value: "Order #1234", url: "/dashboard/orders/1234" },
+  { type: "customer", label: "ลูกค้า", value: "สมชาย ใจดี", url: "/dashboard/customers/1" },
+  { type: "article", label: "บทความ", value: "เทคนิคขายดี", url: "/dashboard/articles/42" },
+  { type: "message", label: "ข้อความ", value: "สอบถามสินค้า", url: "/dashboard/messages/9" },
+  { type: "notification", label: "แจ้งเตือน", value: "ออเดอร์ใหม่", url: "/dashboard/notifications" },
+  // ... เพิ่มข้อมูลอื่นๆ ตามต้องการ
+];
 
 interface TopbarProps {
   setDarkMode: (isDark: boolean) => void;
@@ -30,21 +43,65 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
   const { user, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
-  
+  const [searchResults, setSearchResults] = useState<typeof mockSearchIndex>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Search for:", searchQuery);
-    // This would trigger a global search in a real app
+  // ค้นหาแบบ Real-time
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.length > 1) {
+      const results = mockSearchIndex.filter((item) =>
+        item.value.toLowerCase().includes(query.toLowerCase()) ||
+        item.label.toLowerCase().includes(query.toLowerCase())
+      );
+      setSearchResults(results);
+      setShowDropdown(true);
+    } else {
+      setSearchResults([]);
+      setShowDropdown(false);
+    }
   };
 
+  // เมื่อกด Enter หรือเลือกผลลัพธ์
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchResults.length > 0) {
+      navigate(searchResults[0].url);
+      setShowDropdown(false);
+      setSearchQuery("");
+    } else {
+      // fallback: หรือจะค้นหาหน้าเฉพาะที่อยู่ปัจจุบัน เช่น ตาราง
+      // สามารถ dispatch/search context ได้ตรงนี้ถ้ามี
+      setShowDropdown(false);
+    }
+  };
+
+  // เลือกผลลัพธ์จาก dropdown
+  const handleResultClick = (url: string) => {
+    navigate(url);
+    setShowDropdown(false);
+    setSearchQuery("");
+  };
+
+  // ปิด dropdown เมื่อเปลี่ยนหน้า
+  React.useEffect(() => {
+    setShowDropdown(false);
+    setSearchQuery("");
+    setSearchResults([]);
+  }, [location.pathname]);
+
   return (
-    <header className="border-b bg-background">
+    <header className="border-b bg-background z-30 relative">
       <div className="flex h-16 items-center justify-between px-4">
         <div className="flex-1 flex items-center md:w-auto">
           <form
             onSubmit={handleSearch}
-            className="hidden md:block w-full max-w-md"
+            className="hidden md:block w-full max-w-md relative"
+            autoComplete="off"
           >
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -53,8 +110,31 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
                 placeholder="ค้นหา..."
                 className="w-full pl-8 bg-background"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleInputChange}
+                onFocus={() => setShowDropdown(searchResults.length > 0)}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 100)}
+                autoComplete="off"
               />
+              {showDropdown && (
+                <div className="absolute left-0 top-10 w-full rounded-md bg-popover shadow-lg border z-50 max-h-60 overflow-auto">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center px-4 py-2 hover:bg-muted cursor-pointer gap-2"
+                        onMouseDown={() => handleResultClick(item.url)}
+                      >
+                        <span className="text-xs text-muted-foreground">{item.label}</span>
+                        <span className="font-medium">{item.value}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-2 text-muted-foreground text-sm">
+                      ไม่พบผลลัพธ์
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </form>
         </div>
@@ -173,8 +253,31 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
               placeholder="ค้นหา..."
               className="w-full pl-8 bg-background"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleInputChange}
+              onFocus={() => setShowDropdown(searchResults.length > 0)}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 100)}
+              autoComplete="off"
             />
+            {showDropdown && (
+              <div className="absolute left-0 top-10 w-full rounded-md bg-popover shadow-lg border z-50 max-h-60 overflow-auto">
+                {searchResults.length > 0 ? (
+                  searchResults.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center px-4 py-2 hover:bg-muted cursor-pointer gap-2"
+                      onMouseDown={() => handleResultClick(item.url)}
+                    >
+                      <span className="text-xs text-muted-foreground">{item.label}</span>
+                      <span className="font-medium">{item.value}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-muted-foreground text-sm">
+                    ไม่พบผลลัพธ์
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </form>
       </div>
