@@ -106,6 +106,7 @@ export const loginUser = async (
           email: user.email,
           role: user.role,
         },
+        token,
       });
   } catch (error) {
     res.status(500).json({ message: "❌ Server error", error });

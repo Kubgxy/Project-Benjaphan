@@ -1,10 +1,12 @@
  
-import express from 'express';
+import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import bodyParser from 'body-parser';
+
 // โหลดค่า .env
 dotenv.config();
 
@@ -17,8 +19,10 @@ app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:5174' ],
   credentials: true              
 }));
-app.use(express.json()); 
 app.use(cookieParser());
+app.use(bodyParser.json({
+  type: (req) => req.headers['content-type']?.includes('application/json') || false
+}));
 
 // Connect MongoDB
 mongoose.connect(mongoURI)
@@ -33,9 +37,11 @@ app.get('/', (_req, res) => {
 // Import routes
 import user from './routes/user.route';
 import product from './routes/product.route';
+import article from './routes/article.route';
 // Use routes
 app.use('/api/user', user);
 app.use('/api/product', product);
+app.use('/api/article', article);
 
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
