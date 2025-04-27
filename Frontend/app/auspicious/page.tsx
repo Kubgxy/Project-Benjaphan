@@ -131,27 +131,12 @@ export default function AuspiciousPage() {
             </div>
             <div className="relative h-[500px] rounded-lg overflow-hidden shadow-lg">
               <Image
-                src="https://images.unsplash.com/photo-1602173574767-37ac01994b2a?q=80&w=1374&auto=format&fit=crop"
+                src="/Product_auspicious.jpg"
                 alt="เครื่องประดับมงคล"
                 fill
                 className="object-cover"
               />
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Products Section */}
-      <section className="py-16 lotus-pattern">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-heading font-medium text-brown-800 text-center mb-12">
-            เครื่องประดับมงคลของเรา
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {auspiciousProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
           </div>
         </div>
       </section>

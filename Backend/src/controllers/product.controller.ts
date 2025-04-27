@@ -150,3 +150,24 @@ export const deleteProduct = async (req: Request, res: Response, _next: NextFunc
     res.status(500).json({ message: "Server error", error });
   }
 };
+
+// ✅ Get new products
+export const getNewProducts = async (req: Request, res: Response) => {
+  try {
+    const products = await Product.find({ isNewArrival: true }).limit(3);
+    res.status(200).json({ products });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+// ✅ Get Bestsellers Products
+export const getBestsellerProducts = async (req: Request, res: Response) => {
+  try {
+    const products = await Product.find({ isBestseller: true });
+    res.status(200).json({ products });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+

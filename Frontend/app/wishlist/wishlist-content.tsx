@@ -1,25 +1,105 @@
-"use client"
-import Image from "next/image"
-import Link from "next/link"
-import { Heart, ShoppingBag, X } from "lucide-react"
-import { useWishlist } from "@/context/wishlist-context"
-import { useCart } from "@/context/cart-context"
-import { Button } from "@/components/ui/button"
-import { formatPrice } from "@/lib/utils"
+"use client";
+import Image from "next/image";
+import Link from "next/link";
+import { Heart, ShoppingBag, X } from "lucide-react";
+import { useCart } from "@/context/cart-context";
+import { Button } from "@/components/ui/button";
+import { formatPrice } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useToast } from "@/components/ui/use-toast";
 
-export function WishlistContent() {
-  const { items, removeItem } = useWishlist()
-  const { addItem } = useCart()
+interface Product {
+  id_product: string;
+  name: string;
+  price: number;
+  images: string[];
+}
 
-  const handleAddToCart = (product: any) => {
-    addItem(product, 1)
-  }
+interface ProductCardProps {
+  product: Product;
+  featured?: boolean;
+}
+
+export function WishlistContent({ product, featured = false }: ProductCardProps) {
+  const [addedToCart, setAddedToCart] = useState(false);
+  const [wishlistItems, setWishlistItems] = useState<Product[]>([]);
+  const { toast } = useToast();
+
+  const handleAddToCart = async (item: Product) => {
+    try {
+      await axios.post(
+        "http://localhost:3000/api/cart/addToCart",
+        {
+          productId: item.id_product, // ✅ ใช้ item ตรงนี้!
+          quantity: 1,
+          size: "FreeSize", // ✅ ถ้าสินค้ามี size เปลี่ยนตรงนี้
+        },
+        { withCredentials: true }
+      );
+  
+      setAddedToCart(true);
+      toast({
+        title: "✅ เพิ่มสินค้าลงตะกร้าสำเร็จ!",
+        description: `${item.name} ถูกเพิ่มลงตะกร้าแล้ว`,
+      });
+    } catch (error) {
+      console.error("❌ Error adding to cart:", error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถเพิ่มสินค้าลงตะกร้าได้ กรุณาลองใหม่อีกครั้ง",
+        variant: "destructive",
+      });
+    }
+  };
+  
+
+  const fetchWishlist = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/api/wishlist/getWishlist", {
+        withCredentials: true,
+      });
+      const products = response.data.wishlist?.products || [];
+      setWishlistItems(products);
+    } catch (error) {
+      console.error("❌ Error fetching wishlist:", error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "โหลดข้อมูลรายการโปรดไม่สำเร็จ",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchWishlist();
+  }, []);
+
+
+  const handleRemoveWishlist = async (productId: string) => {
+    try {
+      await axios.post(
+        "http://localhost:3000/api/wishlist/removeFromWishlist",
+        { productId },
+        { withCredentials: true }
+      );
+      toast({ title: "ลบออกจากรายการโปรดแล้ว" });
+      fetchWishlist(); // รีโหลดหลังลบ
+    } catch (error) {
+      console.error("❌ Error removing wishlist item:", error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถลบออกจากรายการโปรดได้",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-display font-medium text-gray-900 mb-8">My Wishlist</h1>
 
-      {items.length > 0 ? (
+      {wishlistItems.length > 0 ? (
         <div>
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="p-6">
@@ -32,13 +112,13 @@ export function WishlistContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item) => (
-                    <tr key={item.id} className="border-b">
+                  {wishlistItems.map((item) => (
+                    <tr key={item.id_product} className="border-b">
                       <td className="py-4">
                         <div className="flex items-center">
                           <div className="relative w-16 h-16 mr-4 bg-gray-50">
                             <Image
-                              src={item.images[0] || "/placeholder.svg"}
+                              src={`http://localhost:3000${item.images[0]}`}
                               alt={item.name}
                               fill
                               className="object-contain"
@@ -46,7 +126,7 @@ export function WishlistContent() {
                           </div>
                           <div>
                             <Link
-                              href={`/product/${item.id}`}
+                              href={`/product/${item.id_product}`}
                               className="font-medium hover:text-gold-600 transition-colors"
                             >
                               {item.name}
@@ -68,17 +148,9 @@ export function WishlistContent() {
                           >
                             Add to Cart
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="sm:hidden"
-                            onClick={() => handleAddToCart(item)}
-                          >
-                            <ShoppingBag className="h-4 w-4" />
-                          </Button>
                           <button
                             className="text-gray-400 hover:text-red-500 transition-colors"
-                            onClick={() => removeItem(item.id)}
+                            onClick={() => handleRemoveWishlist(item.id_product)}
                           >
                             <X className="w-5 h-5" />
                           </button>
@@ -119,6 +191,5 @@ export function WishlistContent() {
         </div>
       )}
     </div>
-  )
+  );
 }
-
