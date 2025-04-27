@@ -34,12 +34,14 @@
   import product from './routes/product.route';
   import cart from './routes/cart.route';
   import wishlist from './routes/wishlist.route';
+  import review from './routes/review.route';
 
   // Use routes
   app.use('/api/user', user);
   app.use('/api/product', product);
   app.use('/api/cart', cart);
   app.use('/api/wishlist', wishlist);
+  app.use('/api/review', review);
 
   // Serve static files
   app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

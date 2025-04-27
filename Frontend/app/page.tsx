@@ -63,13 +63,13 @@ export default function Home() {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative h-[90vh] flex items-center">
+      <section className="relative h-[90vh]  flex items-center">
         <div className="absolute inset-0 z-0">
           <Image
             src="/production.jpg"
             alt="เครื่องประดับทองคำแท้"
             fill
-            className="object-cover"
+            className="object-cover z-0"
             priority
           />
           <div className="absolute inset-0 bg-black bg-opacity-40"></div>
@@ -120,6 +120,7 @@ export default function Home() {
                   alt="ทองคำแท้"
                   fill
                   className="object-contain"
+                  priority
                 />
               </div>
               <h3 className="text-xl font-heading font-medium text-brown-800 mb-2">
@@ -136,6 +137,7 @@ export default function Home() {
                   alt="เสริมดวง"
                   fill
                   className="object-contain"
+                  priority
                 />
               </div>
               <h3 className="text-xl font-heading font-medium text-brown-800 mb-2">
@@ -152,6 +154,7 @@ export default function Home() {
                   alt="งานฝีมือ"
                   fill
                   className="object-contain"
+                  priority
                 />
               </div>
               <h3 className="text-xl font-heading font-medium text-brown-800 mb-2">
@@ -178,19 +181,22 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[150px] items-center justify-center ml-[250px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 lg:ml-[280px] gap-8 items-center justify-center px-4 md:px-0 mx-auto">
+
             {featuredCategories.map((category) => (
               <Link
                 key={category.id}
                 href={`/products?category=${category.slug}`}
                 className="group"
               >
-                <div className="relative h-80 w-[280px] overflow-hidden rounded-lg shadow-md">
+                <div className="relative h-80 w-full overflow-hidden rounded-lg shadow-md">
+
                   <Image
                     src={category.image || "/placeholder.svg"}
                     alt={category.name}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    priority
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent group-hover:from-black/80 transition-all duration-300"></div>
                   <div className="absolute inset-0 flex items-end justify-center p-6">

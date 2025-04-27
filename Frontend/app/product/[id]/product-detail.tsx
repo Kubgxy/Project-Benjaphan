@@ -46,6 +46,11 @@ export function ProductDetail({
   const availableStock = selectedSizeObj ? selectedSizeObj.quantity : 0;
   const [isInWishlist, setIsInWishlist] = useState(false);
 
+  const [selectedRating, setSelectedRating] = useState<number>(0);
+
+  const [averageRating, setAverageRating] = useState<number>(0);
+  const [totalReviews, setTotalReviews] = useState<number>(0);
+
   const handleAddToCart = async () => {
     if (!selectedSize) {
       toast({ title: "⚠️ กรุณาเลือกขนาดสินค้า", variant: "destructive" });
@@ -74,7 +79,7 @@ export function ProductDetail({
       toast({ title: "✅ เพิ่มสินค้าลงตะกร้าสำเร็จ!" });
 
       setTimeout(() => {
-      setAddedToCart(false);
+        setAddedToCart(false);
       }, 3000);
     } catch (error: any) {
       console.error("❌ Error adding to cart:", error);
@@ -156,6 +161,61 @@ export function ProductDetail({
     }
   };
 
+  const handleSubmitRating = async (rating: number) => {
+    try {
+      await axios.post(
+        "http://localhost:3000/api/review/addRating",
+        { productId: product.id_product, rating }, // ส่ง productId กับคะแนน
+        { withCredentials: true }
+      );
+      toast({ title: "✅ ขอบคุณสำหรับการให้คะแนน!" });
+      setSelectedRating(rating); // เก็บคะแนนที่เลือกไว้ใน state
+      fetchAverageRating(); // อัปเดตคะแนนเฉลี่ยหลังจากกด
+    } catch (error: any) {
+      console.error("❌ Error submitting rating:", error);
+      toast({
+        title: "❌ ไม่สามารถส่งคะแนนได้",
+        description:
+          error.response?.data?.message ||
+          "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchUserRating = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:3000/api/review/user-rating/${product.id_product}`,
+        { withCredentials: true }
+      );
+      setSelectedRating(res.data.rating); // ⭐ preload คะแนนที่ user เคยให้
+    } catch (error) {
+      console.error("❌ ไม่สามารถโหลดคะแนนของผู้ใช้ได้", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAverageRating(); // โหลดคะแนนเฉลี่ย
+    fetchUserRating(); // โหลดคะแนนของ user (กันกดซ้ำ)
+  }, [product.id_product]);
+
+  const fetchAverageRating = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:3000/api/review/average/${product.id_product}`
+      );
+      setAverageRating(res.data.averageRating);
+      setTotalReviews(res.data.totalReviews);
+    } catch (error) {
+      console.error("Error fetching average rating:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAverageRating();
+  }, [product.id_product]);
+
   return (
     <div className="container mx-auto px-4 py-12">
       <Link
@@ -206,22 +266,6 @@ export function ProductDetail({
         </div>
 
         <div>
-          <div className="flex items-center mb-2">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={`h-4 w-4 ${
-                  i < Math.floor(product.rating)
-                    ? "fill-gold-500 text-gold-500"
-                    : "text-gray-300"
-                }`}
-              />
-            ))}
-            <span className="ml-2 text-sm text-gray-600">
-              {product.rating} ({product.reviews} reviews)
-            </span>
-          </div>
-
           <h1 className="text-3xl font-display font-medium text-gray-900 mb-2">
             {product.name}
           </h1>
@@ -260,31 +304,6 @@ export function ProductDetail({
                     <span className="text-xs text-gray-500">
                       {sizeObj.quantity} ชิ้น
                     </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {product.availableColors && (
-            <div className="mb-8">
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Color</h3>
-              <div className="flex flex-wrap gap-2">
-                {product.availableColors.map((color) => (
-                  <button
-                    key={color.name}
-                    className={`h-10 w-10 rounded-full border flex items-center justify-center hover:border-gold-500 focus:outline-none ${
-                      selectedColor === color.name
-                        ? "ring-2 ring-gold-500"
-                        : "border-gray-300"
-                    }`}
-                    style={{ backgroundColor: color.value }}
-                    title={color.name}
-                    onClick={() => setSelectedColor(color.name)}
-                  >
-                    {selectedColor === color.name && (
-                      <Check className="h-4 w-4 text-white" />
-                    )}
                   </button>
                 ))}
               </div>
@@ -360,6 +379,31 @@ export function ProductDetail({
               <Share2 className="h-5 w-5" />
             </Button>
           </div>
+          {/* ⭐⭐⭐⭐⭐ ให้คะแนน */}
+          <div className="flex items-center mb-4">
+            <span className="text-sm text-gray-700 mr-2">ให้คะแนนสินค้า:</span>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                onClick={() => {
+                  if (selectedRating === 0) handleSubmitRating(star); // ✅ ป้องกันกดซ้ำ!
+                }}
+                className={`h-6 w-6 cursor-pointer transition-all ${
+                  star <= selectedRating
+                    ? "fill-gold-500 text-gold-500"
+                    : "text-gray-300"
+                }`}
+              />
+            ))}
+            <span className="ml-2 text-sm text-gray-700">
+              {averageRating.toFixed(1)} / 5 ({totalReviews} รีวิว)
+            </span>
+          </div>
+          {selectedRating > 0 && (
+            <p className="text-green-600 text-sm mb-4">
+              คุณให้คะแนนไปแล้ว {selectedRating} ดาว ขอบคุณครับ ❤️
+            </p>
+          )}
 
           {addedToCart && (
             <div className="p-4 bg-green-50 text-green-700 border border-green-200 rounded-md flex items-center mb-6">

@@ -33,7 +33,7 @@ const prompt = Prompt({
 
 // อัปเดตข้อมูล metadata ให้สะท้อนถึงแบรนด์
 export const metadata: Metadata = {
-  title: "เบญจภัณฑ์๕ | เครื่องประดับทองคำแท้ มงคล เสริมดวง",
+  title: "เบญจภัณฑ์ ๕ ",
   description: "เบญจภัณฑ์๕ ร้านทองและเครื่องประดับมงคล คัดสรรเครื่องประดับทองคำแท้คุณภาพสูง ออกแบบเพื่อความเป็นสิริมงคลและเสริมดวงชะตา",
 }
 
@@ -44,6 +44,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="th">
+      <link rel="icon" href="/logo-bencharm.png" sizes="any" /> 
       <body className={`${sarabun.variable} ${mitr.variable} ${prompt.variable} font-sans bg-cream-50`}>
         <AuthProvider>
           <CartProvider>
