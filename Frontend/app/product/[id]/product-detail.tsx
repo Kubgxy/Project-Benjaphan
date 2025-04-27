@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,7 +14,6 @@ import {
   Check,
 } from "lucide-react";
 import type { Product } from "@/lib/types";
-import { useCart } from "@/context/cart-context";
 import { useWishlist } from "@/context/wishlist-context";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
@@ -31,11 +30,6 @@ export function ProductDetail({
   product,
   relatedProducts,
 }: { params: { id: string } } & ProductDetailProps) {
-  const {
-    addItem: addToWishlist,
-    isInWishlist,
-    removeItem: removeFromWishlist,
-  } = useWishlist();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(
@@ -45,7 +39,7 @@ export function ProductDetail({
     product?.availableColors ? product.availableColors[0].name : undefined
   );
   const [addedToCart, setAddedToCart] = useState(false);
-  const productInWishlist = isInWishlist(product._id);
+  const [wishlist, setWishlist] = useState<string[]>([]);
   const { toast } = useToast();
 
   const selectedSizeObj = product.availableSizes?.find(
@@ -95,14 +89,6 @@ export function ProductDetail({
     }
   };
 
-  const handleWishlist = () => {
-    if (productInWishlist) {
-      removeFromWishlist(product._id);
-    } else {
-      addToWishlist(product);
-    }
-  };
-
   const incrementQuantity = () => {
     const selectedSizeObj = product.availableSizes?.find(
       (sizeObj) => sizeObj.size === selectedSize
@@ -119,6 +105,51 @@ export function ProductDetail({
       setQuantity(quantity - 1);
     }
   };
+
+    const fetchWishlist = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/api/wishlist/getWishlist",
+          { withCredentials: true }
+        );
+        const wishlistItems = response.data.wishlist.map((item: any) => item._id);
+        setWishlist(wishlistItems);
+      } catch (error) {
+        console.error("❌ Error fetching wishlist:", error);
+      }
+    };
+    
+
+    const isInWishlist = wishlist.includes(product._id);
+
+    const handleWishlist = async () => {
+      try {
+        if (isInWishlist) {
+          // ✅ ถ้ามีใน Wishlist แล้ว → Remove
+          await axios.post(
+            "http://localhost:3000/api/wishlist/removeFromWishlist",
+            { productId: product._id },
+            { withCredentials: true }
+          );
+        } else {
+          // ✅ ถ้ายังไม่มี → Add เข้า Wishlist
+          await axios.post(
+            "http://localhost:3000/api/wishlist/addToWishlist",
+            { productId: product._id },
+            { withCredentials: true }
+          );
+        }
+        await fetchWishlist();
+      } catch (error) {
+        console.error("❌ Wishlist error:", error);
+        toast({
+          title: "❌ เกิดข้อผิดพลาด",
+          description: "เพิ่มหรือเอาออกจาก Wishlist ไม่สำเร็จ",
+          variant: "destructive",
+        });
+      }
+    };
+  
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -304,19 +335,20 @@ export function ProductDetail({
             </Button>
 
             <Button
-              variant={productInWishlist ? "outline" : "luxuryOutline"}
+              variant={isInWishlist ? "outline" : "luxuryOutline"}
               size="lg"
               className={`sm:w-auto ${
-                productInWishlist
+                isInWishlist
                   ? "text-red-500 border-red-500 hover:bg-red-50"
                   : ""
               }`}
               onClick={handleWishlist}
             >
               <Heart
-                className={`h-5 w-5 ${productInWishlist ? "fill-red-500" : ""}`}
+                className={`h-5 w-5 ${isInWishlist ? "fill-red-500" : ""}`}
               />
             </Button>
+
             <Button variant="luxuryOutline" size="lg" className="sm:w-auto">
               <Share2 className="h-5 w-5" />
             </Button>

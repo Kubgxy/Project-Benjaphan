@@ -8,7 +8,7 @@ const cart = express.Router();
 // For User
 cart.post('/addToCart', verifyToken, addToCart);
 cart.get('/getCart', verifyToken, getCartUser);
-
+ 
 // For Admin
 cart.get('/getAllCarts', verifyAdmin, getAllCarts);
 
