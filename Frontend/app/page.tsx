@@ -114,12 +114,12 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="flex flex-col items-center text-center p-6">
-              <div className="w-16 h-16 rounded-full bg-gold-100 flex items-center justify-center mb-4">
+              <div className="relative w-16 h-16 rounded-full bg-gold-100 flex items-center justify-center mb-4">
                 <Image
                   src="/icons/gold-quality.svg"
                   alt="ทองคำแท้"
-                  width={32}
-                  height={32}
+                  fill
+                  className="object-contain"
                 />
               </div>
               <h3 className="text-xl font-heading font-medium text-brown-800 mb-2">
@@ -130,12 +130,12 @@ export default function Home() {
               </p>
             </div>
             <div className="flex flex-col items-center text-center p-6">
-              <div className="w-16 h-16 rounded-full bg-gold-100 flex items-center justify-center mb-4">
+              <div className="relative w-16 h-16 rounded-full bg-gold-100 flex items-center justify-center mb-4">
                 <Image
                   src="/icons/auspicious.svg"
                   alt="เสริมดวง"
-                  width={32}
-                  height={32}
+                  fill
+                  className="object-contain"
                 />
               </div>
               <h3 className="text-xl font-heading font-medium text-brown-800 mb-2">
@@ -146,12 +146,12 @@ export default function Home() {
               </p>
             </div>
             <div className="flex flex-col items-center text-center p-6">
-              <div className="w-16 h-16 rounded-full bg-gold-100 flex items-center justify-center mb-4">
+              <div className="relative w-16 h-16 rounded-full bg-gold-100 flex items-center justify-center mb-4">
                 <Image
                   src="/icons/craftsmanship.svg"
                   alt="งานฝีมือ"
-                  width={32}
-                  height={32}
+                  fill
+                  className="object-contain"
                 />
               </div>
               <h3 className="text-xl font-heading font-medium text-brown-800 mb-2">
@@ -236,9 +236,10 @@ export default function Home() {
             {loading ? (
               <p>กำลังโหลดสินค้ามาใหม่...</p> // ✅ ใส่ loading (optional)
             ) : newProducts.length > 0 ? (
-              newProducts.map((product) => (
-                <ProductCard key={product.id} product={product} featured />
-              ))
+              newProducts.map((product) => {
+                const productWithId = { ...product, id: product._id }; // ✅ เพิ่ม id เข้ามา
+                return <ProductCard key={product._id} product={productWithId} featured />;
+              })
             ) : (
               <p>ยังไม่มีสินค้ามาใหม่ตอนนี้</p> // ✅ กรณีไม่มีสินค้า
             )}
@@ -311,9 +312,10 @@ export default function Home() {
         {loadingBestsellers ? (
           <p>กำลังโหลดสินค้าขายดี...</p>
         ) : (
-          bestsellers.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))
+          bestsellers.map((product) => {
+            const productWithId = { ...product, id: product._id };
+            return <ProductCard key={product._id} product={productWithId} />;
+          })
         )}
       </div>
     </div>

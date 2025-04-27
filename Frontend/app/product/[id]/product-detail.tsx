@@ -14,7 +14,6 @@ import {
   Check,
 } from "lucide-react";
 import type { Product } from "@/lib/types";
-import { useWishlist } from "@/context/wishlist-context";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
@@ -39,13 +38,13 @@ export function ProductDetail({
     product?.availableColors ? product.availableColors[0].name : undefined
   );
   const [addedToCart, setAddedToCart] = useState(false);
-  const [wishlist, setWishlist] = useState<string[]>([]);
   const { toast } = useToast();
 
   const selectedSizeObj = product.availableSizes?.find(
     (sizeObj) => sizeObj.size === selectedSize
   );
   const availableStock = selectedSizeObj ? selectedSizeObj.quantity : 0;
+  const [isInWishlist, setIsInWishlist] = useState(false);
 
   const handleAddToCart = async () => {
     if (!selectedSize) {
@@ -75,7 +74,7 @@ export function ProductDetail({
       toast({ title: "✅ เพิ่มสินค้าลงตะกร้าสำเร็จ!" });
 
       setTimeout(() => {
-        setAddedToCart(false);
+      setAddedToCart(false);
       }, 3000);
     } catch (error: any) {
       console.error("❌ Error adding to cart:", error);
@@ -106,50 +105,56 @@ export function ProductDetail({
     }
   };
 
-    const fetchWishlist = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:3000/api/wishlist/getWishlist",
+  // ✅ ตรวจสอบว่ามีสินค้านี้ใน wishlist หรือยัง
+  const checkWishlistStatus = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:3000/api/wishlist/getWishlist",
+        {
+          withCredentials: true,
+        }
+      );
+      const wishlistItems = response.data.wishlist?.products || [];
+      const exists = wishlistItems.some(
+        (item: any) => item.id_product === product.id_product
+      );
+      setIsInWishlist(exists);
+    } catch (error) {
+      console.error("Error checking wishlist:", error);
+    }
+  };
+
+  useEffect(() => {
+    checkWishlistStatus();
+  }, []);
+
+  const handleWishlist = async () => {
+    try {
+      if (isInWishlist) {
+        await axios.post(
+          "http://localhost:3000/api/wishlist/removeFromWishlist",
+          { productId: product.id_product },
           { withCredentials: true }
         );
-        const wishlistItems = response.data.wishlist.map((item: any) => item._id);
-        setWishlist(wishlistItems);
-      } catch (error) {
-        console.error("❌ Error fetching wishlist:", error);
+        toast({ title: "💔 ลบออกจากรายการโปรดแล้ว" });
+      } else {
+        await axios.post(
+          "http://localhost:3000/api/wishlist/addToWishlist",
+          { productId: product.id_product },
+          { withCredentials: true }
+        );
+        toast({ title: "❤️ เพิ่มลงในรายการโปรดแล้ว" });
       }
-    };
-    
-
-    const isInWishlist = wishlist.includes(product._id);
-
-    const handleWishlist = async () => {
-      try {
-        if (isInWishlist) {
-          // ✅ ถ้ามีใน Wishlist แล้ว → Remove
-          await axios.post(
-            "http://localhost:3000/api/wishlist/removeFromWishlist",
-            { productId: product._id },
-            { withCredentials: true }
-          );
-        } else {
-          // ✅ ถ้ายังไม่มี → Add เข้า Wishlist
-          await axios.post(
-            "http://localhost:3000/api/wishlist/addToWishlist",
-            { productId: product._id },
-            { withCredentials: true }
-          );
-        }
-        await fetchWishlist();
-      } catch (error) {
-        console.error("❌ Wishlist error:", error);
-        toast({
-          title: "❌ เกิดข้อผิดพลาด",
-          description: "เพิ่มหรือเอาออกจาก Wishlist ไม่สำเร็จ",
-          variant: "destructive",
-        });
-      }
-    };
-  
+      checkWishlistStatus(); // ✅ Refresh สถานะ
+    } catch (error) {
+      console.error("Error updating wishlist:", error);
+      toast({
+        title: "❌ เกิดข้อผิดพลาด",
+        description: "ไม่สามารถอัปเดตรายการโปรดได้",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -172,6 +177,7 @@ export function ProductDetail({
               alt={product.name}
               fill
               className="object-contain"
+              priority
             />
           </div>
           <div className="grid grid-cols-4 gap-2">
@@ -192,6 +198,7 @@ export function ProductDetail({
                   alt={`${product.name} view ${index + 1}`}
                   fill
                   className="object-contain"
+                  priority
                 />
               </div>
             ))}
@@ -319,7 +326,7 @@ export function ProductDetail({
                 <Plus className="h-4 w-4" />
               </button>
               <span className="ml-4 text-sm text-gray-600">
-                {availableStock} items available
+                คงเหลือ {availableStock} ชิ้น
               </span>
             </div>
           </div>
@@ -360,18 +367,6 @@ export function ProductDetail({
               เพิ่มลงตะกร้าเรียบร้อยแล้ว
             </div>
           )}
-
-          {/* // ส่วน Materials */}
-          {/* <div className="pt-8 border-t border-gray-200">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">Materials</h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.materials.map((material, index) => (
-                    <span key={index} className="px-3 py-1 bg-gray-100 text-gray-800 text-sm rounded-full">
-                      {material}
-                    </span>
-                  ))}
-                </div>
-              </div> */}
         </div>
       </div>
 
@@ -385,21 +380,6 @@ export function ProductDetail({
             <p className="text-gray-800">{feature}</p>
           </div>
         ))}
-      </div>
-
-      {/* Related Products */}
-      <div className="mt-20">
-        <h2 className="text-2xl font-display font-medium text-gray-900 mb-8">
-          สินค้าที่คุณอาจสนใจ
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {relatedProducts.map((relatedProduct) => (
-            <ProductCard
-              key={relatedProduct.id_product}
-              product={mapProductToCardProduct(relatedProduct)}
-            />
-          ))}
-        </div>
       </div>
     </div>
   );

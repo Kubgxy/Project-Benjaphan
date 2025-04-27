@@ -270,7 +270,7 @@ export default function BlogPage() {
                   onClick={() => {
                     router.push(`/blog?page=${i + 1}`)
                     setCurrentPage(i + 1)
-                    window.scrollTo({ top: 0, behavior: "smooth" })
+                    document.documentElement.scrollTo({ top: 0, behavior: "smooth" })
                   }} 
                   className={`px-4 py-2 border rounded ${
                     currentPage === i + 1

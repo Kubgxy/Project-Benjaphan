@@ -54,6 +54,26 @@ export const addToCart = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+// controllers/cartController.ts
+export const updateCartItem = async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const { productId, size, quantity } = req.body;
+
+  try {
+    const updatedCart = await Cart.findOneAndUpdate(
+      { userID: userId, "items.productId": productId, "items.size": size },
+      { $set: { "items.$.quantity": quantity } }, // 🎯 อัปเดต quantity ใน item ที่ match
+      { new: true }
+    );
+
+    res.status(200).json({ message: "Cart updated", cart: updatedCart });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error updating cart", error });
+  }
+};
+
+
 // ✅ Get cart For User
 export const getCartUser = async (
   req: Request,

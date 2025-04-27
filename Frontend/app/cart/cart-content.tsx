@@ -7,6 +7,7 @@ import axios from "axios";
 import { Minus, Plus, X, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 
 interface CartItem {
   productId: string;
@@ -26,6 +27,7 @@ interface CartResponse {
 export function CartContent() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   const subtotal = cartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -72,21 +74,28 @@ export function CartContent() {
     newQuantity: number
   ) => {
     if (newQuantity < 1) return;
+
     try {
       await axios.post(
-        "http://localhost:3000/api/cart/updateQuantity",
-        { productId, size, quantity: newQuantity },
+        "http://localhost:3000/api/cart/updateCartItem",
+        {
+          productId,
+          size,
+          quantity: newQuantity,
+        },
         { withCredentials: true }
       );
-      fetchCart(); // อัปเดต cart หลังแก้จำนวน
+      toast({ title: "🛒 อัปเดตจำนวนสินค้าเรียบร้อย!" });
+      fetchCart(); // ✅ ดึงข้อมูลตะกร้าใหม่เพื่อ refresh
     } catch (error) {
-      console.error("❌ Failed to update quantity:", error);
+      console.error("Error updating quantity:", error);
+      toast({
+        title: "❌ ไม่สามารถอัปเดตจำนวนได้",
+        description: "กรุณาลองใหม่อีกครั้ง",
+        variant: "destructive",
+      });
     }
   };
-
-  if (loading) {
-    return <p>Loading...</p>;
-  }
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -109,7 +118,10 @@ export function CartContent() {
                   </thead>
                   <tbody>
                     {cartItems.map((item) => (
-                      <tr key={`${item.productId}-${item.size}`} className="border-b">
+                      <tr
+                        key={`${item.productId}-${item.size}`}
+                        className="border-b"
+                      >
                         <td className="py-4">
                           <div className="flex items-center">
                             <div className="relative w-16 h-16 mr-4 bg-gray-50">
@@ -126,9 +138,13 @@ export function CartContent() {
                             </div>
                             <div>
                               <h3 className="font-medium">{item.name}</h3>
-                              <p className="text-sm text-gray-600">{formatPrice(item.price)}</p>
+                              <p className="text-sm text-gray-600">
+                                {formatPrice(item.price)}
+                              </p>
                               {item.size && (
-                                <p className="text-xs text-gray-500">Size: {item.size}</p>
+                                <p className="text-xs text-gray-500">
+                                  Size: {item.size}
+                                </p>
                               )}
                             </div>
                           </div>
@@ -238,7 +254,12 @@ export function CartContent() {
                   </div>
                 </div>
 
-                <Button variant="luxury" size="lg" className="w-full mt-6" asChild>
+                <Button
+                  variant="luxury"
+                  size="lg"
+                  className="w-full mt-6"
+                  asChild
+                >
                   <Link href="/checkout">Proceed to Checkout</Link>
                 </Button>
               </div>
