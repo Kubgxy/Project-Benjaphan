@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart, Star, ShoppingBag } from "lucide-react";
@@ -11,6 +11,7 @@ import { useWishlist } from "@/context/wishlist-context";
 import { useCart } from "@/context/cart-context";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import axios from "axios";
 
 export interface AvailableSize {
   _id: string;
@@ -45,33 +46,94 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, featured = false }: ProductCardProps) {
-  const {
-    addItem: addToWishlist,
-    removeItem: removeFromWishlist,
-    isInWishlist,
-  } = useWishlist();
-  const { addItem: addToCart } = useCart();
   const { toast } = useToast();
-  const inWishlist = isInWishlist(product.id);
+  const [addedToCart, setAddedToCart] = useState(false);
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  
+  
 
-  const handleWishlistToggle = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
-    if (inWishlist) {
-      removeFromWishlist(product.id); // ✅ ส่งแค่ id พอเลยครับ!
+  
+    try {
+      await axios.post(
+        "http://localhost:3000/api/cart/addToCart",
+        {
+          productId: product.id,          // ✅ ใช้ id_product ตรงนี้!
+          quantity: 1,                    // ✅ ใส่ default 1 ชิ้น
+          size: "FreeSize",               // ✅ หรือเลือก size ตรงนี้ถ้ามีหลาย size
+        },
+        { withCredentials: true }
+      );
+  
+      setAddedToCart(true); // 🟢 ดันเข้า context ตะกร้า
       toast({
-        title: "Removed from Favorites",
-        description: `${product.name} has been removed from your favorites.`,
+        title: "✅ เพิ่มสินค้าลงตะกร้าสำเร็จ!",
+        description: `${product.name} ถูกเพิ่มลงตะกร้าแล้ว`,
       });
-    } else {
-      addToWishlist({ ...product, id_product: product.id }); // ✅ ตรงนี้ถูกแล้ว!
+    } catch (error) {
+      console.error("❌ Error adding to cart:", error);
       toast({
-        title: "Added to Favorites",
-        description: `${product.name} has been added to your favorites.`,
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถเพิ่มสินค้าลงตะกร้าได้ กรุณาลองใหม่อีกครั้ง",
+        variant: "destructive",
       });
     }
   };
+
+  const checkWishlistStatus = async () => {
+    try {
+        const response = await axios.get(
+          "http://localhost:3000/api/wishlist/getWishlist",
+          {
+            withCredentials: true,
+          }
+        );
+        const wishlistItems = response.data.wishlist?.products || [];
+        const exists = wishlistItems.some(
+          (item: any) => item.id_product === product.id
+        );
+        setIsInWishlist(exists);
+      } catch (error) {
+        console.error("Error checking wishlist:", error);
+      }
+    };
+  
+    useEffect(() => {
+      checkWishlistStatus();
+    }, []);
+
+      const handleWishlist = async () => {
+        try {
+          if (isInWishlist) {
+            await axios.post(
+              "http://localhost:3000/api/wishlist/removeFromWishlist",
+              { productId: product.id },
+              { withCredentials: true }
+            );
+            toast({ title: "💔 ลบออกจากรายการโปรดแล้ว" });
+          } else {
+            await axios.post(
+              "http://localhost:3000/api/wishlist/addToWishlist",
+              { productId: product.id },
+              { withCredentials: true }
+            );
+            toast({ title: "❤️ เพิ่มลงในรายการโปรดแล้ว" });
+          }
+          checkWishlistStatus(); // ✅ Refresh สถานะ
+        } catch (error) {
+          console.error("Error updating wishlist:", error);
+          toast({
+            title: "❌ เกิดข้อผิดพลาด",
+            description: "ไม่สามารถอัปเดตรายการโปรดได้",
+            variant: "destructive",
+          });
+        }
+      };
+  
+
+
 
   return (
     <div className="group">
@@ -89,6 +151,8 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
           alt={product.name}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-700"
+          priority
+
         />
 
         {product.isNewArrival && (
@@ -112,7 +176,7 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
             variant="default"
             size="sm"
             className="bg-yellow-600 hover:bg-yellow-700 text-white transform -translate-y-2 group-hover:translate-y-0 transition-transform duration-300 delay-75"
-            // onClick={handleAddToCart}
+            onClick={handleAddToCart}
           >
             <ShoppingBag className="h-4 w-4 mr-2" />
             Add to Cart
@@ -120,11 +184,11 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
         </div>
         <button
           className={`absolute top-4 right-4 h-8 w-8 rounded-full bg-white flex items-center justify-center ${
-            inWishlist ? "text-red-500" : "text-gray-600 hover:text-yellow-600"
+            isInWishlist ? "text-red-500" : "text-gray-600 hover:text-yellow-600"
           } transition-colors shadow-md`}
-          onClick={handleWishlistToggle}
+          onClick={handleWishlist}
         >
-          <Heart className={`h-4 w-4 ${inWishlist ? "fill-red-500" : ""}`} />
+          <Heart className={`h-4 w-4 ${isInWishlist ? "fill-red-500" : ""}`} />
         </button>
       </div>
       <Link href={`/product/${product.id}`} className="block">

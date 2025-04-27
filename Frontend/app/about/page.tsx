@@ -42,7 +42,7 @@ export default function AboutPage() {
                 ซึ่งกำเนิดขึ้นจากแรงศรัทธาและความเชื่อในศาสตร์แห่งบุญและทานบารมี
                 อันมีรากฐานจากพระพุทธศาสนา โดยมี พระสัมมาสัมพุทธเจ้า
                 เป็นองค์ปฐมแห่งความดีงาม และ พญานาคราช
-               เจ้าแห่งขุมทรัพย์แห่งเมืองบาดาล
+                เจ้าแห่งขุมทรัพย์แห่งเมืองบาดาล
                 ผู้ปกปักษ์รักษาและทำนุบำรุงพระศาสนา
                 สืบสานความเชื่อจากรุ่นสู่รุ่นจวบจนกาลปัจจุบัน
               </p>
@@ -165,16 +165,30 @@ export default function AboutPage() {
             พบกับทีมงานผู้เชี่ยวชาญของเรา ที่พร้อมให้คำปรึกษาและบริการด้วยใจ
           </p>
 
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="flex justify-center gap-[70px]">
             {[
+              {
+                name: "คุณ",
+                role: "ทีมงานผู้เชี่ยวชาญ",
+                image: "/Pnhoona.jpg",
+              },
               {
                 name: "คุณเบญจพรรณ",
                 role: "ผู้ก่อตั้งและผู้จัดการ",
-                image: "/team/founder.jpg",
+                image: "/Pben.jpg",
+              },
+              {
+                name: "คุณ",
+                role: "ทีมงานฝ่ายบริการลูกค้า",
+                image: "/Pdream.jpg",
               },
             ].map((member, index) => (
-              <div key={index} className="text-center">
-                <div className="relative w-48 h-48 mx-auto mb-4 rounded-full overflow-hidden">
+              <div key={index} className="text-center ">
+                <div
+                  className={`relative ${
+                    index === 1 ? "w-60 h-60" : "w-40 h-40 mt-14" 
+                  } mx-auto mb-4 rounded-full overflow-hidden `}
+                >
                   <Image
                     src={
                       member.image || "/placeholder.svg?height=192&width=192"

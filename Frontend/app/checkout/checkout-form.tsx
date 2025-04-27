@@ -65,7 +65,7 @@ export function CheckoutForm() {
       // Prepare order data
       const orderData = {
         items: items.map((item) => ({
-          productId: item.product.id,
+          productId: item.product._id,
           name: item.product.name,
           price: item.product.price,
           quantity: item.quantity,
@@ -414,7 +414,7 @@ export function CheckoutForm() {
                   <h3 className="text-lg font-medium mb-2">Order Items</h3>
                   <div className="border-t border-b border-gray-200">
                     {items.map((item) => (
-                      <div key={item.product.id} className="py-4 flex items-center">
+                      <div key={item.product._id} className="py-4 flex items-center">
                         <div className="relative w-16 h-16 mr-4 bg-gray-50">
                           <Image
                             src={item.product.images[0] || "/placeholder.svg"}
@@ -487,7 +487,7 @@ export function CheckoutForm() {
 
               <div className="mt-6 space-y-4">
                 {items.map((item) => (
-                  <div key={item.product.id} className="flex items-center">
+                  <div key={item.product._id} className="flex items-center">
                     <div className="relative w-12 h-12 mr-3 bg-gray-50">
                       <Image
                         src={item.product.images[0] || "/placeholder.svg"}
