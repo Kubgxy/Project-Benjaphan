@@ -33,13 +33,13 @@
   import user from './routes/user.route';
   import product from './routes/product.route';
   import cart from './routes/cart.route';
-  import wishlist from './routes/wishlist.route';  // ✅ ถูกต้อง
+  import wishlist from './routes/wishlist.route';
 
   // Use routes
   app.use('/api/user', user);
   app.use('/api/product', product);
   app.use('/api/cart', cart);
-  app.use('/api/wishlist', wishlist)
+  app.use('/api/wishlist', wishlist);
 
   // Serve static files
   app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

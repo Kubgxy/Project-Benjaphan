@@ -1,17 +1,18 @@
-// models/Wishlist.ts
-import mongoose, { Schema, Document } from "mongoose";
+import { Schema, model, Document } from "mongoose";
+import { IProduct } from "./Product";
 
 export interface IWishlist extends Document {
-  userID: mongoose.Types.ObjectId;
-  products: any[];  // 👈 เปลี่ยนตรงนี้!
+  userID: string; // ⬅️ อ้างถึงผู้ใช้งาน
+  products: IProduct[]; // ⬅️ เก็บทั้ง product object เต็ม ๆ
 }
 
-const WishlistSchema = new Schema<IWishlist>(
+const wishlistSchema = new Schema<IWishlist>(
   {
-    userID: { type: Schema.Types.ObjectId, ref: "User", required: true, unique: true },
-    products: [{}],  // 👈 เปลี่ยนตรงนี้! เก็บทั้ง object ได้เลย
+    userID: { type: String, required: true, unique: true },
+    products: { type: [Object], default: [] }, // ✅ เก็บเป็น array of products
   },
-  { timestamps: true, collection: "Wishlist" }  // แก้ชื่อ collection ด้วยนะ!
+  { collection: "Wishlist", timestamps: true }
 );
 
-export default mongoose.model<IWishlist>("Wishlist", WishlistSchema);
+const Wishlist = model<IWishlist>("Wishlist", wishlistSchema);
+export default Wishlist;

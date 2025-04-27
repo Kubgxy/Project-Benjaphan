@@ -10,9 +10,10 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Product, AvailableSize, AvailableColor } from "@/lib/types";
 
+
 // 🟢 สร้าง Function แปลง Product → ProductCardProps
 const mapProductToCardProduct = (product: Product) => ({
-  id: product.id_product,
+  id: product.id_product,                  // ✅ ต้องใช้ id ไม่ใช่ _id
   name: product.name,
   price: product.price,
   description: product.description,
@@ -38,6 +39,7 @@ const mapProductToCardProduct = (product: Product) => ({
   availableColors: product.availableColors,
 });
 
+
 export default function ProductsPage() {
   const searchParams = useSearchParams();
   const categoryFilter = searchParams.get("category");
@@ -45,6 +47,17 @@ export default function ProductsPage() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+
+  if (categoryFilter) {
+    console.log("✅ categoryFilter:", categoryFilter);
+    console.log(
+      "🎯 matched category name:",
+      categories.find((cat) => cat.slug === categoryFilter)?.name
+    );
+  }
+
+  
+
 
   // ✅ ดึงสินค้าทั้งหมดจาก API จริง
   useEffect(() => {
@@ -117,7 +130,8 @@ export default function ProductsPage() {
   const currentCategory = categoryFilter
     ? categories.find((cat) => cat.slug === categoryFilter)?.name
     : "สินค้าทั้งหมด";
-    
+
+
 
   return (
     <div className="min-h-screen bg-cream-50">
