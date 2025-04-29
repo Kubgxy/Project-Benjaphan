@@ -26,6 +26,7 @@ const prepareProductData = (body: any, images: string[] = []) => {
           productData[field] = num;
         } else if (field === 'details') {
           productData[field] = toArray(body[field]);
+          
         } else if (field === 'availableSizes') {
           let sizes;
           try {
@@ -49,9 +50,16 @@ const prepareProductData = (body: any, images: string[] = []) => {
           });
         } else if (['isNewArrival', 'isBestseller', 'isOnSale'].includes(field)) {
           productData[field] = toBoolean(body[field]);
+        } else if (field === 'details') {
+          const detailArr = typeof body[field] === 'string' ? JSON.parse(body[field]) : toArray(body[field]);
+          if (!Array.isArray(detailArr)) {
+            throw new Error('Details must be an array');
+          }
+          productData[field] = detailArr.map((item: any) => item.toString());
         } else {
           productData[field] = body[field];
         }
+        
       }
     });
   
@@ -89,9 +97,9 @@ export const getProductById = async (req: Request, res: Response, _next: NextFun
 
 // ✅ Add product + Validate + Upload images
 export const addProduct = async (req: Request, res: Response): Promise<void> => {
-    const { id_product, name, category, price, description, availableSizes } = req.body;
+    const { id_product, name, category, price, description, details, availableSizes } = req.body;
   
-    if (!id_product || !name || !category || !price || !description || !availableSizes) {
+    if (!id_product || !name || !category || !price || !description || !details || !availableSizes) {
       res.status(400).json({ message: "Missing required fields" });
       return;
     }
@@ -99,6 +107,7 @@ export const addProduct = async (req: Request, res: Response): Promise<void> => 
     try {
       const images = (req.files as Express.Multer.File[] || []).map(file => `/uploads/products/${file.filename}`);
       const productData = prepareProductData(req.body, images);
+      
   
       const product = await Product.create(productData);
       console.log(req.body)
