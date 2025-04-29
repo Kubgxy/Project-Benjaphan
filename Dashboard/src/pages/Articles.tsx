@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Pencil, 
@@ -49,7 +49,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Editor } from '@toast-ui/react-editor';
+import '@toast-ui/editor/dist/toastui-editor.css';
 import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
+import remarkGfm from 'remark-gfm';
 import axios from 'axios';
 
 type Article = {
@@ -144,6 +148,7 @@ const Articles = () => {
   const [showArticleDialog, setShowArticleDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState<'view' | 'edit' | 'create'>('view');
+  const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit');
 
   const fetchArticles = async () => {
     setIsLoading(true);
@@ -255,6 +260,7 @@ const Articles = () => {
     const formData = new FormData();
     formData.append('title', selectedArticle.title);
     formData.append('excerpt', selectedArticle.excerpt);
+    syncEditorContentToState();
     formData.append('content', selectedArticle.content);
     formData.append('tags', JSON.stringify(selectedArticle.tags));
     formData.append('category', selectedArticle.category);
@@ -324,6 +330,14 @@ const Articles = () => {
     if (!selectedArticle) return;
     setSelectedArticle({...selectedArticle, [field]: value});
   };
+
+  const syncEditorContentToState = () => {
+    if (!editorRef.current || !selectedArticle) return;
+    const markdown = editorRef.current.getInstance().getMarkdown();
+    setSelectedArticle({ ...selectedArticle, content: markdown });
+  };  
+
+  const editorRef = useRef<any>(null);
 
   return (
     <div className="space-y-6">
@@ -433,14 +447,19 @@ const Articles = () => {
             filteredArticles.map((article) => (
               <Card key={article._id} className="overflow-hidden">
                 <div className="h-48 bg-muted relative">
-                  {/* Placeholder for article image */}
-                  <div className="flex items-center justify-center h-full bg-slate-200">
-                    <BookText size={48} className="text-slate-400" />
-                  </div>
+                  {article.thumbnail ? (
+                    <img
+                      src={`http://localhost:3000/${article.thumbnail}`} 
+                      alt="Thumbnail"
+                      className="object-cover w-full h-full"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full bg-slate-200">
+                      <BookText size={48} className="text-slate-400" />
+                    </div>
+                  )}
                   <Badge 
-                    className={`absolute top-2 right-2 ${
-                      statusColors[article.isPublished ? 'published' : 'draft']
-                    }`}
+                    className={`absolute top-2 right-2 ${statusColors[article.isPublished ? 'published' : 'draft']}`}
                   >
                     {article.isPublished ? 'Published' : 'Draft'}
                   </Badge>
@@ -518,7 +537,14 @@ const Articles = () => {
               )}
             </DialogHeader>
             
-            <Tabs defaultValue={dialogMode === 'view' ? "preview" : "edit"}>
+            <Tabs 
+              value={activeTab}
+              onValueChange={(tab) => {
+                const t = tab as 'edit' | 'preview';
+                if (t === 'preview') syncEditorContentToState();
+                setActiveTab(t);
+              }}
+            >
               <TabsList className="grid grid-cols-2">
                 <TabsTrigger value="edit" disabled={dialogMode === 'view'}>Edit</TabsTrigger>
                 <TabsTrigger value="preview">Preview</TabsTrigger>
@@ -589,13 +615,15 @@ const Articles = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="content">Content (Markdown)</Label>
-                    <Textarea 
-                      id="content"
-                      value={selectedArticle.content} 
-                      onChange={(e) => handleArticleChange('content', e.target.value)}
-                      disabled={isLoading}
-                      className="min-h-[300px] font-mono"
+                    <Label>Content</Label>
+                    <Editor
+                      ref={editorRef}
+                      height="500px"
+                      initialEditType="wysiwyg"
+                      previewStyle="vertical"
+                      useCommandShortcut={true}
+                      initialValue={selectedArticle.content || ''}
+                      key={selectedArticle._id || 'new'} // 💡 บังคับ re-render ตอนสลับบทความ
                     />
                   </div>
 
@@ -618,7 +646,11 @@ const Articles = () => {
                 </div>
               </TabsContent>
               
-              <TabsContent value="preview" className="bg-white rounded-md p-4 border">
+              <TabsContent
+                value="preview"
+                className="bg-white rounded-md p-4 border"
+                onFocus={syncEditorContentToState}
+              >
                 <div className="prose max-w-none dark:prose-invert">
                   <h1 className="text-2xl font-bold">{selectedArticle.title}</h1>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
@@ -638,7 +670,73 @@ const Articles = () => {
 
                   {/* ✅ ใช้ ReactMarkdown ตรงนี้ */}
                   <div className="prose max-w-none dark:prose-invert">
-                    <ReactMarkdown>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm, remarkBreaks]}
+                      components={{
+                        // Heading
+                        h1: ({ node, ...props }) => (
+                          <h1 className="text-2xl font-bold mt-6 mb-4 leading-snug" {...props} />
+                        ),
+                        h2: ({ node, ...props }) => (
+                          <h2 className="text-xl font-semibold mt-5 mb-3 leading-snug" {...props} />
+                        ),
+                        h3: ({ node, ...props }) => (
+                          <h3 className="text-lg font-semibold mt-4 mb-2 leading-snug" {...props} />
+                        ),
+
+                        // Paragraph + HR
+                        p: ({ node, ...props }) => (
+                          <p className="mb-4 leading-relaxed" {...props} />
+                        ),
+                        hr: ({ ...props }) => (
+                          <hr className="my-8 border-t border-gray-300" {...props} />
+                        ),
+
+                        // Emphasis
+                        strong: ({ node, ...props }) => (
+                          <strong className="font-semibold text-black dark:text-white" {...props} />
+                        ),
+                        em: ({ node, ...props }) => (
+                          <em className="italic" {...props} />
+                        ),
+
+                        // Blockquote
+                        blockquote: ({ node, ...props }) => (
+                          <blockquote className="border-l-4 border-gray-400 pl-4 italic text-gray-600 my-4 leading-relaxed" {...props} />
+                        ),
+
+                        // List
+                        ul: ({ node, ...props }) => (
+                          <ul className="list-disc pl-6 mb-4 leading-relaxed" {...props} />
+                        ),
+                        ol: ({ node, ...props }) => (
+                          <ol className="list-decimal pl-6 mb-4 leading-relaxed" {...props} />
+                        ),
+                        li: ({ node, ...props }) => (
+                          <li className="mb-1 leading-relaxed" {...props} />
+                        ),
+
+                        // Table
+                        table: ({ node, ...props }) => (
+                          <table className="table-auto border-collapse border border-gray-300 my-6" {...props} />
+                        ),
+                        thead: ({ node, ...props }) => (
+                          <thead className="bg-gray-100" {...props} />
+                        ),
+                        tbody: ({ node, ...props }) => (
+                          <tbody {...props} />
+                        ),
+                        tr: ({ node, ...props }) => (
+                          <tr className="border-t border-gray-300" {...props} />
+                        ),
+                        th: ({ node, ...props }) => (
+                          <th className="border px-4 py-2 text-left font-semibold bg-gray-100" {...props} />
+                        ),
+                        td: ({ node, ...props }) => (
+                          <td className="border px-4 py-2" {...props} />
+                        ),
+                      }}
+                    >
                       {selectedArticle.content}
                     </ReactMarkdown>
                   </div>
