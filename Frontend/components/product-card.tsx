@@ -168,9 +168,9 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
         <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-2">
           <Link
             href={`/product/${product.id}`}
-            className="bg-white text-brown-800 px-6 py-3 text-sm font-medium hover:bg-yellow-600 hover:text-white  transform -translate-y-2 group-hover:translate-y-0 transition-transform duration-300 rounded-md"
+            className="bg-white text-brown-800 px-6 py-2 text-sm font-medium hover:bg-yellow-600 hover:text-white  transform -translate-y-2 group-hover:translate-y-0 transition-transform duration-300 rounded-md"
           >
-            View Details
+            ดูรายละเอียด
           </Link>
           <Button
             variant="default"
@@ -179,7 +179,7 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
             onClick={handleAddToCart}
           >
             <ShoppingBag className="h-4 w-4 mr-2" />
-            Add to Cart
+            เพิ่มลงตะกร้า
           </Button>
         </div>
         <button

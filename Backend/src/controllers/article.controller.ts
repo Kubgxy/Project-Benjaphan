@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import Article from "../Models/Article";
+import slugify from "slugify";
+
 
 // 🟢 ดึงบทความทั้งหมด (เฉพาะ published)
 export const getAllArticles = async (req: Request, res: Response) => {
@@ -52,26 +54,44 @@ export const getAllArticles = async (req: Request, res: Response) => {
 // 🟠 ดึงบทความเดี่ยวด้วย slug
 export const getArticleBySlug = async (req: Request, res: Response) => {
     try {
-      const slug = req.params.slug;
-  
-      const article = await Article.findOne({ slug, isPublished: true })
-        .populate("author", "firstName lastName");
+      const rawSlug = req.params.slug;
+      const decodedSlug = decodeURIComponent(rawSlug);
+
+      const article = await Article.findOne({ slug: decodedSlug, isPublished: true })
+      .populate("author", "firstName lastName");
   
       if (!article) {
         res.status(404).json({ message: "ไม่พบบทความนี้" });
         return
       }
-  
-      // 🟢 เพิ่ม views +1 ทุกครั้งที่มีคนอ่าน
-      article.views += 1;
-      await article.save();
-  
       res.status(200).json({ article });
     } catch (error) {
       console.error("❌ Error fetching article by slug:", error);
       res.status(500).json({ message: "ไม่สามารถดึงบทความได้", error });
     }
   };
+
+  export const increaseViewBySlug = async (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      const decodedSlug = decodeURIComponent(slug);
+  
+      const article = await Article.findOne({ slug: decodedSlug });
+      if (!article) {
+        res.status(404).json({ message: "ไม่พบบทความ" });
+        return;
+      }
+  
+      article.views += 1;
+      await article.save();
+  
+      res.status(200).json({ message: "เพิ่ม view สำเร็จ" });
+    } catch (error) {
+      console.error("❌ Error increasing view:", error);
+      res.status(500).json({ message: "เพิ่ม view ล้มเหลว", error });
+    }
+  };
+  
   
 
 // 🟢 สร้างบทความ
@@ -91,32 +111,22 @@ export const createArticle = async (req: Request, res: Response) => {
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-    // ✅ ดึง thumbnail (1 รูป)
     const thumbnail = files?.["thumbnail"]?.[0]?.path || "";
-    
-    if (!thumbnail) {
-      res.status(400).json({ message: "กรุณาอัปโหลดรูปปก (thumbnail)" });
-      return;
-    }
-    
-    // ✅ ดึง contentImages (หลายรูป → array)
     const contentImages = (files?.["contentImages"] || []).map((file) => file.path);
 
-    if (!files || !files["thumbnail"] || files["thumbnail"].length === 0) {
-      res.status(400).json({ message: "กรุณาอัปโหลดรูปปก (thumbnail)" });
-      return;
-    }
-    
-    // ✅ 3. รองรับ tags ถ้าส่งมาเป็น string (เช่น '["tag1", "tag2"]')
-    // ✅ Parse tags ให้เป็น array เสมอ (รองรับพิมพ์ใน Dashboard เป็น "แหวน, เสริมดวง, มูเตลู")
-    let parsedTags: string[] = [];
+    // ✅ แปลง title เป็น slug
+    const slug = slugify(title, {
+      lower: true,
+      strict: true,
+      locale: "th",
+    });
 
+    // ✅ แปลง tags ให้เป็น array
+    let parsedTags: string[] = [];
     if (typeof tags === "string") {
       try {
-        // 🟢 เผื่อในอนาคตมีคนส่ง JSON string ["แหวน", "เสริมดวง"]
         parsedTags = JSON.parse(tags);
       } catch {
-        // 🟢 ถ้าเป็น string ธรรมดา → split จาก comma (,) แล้ว trim ช่องว่างออก
         parsedTags = tags.split(",").map((tag: string) => tag.trim()).filter((tag) => tag !== "");
       }
     } else if (Array.isArray(tags)) {
@@ -125,11 +135,12 @@ export const createArticle = async (req: Request, res: Response) => {
 
     const newArticle = new Article({
       title,
+      slug, // ✅ ใส่ slug ตรงนี้เลย
       excerpt,
       content,
-      thumbnail,             // 🟢 ใช้ path จากรูปปก
-      contentImages,         // 🟢 ใช้ path array ของรูปในเนื้อหา
-      tags: parsedTags,      // 🟢 tags เป็น array เสมอ
+      thumbnail,
+      contentImages,
+      tags: parsedTags,
       category,
       metaDescription,
       isPublished: isPublished === "true",
