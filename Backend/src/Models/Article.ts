@@ -33,7 +33,7 @@ const ArticleSchema: Schema = new Schema(
     views: { type: Number, default: 0 },
     isPublished: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true , collection: 'Articles' }
 );
 
 // 🟡 Pre-save hook สำหรับสร้าง slug อัตโนมัติจาก title
