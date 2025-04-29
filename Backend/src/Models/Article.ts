@@ -23,7 +23,7 @@ const ArticleSchema: Schema = new Schema(
     title: { type: String, required: true },
     slug: { type: String, unique: true }, // 🟢 slug ต้อง unique!
     excerpt: { type: String, required: true },
-    content: { type: String, required: true },
+    content: { type: String },
     thumbnail: { type: String, required: true },        // 🟢 main thumbnail
     contentImages: { type: [String], default: [] },     // 🟢 รูปในเนื้อหา
     tags: { type: [String], default: [] },
@@ -33,7 +33,7 @@ const ArticleSchema: Schema = new Schema(
     views: { type: Number, default: 0 },
     isPublished: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { collection: "Articles", timestamps: true }
 );
 
 // 🟡 Pre-save hook สำหรับสร้าง slug อัตโนมัติจาก title
