@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { mapProductToCardProduct } from "@/lib/product";
 import { useToast } from "@/components/ui/use-toast";
+import ReactImageMagnify from "react-image-magnify";
 
 interface ProductDetailProps {
   product: Product;
@@ -228,18 +229,38 @@ export function ProductDetail({
 
       <div className="grid md:grid-cols-2 gap-12">
         <div className="space-y-4">
-          <div className="relative h-[600px] bg-gray-50">
-            <Image
-              src={
-                `http://localhost:3000${product.images[selectedImage]}` ||
-                "/placeholder.svg"
-              }
-              alt={product.name}
-              fill
-              className="object-contain"
-              priority
+          <div className="relative w-full bg-white">
+            <ReactImageMagnify
+              {...{
+                smallImage: {
+                  alt: product.name,
+                  isFluidWidth: true,
+                  src: `http://localhost:3000${product.images[selectedImage]}`,
+                  sizes: "(max-width: 2000px) 100vw, 200px",
+                },
+                largeImage: {
+                  src: `http://localhost:3000${product.images[selectedImage]}`,
+                  sizes : "(max-width: 8000px)",
+                  width: 2000,
+                  height: 800
+                },
+                enlargedImagePosition: "beside", // ซูมด้านขวา
+                isHintEnabled: true,
+                shouldUsePositiveSpaceLens: true,
+                enlargedImageContainerClassName:
+                  "rounded-lg shadow-xl border border-gray-300 overflow-hidden w-[500px] h-full",
+                lensStyle: {
+                  backgroundColor: "rgba(255,255,255,0.3)",
+                  border: "1px solid #999",
+                },
+                enlargedImageContainerDimensions: {
+                  width: "110%",
+                  height: "100%",
+                },
+              }}
             />
           </div>
+
           <div className="grid grid-cols-4 gap-2">
             {product.images.map((image, index) => (
               <div
@@ -265,7 +286,7 @@ export function ProductDetail({
           </div>
         </div>
 
-        <div>
+        <div className="mt-4">
           <h1 className="text-3xl font-display font-medium text-gray-900 mb-2">
             {product.name}
           </h1>

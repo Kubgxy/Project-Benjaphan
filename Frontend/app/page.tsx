@@ -272,7 +272,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="relative h-[600px] rounded-lg overflow-hidden shadow-lg">
               <Image
-                src="https://images.unsplash.com/photo-1600721391689-2564bb8055de?q=80&w=1374&auto=format&fit=crop"
+                src="/production1.jpg"
                 alt="เครื่องประดับมงคล"
                 fill
                 className="object-cover"
@@ -418,63 +418,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-heading font-medium text-brown-800 mb-4">
-              เสียงจากลูกค้า
-            </h2>
-            <p className="text-brown-600 max-w-2xl mx-auto">
-              ความประทับใจจากลูกค้าที่ไว้วางใจเลือกซื้อเครื่องประดับจากเบญจภัณฑ์๕
-            </p>
-          </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {featuredTestimonials.map((testimonial) => (
-              <div
-                key={testimonial.id}
-                className="bg-cream-50 p-8 rounded-lg shadow-md"
-              >
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <svg
-                      key={i}
-                      className={`w-5 h-5 ${
-                        i < testimonial.rating
-                          ? "text-gold-500"
-                          : "text-gray-300"
-                      } fill-current`}
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                  ))}
-                </div>
-                <p className="text-brown-600 mb-6 italic">
-                  "{testimonial.content}"
-                </p>
-                <div className="flex items-center">
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4">
-                    <Image
-                      src={testimonial.avatar || "/placeholder.svg"}
-                      alt={testimonial.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-medium text-brown-800">
-                      {testimonial.name}
-                    </p>
-                    <p className="text-sm text-brown-600">{testimonial.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Newsletter Section */}
       <section className="py-20 bg-gold-600 text-white">

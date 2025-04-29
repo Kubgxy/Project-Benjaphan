@@ -26,7 +26,7 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="relative h-[500px] rounded-lg overflow-hidden shadow-lg">
               <Image
-                src="https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?q=80&w=1374&auto=format&fit=crop"
+                src="About1.jpg"
                 alt="ประวัติร้านเบญจภัณฑ์๕"
                 fill
                 className="object-cover"
@@ -37,7 +37,10 @@ export default function AboutPage() {
                 เรื่องราวของเรา
               </h2>
               <p className="text-brown-600 mb-4">
-                เบญจภัณฑ์ ๕ ธุรกิจที่มุ่งมั่นสร้างสรรค์ ผลิตภัณฑ์สายบุญ สายมู
+                เบญจภัณฑ์ ๕ 
+              </p>
+              <p className="text-brown-600 mb-4">
+                ธุรกิจที่มุ่งมั่นสร้างสรรค์ ผลิตภัณฑ์สายบุญ สายมู
                 เพื่อเป็นอีกหนึ่งสื่อกลางในการส่งต่อแรงศรัทธาและความเชื่ออย่างถูกวิธี
                 ซึ่งกำเนิดขึ้นจากแรงศรัทธาและความเชื่อในศาสตร์แห่งบุญและทานบารมี
                 อันมีรากฐานจากพระพุทธศาสนา โดยมี พระสัมมาสัมพุทธเจ้า
