@@ -65,6 +65,7 @@ const Products: React.FC = () => {
     price: 0,
     availableSizes: [] as { size: string; quantity: number }[],
     description: "",
+    details: [] as string[],
     images: [] as File[],
     isNewArrival: false,
     isBestseller: false,
@@ -152,6 +153,7 @@ const Products: React.FC = () => {
       formData.append("category", newProduct.category);
       formData.append("price", newProduct.price.toString());
       formData.append("description", newProduct.description);
+      formData.append("details", JSON.stringify(newProduct.details));
       formData.append(
         "availableSizes",
         JSON.stringify(newProduct.availableSizes)
