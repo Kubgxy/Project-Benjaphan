@@ -255,12 +255,12 @@ const Articles = () => {
       return; // ❌ ต้อง return ตรงนี้!
     }
 
+    syncEditorContentToState();
     setIsLoading(true); // ⬅️ ค่อย setIsLoading ทีหลัง
   
     const formData = new FormData();
     formData.append('title', selectedArticle.title);
     formData.append('excerpt', selectedArticle.excerpt);
-    syncEditorContentToState();
     formData.append('content', selectedArticle.content);
     formData.append('tags', JSON.stringify(selectedArticle.tags));
     formData.append('category', selectedArticle.category);
@@ -290,6 +290,7 @@ const Articles = () => {
         });
         toast({ title: '✅ Article Updated', description: 'Your article has been updated successfully.' });
       }
+      console.log("📌 Sending Article:", selectedArticle);
       fetchArticles();
       resetArticleForm();
     } catch (error) {

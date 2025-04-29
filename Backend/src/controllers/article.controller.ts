@@ -71,7 +71,7 @@ export const getArticleBySlug = async (req: Request, res: Response) => {
     }
   };
 
-  export const increaseViewBySlug = async (req: Request, res: Response) => {
+export const increaseViewBySlug = async (req: Request, res: Response) => {
     try {
       const { slug } = req.params;
       const decodedSlug = decodeURIComponent(slug);

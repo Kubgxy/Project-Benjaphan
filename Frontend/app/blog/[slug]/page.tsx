@@ -9,6 +9,8 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Article {
   title: string;
@@ -66,8 +68,6 @@ export default function BlogDetailPage() {
       increaseView();
     }
   }, [slug]);
-  
-  
 
   if (loading) {
     return (
@@ -96,8 +96,14 @@ export default function BlogDetailPage() {
         <div className="max-w-3xl mx-auto px-4">
           {/* Breadcrumb */}
           <nav className="text-sm text-gold-700 mb-6" data-aos="fade-right">
-            <Link href="/" className="hover:underline">หน้าแรก</Link> &gt;{" "}
-            <Link href="/blog" className="hover:underline">บทความ</Link> &gt;{" "}
+            <Link href="/" className="hover:underline">
+              หน้าแรก
+            </Link>{" "}
+            &gt;{" "}
+            <Link href="/blog" className="hover:underline">
+              บทความ
+            </Link>{" "}
+            &gt;{" "}
             <span className="text-brown-600 font-semibold">{post.title}</span>
           </nav>
 
@@ -105,12 +111,18 @@ export default function BlogDetailPage() {
           <p className="text-gold-600 text-sm mb-2" data-aos="fade-up">
             👁️ {post.views?.toLocaleString() || 0} ครั้ง
           </p>
-          <h1 className="text-3xl md:text-4xl font-bold text-brown-800 mb-6" data-aos="fade-up">
+          <h1
+            className="text-3xl md:text-4xl font-bold text-brown-800 mb-6"
+            data-aos="fade-up"
+          >
             {post.title}
           </h1>
 
           {/* Thumbnail */}
-          <div className="relative w-full h-[300px] md:h-[400px] rounded-lg overflow-hidden shadow-md mb-10" data-aos="zoom-in">
+          <div
+            className="relative w-full h-[300px] md:h-[400px] rounded-lg overflow-hidden shadow-md mb-10"
+            data-aos="zoom-in"
+          >
             <Image
               src={`http://localhost:3000/${post.thumbnail}`}
               alt={post.title}
@@ -121,10 +133,12 @@ export default function BlogDetailPage() {
 
           {/* ✨ แสดงเนื้อหาธรรมดา รองรับเว้นบรรทัดด้วย whitespace-pre-line */}
           <article
-            className="whitespace-pre-line text-brown-800 leading-relaxed text-lg"
+            className="prose prose-lg max-w-none text-brown-800 prose-headings:text-brown-800 prose-p:leading-relaxed prose-img:rounded-lg"
             data-aos="fade-up"
           >
-            {post.content}
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {post.content}
+            </ReactMarkdown>
           </article>
 
           {/* Share + Back */}
@@ -134,20 +148,26 @@ export default function BlogDetailPage() {
             data-aos-delay="300"
           >
             <div className="flex gap-2">
-              <Button className="bg-blue-600 text-white" onClick={() =>
-                window.open(
-                  `https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`,
-                  "_blank"
-                )
-              }>
+              <Button
+                className="bg-blue-600 text-white"
+                onClick={() =>
+                  window.open(
+                    `https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`,
+                    "_blank"
+                  )
+                }
+              >
                 แชร์ Facebook
               </Button>
-              <Button className="bg-green-500 text-white" onClick={() =>
-                window.open(
-                  `https://social-plugins.line.me/lineit/share?url=${window.location.href}`,
-                  "_blank"
-                )
-              }>
+              <Button
+                className="bg-green-500 text-white"
+                onClick={() =>
+                  window.open(
+                    `https://social-plugins.line.me/lineit/share?url=${window.location.href}`,
+                    "_blank"
+                  )
+                }
+              >
                 แชร์ Line
               </Button>
             </div>
