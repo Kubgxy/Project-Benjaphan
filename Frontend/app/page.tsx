@@ -243,8 +243,11 @@ export default function Home() {
               <p>กำลังโหลดสินค้ามาใหม่...</p> // ✅ ใส่ loading (optional)
             ) : newProducts.length > 0 ? (
               newProducts.map((product) => {
-                const productWithId = { ...product, id: product._id }; // ✅ เพิ่ม id เข้ามา
-                return <ProductCard key={product._id} product={productWithId} featured />;
+                const productWithId = {
+                  ...product,
+                  id: product.id_product, // ✅ เปลี่ยนจาก _id → id_product ที่ backend ใช้จริง
+                };
+                return <ProductCard key={product.id_product} product={productWithId} featured />;
               })
             ) : (
               <p>ยังไม่มีสินค้ามาใหม่ตอนนี้</p> // ✅ กรณีไม่มีสินค้า
@@ -319,8 +322,11 @@ export default function Home() {
           <p>กำลังโหลดสินค้าขายดี...</p>
         ) : (
           bestsellers.map((product) => {
-            const productWithId = { ...product, id: product._id };
-            return <ProductCard key={product._id} product={productWithId} />;
+            const productWithId = {
+              ...product,
+              id: product.id_product, // ✅ ตรงนี้เหมือนกัน
+            };
+            return <ProductCard key={product.id_product} product={productWithId} />;
           })
         )}
       </div>
