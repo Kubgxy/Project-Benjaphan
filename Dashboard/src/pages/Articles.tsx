@@ -276,7 +276,9 @@ const Articles = () => {
         });
         toast({ title: '✅ Article Created', description: 'Your article has been created successfully.' });
       } else if (dialogMode === 'edit' && selectedArticle._id) {
-        await axios.patch('http://localhost:3000/api/article/updateArticle/${selectedArticle._id}', formData, {
+        console.log("📌 ID ที่จะส่งไปอัปเดต:", selectedArticle._id)
+        console.log("🧠 selectedArticle:", selectedArticle);
+        await axios.patch(`http://localhost:3000/api/article/updateArticle/${selectedArticle._id}`, formData, {
           withCredentials: true,
           headers: { 'Content-Type': 'multipart/form-data' }
         });

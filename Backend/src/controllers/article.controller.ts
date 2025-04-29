@@ -161,49 +161,72 @@ export const createArticle = async (req: Request, res: Response) => {
 
 // 🟠 อัปเดตบทความ
 export const updateArticle = async (req: Request, res: Response) => {
-    try {
-      const articleId = req.params.id;
-  
-      const {
-        title,
-        excerpt,
-        content,
-        image,
-        tags,
-        category,
-        metaDescription,
-        isPublished,
-      } = req.body;
-  
-      const updatedArticle = await Article.findByIdAndUpdate(
-        articleId,
-        {
-          title,
-          excerpt,
-          content,
-          image,
-          tags,
-          category,
-          metaDescription,
-          isPublished,
-        },
-        { new: true, runValidators: true }
-      );
-  
-      if (!updatedArticle) {
-        res.status(404).json({ message: "ไม่พบบทความนี้" });
-        return
+  try {
+    const articleId = req.params.id;
+    const {
+      title,
+      excerpt,
+      content,
+      tags,
+      category,
+      metaDescription,
+      isPublished,
+    } = req.body;
+
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+    const thumbnail = files?.["thumbnail"]?.[0]?.path; // optional
+    const contentImages = (files?.["contentImages"] || []).map((f) => f.path);
+
+    // ✅ Parse tags เหมือน create
+    let parsedTags: string[] = [];
+    if (typeof tags === "string") {
+      try {
+        parsedTags = JSON.parse(tags);
+      } catch {
+        parsedTags = tags.split(",").map((t: string) => t.trim()).filter((t) => t !== "");
       }
-  
-      res.status(200).json({
-        message: "📝 แก้ไขบทความเรียบร้อยแล้ว",
-        article: updatedArticle,
-      });
-    } catch (error) {
-      console.error("❌ Error updating article:", error);
-      res.status(500).json({ message: "ไม่สามารถแก้ไขบทความได้", error });
+    } else if (Array.isArray(tags)) {
+      parsedTags = tags;
     }
-  };
+
+    // ✅ Convert isPublished to boolean
+    const published = isPublished === "true" || isPublished === true;
+
+    // ✅ Build update object dynamically
+    const updateFields: any = {
+      title,
+      excerpt,
+      content,
+      category,
+      tags: parsedTags,
+      metaDescription,
+      isPublished: published,
+    };
+
+    if (thumbnail) updateFields.thumbnail = thumbnail;
+    if (contentImages.length > 0) updateFields.contentImages = contentImages;
+
+    const updatedArticle = await Article.findByIdAndUpdate(
+      articleId,
+      updateFields,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedArticle) {
+      res.status(404).json({ message: "ไม่พบบทความนี้" });
+      return;
+    }
+
+    res.status(200).json({
+      message: "📝 แก้ไขบทความเรียบร้อยแล้ว",
+      article: updatedArticle,
+    });
+  } catch (error) {
+    console.error("❌ Error updating article:", error);
+    res.status(500).json({ message: "ไม่สามารถแก้ไขบทความได้", error });
+  }
+};
 
 // 🟠 ลบบทความ
 export const deleteArticle = async (req: Request, res: Response) => {
