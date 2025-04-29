@@ -63,10 +63,10 @@ export default function Home() {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative h-[90vh]  flex items-center">
+      <section className="relative h-[100vh]  flex items-center">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/production.jpg"
+            src="/bg/ChatGPT Image 30 เม.ย. 2568 04_39_21.png"
             alt="เครื่องประดับทองคำแท้"
             fill
             className="object-cover z-0"
