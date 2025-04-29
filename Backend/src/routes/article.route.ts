@@ -24,7 +24,11 @@ article.post(
 );                                                         // ✅ create
 article.get("/getAllArticle", getAllArticles);                                  // 🟢 get all (search, filter)
 article.get("/getOneArticle/:slug", getArticleBySlug);                          // 🟠 get by slug
-article.patch("/updateArticle/:id", verifyToken, verifyAdmin, updateArticle);   // 🟡 update
+article.patch("/updateArticle/:id",
+  upload.fields([
+    { name: "thumbnail", maxCount: 1 },
+    { name: "contentImages", maxCount: 10 }
+  ]), verifyToken, verifyAdmin, updateArticle);   // 🟡 update
 article.delete("/deleteArticle/:id", verifyToken, verifyAdmin, deleteArticle);  // 🔴 delete
 
 export default article;
