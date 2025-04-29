@@ -71,29 +71,27 @@ export const getArticleBySlug = async (req: Request, res: Response) => {
     }
   };
 
-  export const increaseViewBySlug = async (req: Request, res: Response) => {
-    try {
-      const { slug } = req.params;
-      const decodedSlug = decodeURIComponent(slug);
-  
-      const article = await Article.findOne({ slug: decodedSlug });
-      if (!article) {
-        res.status(404).json({ message: "ไม่พบบทความ" });
-        return;
-      }
-  
-      article.views += 1;
-      await article.save();
-  
-      res.status(200).json({ message: "เพิ่ม view สำเร็จ" });
-    } catch (error) {
-      console.error("❌ Error increasing view:", error);
-      res.status(500).json({ message: "เพิ่ม view ล้มเหลว", error });
-    }
-  };
-  
-  
+export const increaseViewBySlug = async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+    const decodedSlug = decodeURIComponent(slug);
 
+    const article = await Article.findOne({ slug: decodedSlug });
+    if (!article) {
+      res.status(404).json({ message: "ไม่พบบทความ" });
+      return;
+    }
+
+    article.views += 1;
+    await article.save();
+
+    res.status(200).json({ message: "เพิ่ม view สำเร็จ" });
+  } catch (error) {
+    console.error("❌ Error increasing view:", error);
+    res.status(500).json({ message: "เพิ่ม view ล้มเหลว", error });
+  }
+};
+  
 // 🟢 สร้างบทความ
 export const createArticle = async (req: Request, res: Response) => {
   try {

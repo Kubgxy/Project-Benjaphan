@@ -194,6 +194,15 @@ const Articles = () => {
     setContentImageFiles(files);
   };
 
+  const editorRef = useRef<any>(null);
+
+  const syncEditorContentToState = () => {
+    if (!editorRef.current || !selectedArticle) return;
+    const markdown = editorRef.current.getInstance().getMarkdown();
+    setSelectedArticle({ ...selectedArticle, content: markdown });
+  };  
+
+
   // Handle article edit dialog
   const openArticleDialog = (article: (typeof articles)[0] | null, mode: 'view' | 'edit' | 'create') => {
     setSelectedArticle(article || {
@@ -240,11 +249,14 @@ const Articles = () => {
   const handleSaveArticle = async () => {
     if (!selectedArticle) return;
 
+    // 👉 ดึง content จาก editor แทนที่จะรอ state
+    const markdown = editorRef.current?.getInstance().getMarkdown() || '';
+
     // ✅ Validation ก่อนยิง API
     if (
       !selectedArticle.title || 
       !selectedArticle.excerpt || 
-      !selectedArticle.content || 
+      !markdown.trim() || 
       !selectedArticle.category
     ) {
       toast({ 
@@ -252,7 +264,7 @@ const Articles = () => {
         description: 'Please fill in Title, Excerpt, Content, and Category.', 
         variant: 'destructive' 
       });
-      return; // ❌ ต้อง return ตรงนี้!
+      return;
     }
 
     setIsLoading(true); // ⬅️ ค่อย setIsLoading ทีหลัง
@@ -260,8 +272,7 @@ const Articles = () => {
     const formData = new FormData();
     formData.append('title', selectedArticle.title);
     formData.append('excerpt', selectedArticle.excerpt);
-    syncEditorContentToState();
-    formData.append('content', selectedArticle.content);
+    formData.append('content', markdown); // ✅ ใช้ content จาก editor โดยตรง
     formData.append('tags', JSON.stringify(selectedArticle.tags));
     formData.append('category', selectedArticle.category);
     formData.append('metaDescription', selectedArticle.metaDescription);
@@ -290,6 +301,7 @@ const Articles = () => {
         });
         toast({ title: '✅ Article Updated', description: 'Your article has been updated successfully.' });
       }
+      console.log("📌 Sending Article:", selectedArticle);
       fetchArticles();
       resetArticleForm();
     } catch (error) {
@@ -330,14 +342,6 @@ const Articles = () => {
     if (!selectedArticle) return;
     setSelectedArticle({...selectedArticle, [field]: value});
   };
-
-  const syncEditorContentToState = () => {
-    if (!editorRef.current || !selectedArticle) return;
-    const markdown = editorRef.current.getInstance().getMarkdown();
-    setSelectedArticle({ ...selectedArticle, content: markdown });
-  };  
-
-  const editorRef = useRef<any>(null);
 
   return (
     <div className="space-y-6">
