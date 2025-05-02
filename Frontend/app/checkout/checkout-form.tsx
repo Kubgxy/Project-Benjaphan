@@ -233,7 +233,7 @@ export function CheckoutForm() {
       {/* ส่วนแสดงที่อยู่ */}
       <div className="bg-white p-4 rounded shadow mb-4">
         <div className="flex justify-between items-center mb-2">
-          <h2 className="flex gap-2 text-lg font-semibold text-brown-800 flex items-center">
+          <h2 className="flex gap-2 text-lg font-semibold text-brown-800 items-center">
             <MapPinHouse className="w-6 h-6 text-yellow-500" />
             กรอกที่อยู่จัดส่ง
           </h2>

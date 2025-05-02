@@ -53,13 +53,15 @@ export function ProductDetail({
   const [averageRating, setAverageRating] = useState<number>(0);
   const [totalReviews, setTotalReviews] = useState<number>(0);
   interface Review {
-    userId?: { name: string };
+    userId?: { firstName: string; lastName: string, avatar: string };
+    productId: string;
     rating: number;
     comment: string;
   }
-
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewComment, setReviewComment] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const reviewsPerPage = 5; // จำนวนรีวิวต่อหน้า
 
   const handleAddToCart = async () => {
     if (!selectedSize) {
@@ -179,12 +181,14 @@ export function ProductDetail({
     }
   };
 
-  const fetchProductReviews = async () => {
+  const fetchProductReviews = async (page = 1) => {
     try {
       const res = await axios.get(
-        `http://localhost:3000/api/review/getReviews/${product._id}`
+        `http://localhost:3000/api/review/getReviews/${product._id}?page=${page}&limit=${reviewsPerPage}`
       );
       setReviews(res.data.reviews);
+      setTotalReviews(res.data.totalReviews);
+      setCurrentPage(res.data.currentPage);
     } catch (error) {
       console.error("Error fetching reviews:", error);
     }
@@ -500,14 +504,75 @@ export function ProductDetail({
         <h3 className="text-lg font-medium mb-4">
           รีวิวทั้งหมด ({reviews.length})
         </h3>
-        {reviews.map((r, index) => (
-          <div key={index} className="border-b py-2">
-            <p className="text-sm text-gray-800">
-              {r.userId?.name || "ผู้ใช้ไม่ระบุ"} ให้ {r.rating} ดาว
-            </p>
-            <p className="text-sm text-gray-600">{r.comment}</p>
+        <div className="space-y-4">
+          {reviews.map((r, index) => (
+            <div
+              key={index}
+              className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg shadow"
+            >
+              {/* Avatar ตัวอักษรแรกของชื่อ */}
+              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gold-500 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
+                {r.userId?.avatar ? (
+                  // ใช้ avatar ถ้ามี
+                  <Image
+                    src={`http://localhost:3000${r.userId.avatar}`}
+                    alt="User Avatar"
+                    width={100}
+                    height={100}
+                    className="rounded-full"
+                  />
+                ) : (
+                  // ถ้าไม่มี avatar ให้ใช้ตัวอักษรแรกของชื่อ
+                  <span className="text-white font-bold">
+                    {r.userId?.firstName.charAt(0).toUpperCase()}
+                  </span>
+                )
+              }
+              </div>
+
+              {/* ข้อมูลรีวิว */}
+              <div className="flex-1">
+                <div className="flex items-center space-x-2">
+                  <span className="font-semibold text-gray-800">
+                    {r.userId?.firstName} {r.userId?.lastName}
+                  </span>
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-4 w-4 ${
+                          star <= r.rating ? "fill-gold-500 text-gold-500" : "text-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">{r.comment || "ไม่มีข้อความรีวิว"}</p>
+              </div>
+            </div>
+          ))}
+          <div className="flex justify-end mt-8">
+            <div className="flex items-center space-x-2 bg-gray-100 p-2 rounded shadow">
+              <button
+                className="px-2 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+                onClick={() => fetchProductReviews(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                ก่อนหน้า
+              </button>
+              <span className="text-sm text-gray-600">
+                หน้า {currentPage} / {Math.ceil(totalReviews / reviewsPerPage)}
+              </span>
+              <button
+                className="px-2 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+                onClick={() => fetchProductReviews(currentPage + 1)}
+                disabled={currentPage === Math.ceil(totalReviews / reviewsPerPage)}
+              >
+                ถัดไป
+              </button>
+            </div>
           </div>
-        ))}
+        </div>
       </div>
   
       <div className="mt-16 grid md:grid-cols-3 gap-8">
