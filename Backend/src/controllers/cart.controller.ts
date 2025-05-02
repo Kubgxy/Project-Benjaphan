@@ -54,6 +54,41 @@ export const addToCart = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+// ✅ Remove item from cart
+export const removeCartItem = async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const { productId, size } = req.body;
+
+  // 🔒 เช็คค่าที่จำเป็น
+  if (!userId || !productId || !size) {
+    res.status(400).json({ message: "Missing required fields" });
+    return;
+  }
+
+  try {
+    // 🔍 หา cart ของผู้ใช้
+    const cart = await Cart.findOne({ userID: userId });
+    if (!cart) {
+      res.status(404).json({ message: "Cart not found" });
+      return;
+    }
+
+    // 🎯 กรองเอาสินค้าที่ไม่ตรงออก
+    const newItems = cart.items.filter(
+      (item) => !(item.productId === productId && item.size === size)
+    );
+
+    // 🔄 อัปเดตตะกร้า
+    cart.items = newItems;
+    await cart.save();
+
+    res.status(200).json({ message: "Item removed from cart", cart });
+  } catch (error) {
+    console.error("❌ Error removing item from cart:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
 // controllers/cartController.ts
 export const updateCartItem = async (req: Request, res: Response) => {
   const userId = req.user?.userId;

@@ -41,6 +41,8 @@ app.use(bodyParser.json({
   import cart from './routes/cart.route';
   import wishlist from './routes/wishlist.route';
   import review from './routes/review.route';
+  import checkout from './routes/checkout.routes';
+  import order from './routes/order.route';
 
   // Use routes
   app.use('/api/user', user);
@@ -49,6 +51,8 @@ app.use(bodyParser.json({
   app.use('/api/cart', cart);
   app.use('/api/wishlist', wishlist);
   app.use('/api/review', review);
+  app.use('/api/checkout', checkout);
+  app.use('/api/order', order);
 
   // Serve static files
   app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
