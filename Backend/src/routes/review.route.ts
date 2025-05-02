@@ -1,11 +1,13 @@
 import express from "express";
-import { addReview, deleteReview, getReviewsByProduct } from "../controllers/review.controller";
+import { addReview, deleteReview, getReviewsByProduct, getUserRating, getAverageRating } from "../controllers/review.controller";
 import { verifyToken } from "../middlewares/verifyToken";
 
-const router = express.Router();
+const review = express.Router();
 
-router.post("/", verifyToken, addReview);
-router.delete("/:id", verifyToken, deleteReview);
-router.get("/:productId", getReviewsByProduct);
+review.post("/addReview", verifyToken, addReview);
+review.delete("/deleteReview/:id", verifyToken, deleteReview);
+review.get("/getReviews/:productId", getReviewsByProduct);
+review.get("/user-rating/:productId", verifyToken, getUserRating);
+review.get("/average/:productId", getAverageRating);
 
-export default router;
+export default review;

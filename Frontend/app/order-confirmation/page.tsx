@@ -75,7 +75,7 @@ export default function OrderConfirmationPage() {
 
               <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
                 <Button variant="outline" asChild>
-                  <Link href="/products">Continue Shopping</Link>
+                  <Link href="/product">Continue Shopping</Link>
                 </Button>
                 <Button variant="luxury" asChild>
                   <Link href={`/order-tracking?orderId=${orderId}`}>Track Your Order</Link>

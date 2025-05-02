@@ -45,17 +45,17 @@ export function Footer() {
             <h3 className="text-lg font-heading font-medium text-brown-800 mb-4">หมวดหมู่สินค้า</h3>
             <ul className="space-y-2 text-brown-600">
               <li>
-                <Link href="/products?category=chaloms" className="hover:text-gold-600 transition-colors">
+                <Link href="/product?category=chaloms" className="hover:text-gold-600 transition-colors">
                   ชะลอมและธูปเทียน
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=bracelets" className="hover:text-gold-600 transition-colors">
+                <Link href="/product?category=bracelets" className="hover:text-gold-600 transition-colors">
                   กำไลและสร้อยข้อมือ
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=bencharm" className="hover:text-gold-600 transition-colors">
+                <Link href="/product?category=bencharm" className="hover:text-gold-600 transition-colors">
                   น้ำหอม
                 </Link>
               </li>
