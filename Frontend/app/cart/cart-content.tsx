@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Minus, Plus, X, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
+import { ShoppingBasket, Banknote } from "lucide-react";
 
 interface CartItem {
   productId: string;
@@ -25,17 +27,24 @@ interface CartResponse {
 }
 
 export function CartContent() {
+  const router = useRouter();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [selectedItems, setSelectedItems] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const selectedCartItems = cartItems.filter(
+    (item) => selectedItems[`${item.productId}-${item.size}`]
+  );
+
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const subtotal = cartItems.reduce(
+  const subtotal = selectedCartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0
   );
-  const shipping = cartItems.length > 0 ? 15 : 0;
-  const tax = subtotal * 0.07;
-  const total = subtotal + shipping + tax;
+  const shipping = selectedCartItems.length > 0 ? 50 : 0;
+  const total = selectedCartItems.length > 0 ? subtotal + shipping : 0;
 
   const fetchCart = async () => {
     try {
@@ -58,7 +67,7 @@ export function CartContent() {
   const handleRemoveItem = async (productId: string, size: string) => {
     try {
       await axios.post(
-        "http://localhost:3000/api/cart/removeItem",
+        "http://localhost:3000/api/cart/removeCartItem",
         { productId, size },
         { withCredentials: true }
       );
@@ -85,7 +94,6 @@ export function CartContent() {
         },
         { withCredentials: true }
       );
-      toast({ title: "🛒 อัปเดตจำนวนสินค้าเรียบร้อย!" });
       fetchCart(); // ✅ ดึงข้อมูลตะกร้าใหม่เพื่อ refresh
     } catch (error) {
       console.error("Error updating quantity:", error);
@@ -97,10 +105,37 @@ export function CartContent() {
     }
   };
 
+  const handleProceedToCheckout = async () => {
+    try {
+      const items = selectedCartItems.map((item) => ({
+        productId: item.productId,
+        size: item.size,
+        quantity: item.quantity,
+      }));
+
+      await axios.post(
+        "http://localhost:3000/api/checkout/select",
+        { items },
+        { withCredentials: true }
+      );
+
+      // เมื่อสำเร็จ → navigate ไปหน้า checkout
+      router.push("/checkout");
+    } catch (error) {
+      console.error("❌ Failed to save selected items:", error);
+      toast({
+        title: "❌ ไม่สามารถเลือกสินค้าสำหรับ checkout ได้",
+        description: "กรุณาลองใหม่อีกครั้ง",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-display font-medium text-gray-900 mb-8">
-        Shopping Cart
+      <h1 className="flex gap-2 items-center text-3xl font-display font-medium text-brown-800 mb-8">
+        <ShoppingBasket className="w-8 h-8 text-yellow-500" />
+        ตะกร้าสินค้า
       </h1>
 
       {cartItems.length > 0 ? (
@@ -110,10 +145,10 @@ export function CartContent() {
               <div className="p-6">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b">
-                      <th className="text-left pb-4">Product</th>
-                      <th className="text-center pb-4">Quantity</th>
-                      <th className="text-right pb-4">Total</th>
+                    <tr className="border-b text-brown-800">
+                      <th className="text-left pb-4">สินค้า</th>
+                      <th className="text-center pb-4">จำนวน</th>
+                      <th className="text-right pb-4">ราคา</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -123,7 +158,23 @@ export function CartContent() {
                         className="border-b"
                       >
                         <td className="py-4">
-                          <div className="flex items-center">
+                          <div className="flex items-center text-brown-800">
+                            <input
+                              type="checkbox"
+                              checked={
+                                selectedItems[
+                                  `${item.productId}-${item.size}`
+                                ] || false
+                              }
+                              onChange={(e) =>
+                                setSelectedItems({
+                                  ...selectedItems,
+                                  [`${item.productId}-${item.size}`]:
+                                    e.target.checked,
+                                })
+                              }
+                              className="mr-2"
+                            />
                             <div className="relative w-16 h-16 mr-4 bg-gray-50">
                               <Image
                                 src={
@@ -233,24 +284,23 @@ export function CartContent() {
           <div>
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="p-6">
-                <h2 className="text-lg font-medium mb-4">Order Summary</h2>
+                <h2 className="flex gap-2 items-center text-lg font-medium mb-4 text-brown-800">
+                  <Banknote className="w-6 h-6 text-yellow-500" />
+                  สรุปยอดสั่งซื้อ
+                </h2>
 
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>{formatPrice(subtotal)}</span>
+                    <span>ราคาสินค้า</span>
+                    <span>{formatPrice(subtotal)} บาท</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Shipping</span>
-                    <span>{formatPrice(shipping)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tax</span>
-                    <span>{formatPrice(tax)}</span>
+                    <span>ค่าจัดส่ง</span>
+                    <span>{formatPrice(shipping)} บาท</span>
                   </div>
                   <div className="pt-3 mt-3 border-t border-gray-200 flex justify-between font-medium">
-                    <span>Total</span>
-                    <span>{formatPrice(total)}</span>
+                    <span>รวมทั้งสิ้น</span>
+                    <span>{formatPrice(total)} บาท</span>
                   </div>
                 </div>
 
@@ -258,10 +308,11 @@ export function CartContent() {
                   variant="luxury"
                   size="lg"
                   className="w-full mt-6"
-                  asChild
+                  onClick={handleProceedToCheckout}
+                  disabled={selectedCartItems.length === 0}
                 >
-                  <Link href="/checkout">Proceed to Checkout</Link>
-                </Button>
+                  สั่งซื้อสินค้า
+                  </Button>
               </div>
             </div>
           </div>

@@ -1,37 +1,28 @@
-"use server"
+import axios from "axios";
 
-import { revalidatePath } from "next/cache"
-import { createOrder as createOrderInDb, getOrder as getOrderFromDb } from "@/lib/data"
-import type { OrderDetails } from "@/lib/types"
-
-export async function createOrder(formData: FormData): Promise<{ success: boolean; orderId?: string; error?: string }> {
+export async function createOrder(orderData: any) {
   try {
-    // In a real app, you would validate the form data and process payment
-    const orderData = JSON.parse(formData.get("orderData") as string) as OrderDetails
-
-    // Wait for 1 second to simulate processing
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Create order in database
-    const result = createOrderInDb(orderData)
-
-    // Revalidate the orders page
-    revalidatePath("/orders")
-    revalidatePath("/order-confirmation")
-    revalidatePath("/order-tracking")
-
-    return result
+    const response = await axios.post("http://localhost:3000/api/order/createOrder", orderData, {
+      withCredentials: true,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
   } catch (error) {
-    console.error("Error creating order:", error)
-    return {
-      success: false,
-      error: "Failed to process your order. Please try again.",
-    }
+    console.error("❌ API createOrder error:", error);
+    return { success: false, error: "Failed to create order." };
   }
 }
 
-export async function getOrder(orderId: string) {
-  // In a real app, this would fetch from a database
-  return getOrderFromDb(orderId)
+export async function getOrderById(orderId: string) {
+  try {
+    const response = await axios.get(`http://localhost:3000/api/order/getOrderById/${orderId}`, {
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("❌ API getOrderById error:", error);
+    return { success: false, error: "Failed to fetch order." };
+  }
 }
-
