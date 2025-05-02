@@ -91,7 +91,7 @@ export function Header() {
                 บทความ
               </Link>
               <Link
-                href="/products"
+                href="/product"
                 className="text-sm font-medium text-brown-800 hover:text-gold-600 transition-colors"
               >
                 สินค้าทั้งหมด
@@ -182,7 +182,7 @@ export function Header() {
                   หน้าแรก
                 </Link>
                 <Link
-                  href="/products"
+                  href="/product"
                   className="text-sm font-medium text-brown-800 hover:text-gold-600"
                   onClick={() => setMobileMenuOpen(false)}
                 >

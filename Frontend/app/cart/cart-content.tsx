@@ -208,7 +208,7 @@ export function CartContent() {
 
             <div className="mt-8 flex justify-between items-center">
               <Link
-                href="/products"
+                href="/product"
                 className="text-gold-600 hover:text-gold-700 transition-colors flex items-center"
               >
                 <svg
@@ -278,7 +278,7 @@ export function CartContent() {
             Looks like you haven't added any items to your cart yet.
           </p>
           <Button variant="luxury" size="lg" asChild>
-            <Link href="/products">Start Shopping</Link>
+            <Link href="/product">Start Shopping</Link>
           </Button>
         </div>
       )}

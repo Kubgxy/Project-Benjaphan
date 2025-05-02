@@ -13,7 +13,8 @@ import { Product, AvailableSize, AvailableColor } from "@/lib/types";
 
 // 🟢 สร้าง Function แปลง Product → ProductCardProps
 const mapProductToCardProduct = (product: Product) => ({
-  id: product.id_product,                  // ✅ ต้องใช้ id ไม่ใช่ _id
+  id_product: product.id_product,          // Include id_product
+  _id: product._id,                        // Include _id
   name: product.name,
   price: product.price,
   description: product.description,
@@ -48,17 +49,6 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  if (categoryFilter) {
-    console.log("✅ categoryFilter:", categoryFilter);
-    console.log(
-      "🎯 matched category name:",
-      categories.find((cat) => cat.slug === categoryFilter)?.name
-    );
-  }
-
-  
-
-
   // ✅ ดึงสินค้าทั้งหมดจาก API จริง
   useEffect(() => {
     const fetchProducts = async () => {
@@ -70,6 +60,7 @@ export default function ProductsPage() {
           }
         );
         const data = await response.json();
+        console.log("Fetched products:", data.products); // Debugging line
         if (response.ok) {
           setProducts(data.products);
         } else {
@@ -89,17 +80,6 @@ export default function ProductsPage() {
   let filteredProducts = categoryFilter
   ? products.filter((product) => product.category === categoryFilter)   
   : products;
-
-
-  console.log("categoryFilter:", categoryFilter);
-  console.log(
-    "product.category:",
-    products.map((p) => p.category)
-  );
-  console.log(
-    "matched category name:",
-    categories.find((cat) => cat.slug === categoryFilter)?.name
-  );
 
   // ✅ Sort products
   switch (sortOption) {

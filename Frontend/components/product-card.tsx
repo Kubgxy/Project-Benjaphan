@@ -19,7 +19,8 @@ export interface AvailableSize {
   quantity: number;
 }
 export interface ProductCardData {
-  id: string;
+  _id: string; // MongoDB ObjectId
+  id_product: string; // optional, ถ้าอยากโชว์ readable id
   name: string;
   price: number;
   description: string;
@@ -60,9 +61,8 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
       await axios.post(
         "http://localhost:3000/api/cart/addToCart",
         {
-          productId: product.id,          // ✅ ใช้ id_product ตรงนี้!
+          productId: product.id_product,          // ✅ ใช้ id_product ตรงนี้!
           quantity: 1,                    // ✅ ใส่ default 1 ชิ้น
-          size: "FreeSize",               // ✅ หรือเลือก size ตรงนี้ถ้ามีหลาย size
         },
         { withCredentials: true }
       );
@@ -92,8 +92,10 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
         );
         const wishlistItems = response.data.wishlist?.products || [];
         const exists = wishlistItems.some(
-          (item: any) => item.id_product === product.id
-        );
+          (item: any) =>
+            (typeof item === "string" && item === product._id) ||
+            (item._id && item._id === product._id)
+        ); // 🟢 เช็คว่า id_product ตรงกันไหม    
         setIsInWishlist(exists);
       } catch (error) {
         console.error("Error checking wishlist:", error);
@@ -109,17 +111,18 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
           if (isInWishlist) {
             await axios.post(
               "http://localhost:3000/api/wishlist/removeFromWishlist",
-              { productId: product.id },
+              { productId: product._id }, 
               { withCredentials: true }
             );
             toast({ title: "💔 ลบออกจากรายการโปรดแล้ว" });
           } else {
             await axios.post(
               "http://localhost:3000/api/wishlist/addToWishlist",
-              { productId: product.id },
+              { productId: product._id },
               { withCredentials: true }
             );
             toast({ title: "❤️ เพิ่มลงในรายการโปรดแล้ว" });
+            console.log("ส่งไปเพิ่ม wishlist:", product._id);
           }
           checkWishlistStatus(); // ✅ Refresh สถานะ
         } catch (error) {
@@ -167,7 +170,7 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
         )}
         <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-2">
           <Link
-            href={`/product/${product.id}`}
+            href={`/product/${product.id_product}`}
             className="bg-white text-brown-800 px-6 py-2 text-sm font-medium hover:bg-yellow-600 hover:text-white  transform -translate-y-2 group-hover:translate-y-0 transition-transform duration-300 rounded-md"
           >
             ดูรายละเอียด
@@ -191,7 +194,7 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
           <Heart className={`h-4 w-4 ${isInWishlist ? "fill-red-500" : ""}`} />
         </button>
       </div>
-      <Link href={`/product/${product.id}`} className="block">
+      <Link href={`/product/${product.id_product}`} className="block">
         <div className="px-2">
           <div className="flex items-center mb-1">
             {[...Array(5)].map((_, i) => (
@@ -204,6 +207,9 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
                 }`}
               />
             ))}
+            <span className="text-xs text-gray-500 ml-1">
+              {product.rating.toFixed(1)}
+            </span>
             <span className="text-xs text-brown-500 ml-1">
               ({product.reviews})
             </span>

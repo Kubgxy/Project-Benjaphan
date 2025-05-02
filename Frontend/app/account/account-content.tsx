@@ -327,7 +327,7 @@ export function AccountContent() {
                       You haven't placed any orders yet.
                     </p>
                     <Button variant="luxury" asChild>
-                      <a href="/products">Start Shopping</a>
+                      <a href="/product">Start Shopping</a>
                     </Button>
                   </div>
                 </div>

@@ -1,15 +1,14 @@
-import { Schema, model, Document } from "mongoose";
-import { IProduct } from "./Product";
+import { Schema, model, Document, Types } from "mongoose";
 
 export interface IWishlist extends Document {
-  userID: string; // ⬅️ อ้างถึงผู้ใช้งาน
-  products: IProduct[]; // ⬅️ เก็บทั้ง product object เต็ม ๆ
+  userID: string;
+  products: Types.ObjectId[]; // 👉 อ้างอิง ObjectId ของ Product
 }
 
 const wishlistSchema = new Schema<IWishlist>(
   {
     userID: { type: String, required: true, unique: true },
-    products: { type: [Object], default: [] }, // ✅ เก็บเป็น array of products
+    products: [{ type: Schema.Types.ObjectId, ref: "Product" }],
   },
   { collection: "Wishlist", timestamps: true }
 );
