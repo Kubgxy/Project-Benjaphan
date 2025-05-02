@@ -7,7 +7,7 @@ export const addToCart = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.userId;
   const { productId, quantity, size } = req.body;
 
-  if (!userId || !productId || !quantity || !size) {
+  if (!userId || !productId || !quantity ) {
     res.status(400).json({ message: "Missing required fields" });
     return; // ✅ return เฉย ๆ หยุดการทำงาน ไม่ return Response
   }
@@ -25,13 +25,13 @@ export const addToCart = async (req: Request, res: Response): Promise<void> => {
       name: product.name,
       price: product.price,
       quantity,
-      size,
+      size, // ✅ ใช้ size จาก req.body แทน
       images: product.images,
     };
 
     if (cart) {
       const itemIndex = cart.items.findIndex(
-        (item) => item.productId === productId && item.size === size
+        (item) => item.productId === productId
       );
 
       if (itemIndex > -1) {
@@ -60,7 +60,7 @@ export const removeCartItem = async (req: Request, res: Response) => {
   const { productId, size } = req.body;
 
   // 🔒 เช็คค่าที่จำเป็น
-  if (!userId || !productId || !size) {
+  if (!userId || !productId ) {
     res.status(400).json({ message: "Missing required fields" });
     return;
   }
@@ -75,7 +75,7 @@ export const removeCartItem = async (req: Request, res: Response) => {
 
     // 🎯 กรองเอาสินค้าที่ไม่ตรงออก
     const newItems = cart.items.filter(
-      (item) => !(item.productId === productId && item.size === size)
+      (item) => !(item.productId === productId)
     );
 
     // 🔄 อัปเดตตะกร้า
