@@ -94,7 +94,7 @@ export default function Home() {
                 className="bg-gold-600 hover:bg-gold-700 text-base"
                 asChild
               >
-                <Link href="/products">ดูสินค้าทั้งหมด</Link>
+                <Link href="/product">ดูสินค้าทั้งหมด</Link>
               </Button>
               <Button
                 variant="outline"
@@ -186,7 +186,7 @@ export default function Home() {
             {featuredCategories.map((category) => (
               <Link
                 key={category.id}
-                href={`/products?category=${category.slug}`}
+                href={`/product?category=${category.slug}`}
                 className="group"
               >
                 <div className="relative h-80 w-full overflow-hidden rounded-lg shadow-md">
@@ -230,7 +230,7 @@ export default function Home() {
               </p>
             </div>
             <Link
-              href="/products"
+              href="/product"
               className="hidden md:flex items-center text-gold-600 hover:text-gold-700 transition-colors"
             >
               <span className="mr-2">ดูทั้งหมด</span>
@@ -260,7 +260,7 @@ export default function Home() {
               className="border-gold-600 text-gold-600 hover:bg-gold-50"
               asChild
             >
-              <Link href="/products?sort=newest">ดูสินค้าทั้งหมด</Link>
+              <Link href="/product?sort=newest">ดูสินค้าทั้งหมด</Link>
             </Button>
           </div>
         </div>

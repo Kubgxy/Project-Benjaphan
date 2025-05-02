@@ -15,6 +15,7 @@ interface Product {
   name: string;
   price: number;
   images: string[];
+  size?: string[];
 }
 
 export function WishlistContent() {
@@ -44,13 +45,13 @@ export function WishlistContent() {
       await axios.post(
         "http://localhost:3000/api/cart/addToCart",
         {
-          productId: item._id,
+          productId: item.id_product,
           quantity: 1,
         },
         { withCredentials: true }
       );
 
-      setAddedToCart(item._id);
+      setAddedToCart(item.id_product);
       toast({
         title: "✅ เพิ่มสินค้าลงตะกร้าสำเร็จ!",
         description: `${item.name} ถูกเพิ่มลงตะกร้าแล้ว`,
@@ -68,12 +69,13 @@ export function WishlistContent() {
   const handleRemoveWishlist = async (productId: string) => {
     try {
       await axios.post(
-        "http://localhost:3000/api/wishlist/removeFromWishlist",
+        "http://localhost:3000/api/wishlist/removeFromWishlist", // ✅ ไม่มี s
         { productId },
         { withCredentials: true }
       );
       toast({ title: "💔 ลบออกจากรายการโปรดแล้ว" });
       fetchWishlist();
+      console.log('sending to remove:', productId);
     } catch (error) {
       console.error("❌ Error removing wishlist item:", error);
       toast({
@@ -81,6 +83,7 @@ export function WishlistContent() {
         description: "ไม่สามารถลบออกจากรายการโปรดได้",
         variant: "destructive",
       });
+
     }
   };
 
@@ -178,7 +181,7 @@ export function WishlistContent() {
 
           <div className="mt-8 flex justify-between items-center">
             <Link
-              href="/products"
+              href="/product"
               className="text-gold-600 hover:text-gold-700 transition-colors flex items-center"
             >
               <svg
@@ -211,7 +214,7 @@ export function WishlistContent() {
             Looks like you haven't added any items to your wishlist yet.
           </p>
           <Button variant="luxury" size="lg" asChild>
-            <Link href="/products">Start Shopping</Link>
+            <Link href="/product">Start Shopping</Link>
           </Button>
         </div>
       )}

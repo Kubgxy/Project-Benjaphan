@@ -34,18 +34,29 @@ export const removeFromWishlist = async (req: Request, res: Response) => {
   const { productId } = req.body;
 
   try {
+
+    const productDoc = await Product.findOne({ id_product: productId });
+  if (!productDoc) {
+    res.status(404).json({ message: 'Product not found' });
+    return 
+}
     // ✅ ลบ productId ออกจาก wishlist
     const wishlist = await Wishlist.findOneAndUpdate(
       { userID: userId },
-      { $pull: { products: productId } },
+      { $pull: { products: productDoc._id } },
       { new: true }
     ).populate("products");
+
+    console.log('productId from req:', productId);
+    console.log('fetched productDoc:', productDoc);
+
 
     res.status(200).json({ message: "✅ Removed from wishlist", wishlist });
   } catch (error) {
     console.error("❌ Error removing from wishlist:", error);
     res.status(500).json({ message: "Server error", error });
   }
+  
 };
 
 export const getWishlist = async (req: Request, res: Response) => {
