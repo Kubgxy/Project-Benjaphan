@@ -97,4 +97,52 @@ export const getOrderById = async (req: Request, res: Response) => {
   }
 };
 
+export const getOrdersByUser = async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+
+  if (!userId) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return 
+  }
+
+  try {
+    const orders = await Order.find({ userId })
+      .sort({ createdAt: -1 })
+      .select(
+        'orderId total orderStatus paymentStatus createdAt items subtotal shippingFee'
+      );
+
+    if (!orders || orders.length === 0) {
+      res.status(200).json({ success: true, orders: [] });
+      return 
+    }
+
+    // Optional: map เพื่อ clean response (เช่นลบ __v, _id)  
+    const cleanedOrders = orders.map((order) => ({
+      orderId: order.orderId,
+      total: order.total,
+      subtotal: order.subtotal,
+      shippingFee: order.shippingFee,
+      orderStatus: order.orderStatus,
+      paymentStatus: order.paymentStatus,
+      createdAt: order.createdAt,
+      items: order.items.map((item: any) => ({
+        productId: item.productId, // string code
+        name: item.name,
+        images: item.images,
+        price: item.price,
+        quantity: item.quantity,
+        size: item.size,
+      })),
+    }));
+
+    res.status(200).json({ success: true, orders: cleanedOrders });
+    return 
+  } catch (error) {
+    console.error('❌ getOrdersByUser error:', error);
+    res.status(500).json({ message: 'Server error', error });
+    return 
+  }
+};
+
   
