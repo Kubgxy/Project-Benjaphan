@@ -42,12 +42,24 @@ export const addReview = async (req: Request, res: Response) => {
 export const getReviewsByProduct = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
+    const page = parseInt(req.query.page as string) || 1; // หน้าเริ่มต้นคือ 1
+    const limit = parseInt(req.query.limit as string) || 5; // จำนวนรีวิวต่อหน้า (ค่าเริ่มต้น 5)
+    const skip = (page - 1) * limit;
 
     const reviews = await Review.find({ productId })
-      .populate("userId", "name")  // ดึงชื่อคนเขียนรีวิว
-      .sort({ createdAt: -1 });    // เรียงล่าสุดมาก่อน
+      .populate("userId", "firstName lastName avatar")
+      .sort({ createdAt: -1 }) // เรียงจากล่าสุด
+      .skip(skip) // ข้ามรีวิวตามหน้า
+      .limit(limit); // จำกัดจำนวนรีวิวต่อหน้า
 
-    res.status(200).json({ reviews });
+    const totalReviews = await Review.countDocuments({ productId }); // จำนวนรีวิวทั้งหมด
+
+    res.status(200).json({
+      reviews,
+      totalReviews,
+      totalPages: Math.ceil(totalReviews / limit),
+      currentPage: page,
+    });
   } catch (err) {
     console.error("❌ Error fetching reviews:", err);
     res.status(500).json({ message: "ไม่สามารถดึงรีวิวได้", error: err });

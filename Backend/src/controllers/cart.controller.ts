@@ -5,7 +5,7 @@ import Product from "../Models/Product";
 // ✅ Add to cart
 export const addToCart = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.userId;
-  const { productId, quantity} = req.body;
+  const { productId, quantity , size} = req.body;
 
   if (!userId || !productId || !quantity ) {
     res.status(400).json({ message: "Missing required fields" });
@@ -25,12 +25,13 @@ export const addToCart = async (req: Request, res: Response): Promise<void> => {
       name: product.name,
       price: product.price,
       quantity,
+      size, // ✅ ใช้ size จาก req.body แทน
       images: product.images,
     };
 
     if (cart) {
       const itemIndex = cart.items.findIndex(
-        (item) => item.productId === productId 
+        (item) => item.productId === productId
       );
 
       if (itemIndex > -1) {
