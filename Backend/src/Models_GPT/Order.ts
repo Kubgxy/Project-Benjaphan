@@ -53,6 +53,6 @@ const orderSchema = new mongoose.Schema({
   couponApplied: { type: String },         // โค้ดส่วนลดที่ใช้
   total: { type: Number },                 // ยอดรวมทั้งหมด (หลังส่วนลด, tax, etc.)
 
-}, { timestamps: true });                  // createdAt, updatedAt
+}, { collection: 'Orders', timestamps: true });                  // createdAt, updatedAt
 
 export default mongoose.model('Order', orderSchema);

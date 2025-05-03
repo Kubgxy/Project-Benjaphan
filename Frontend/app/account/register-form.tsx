@@ -16,6 +16,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -23,7 +24,8 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     email: string,
     password: string,
     firstName: string,
-    lastName: string
+    lastName: string,
+    phoneNumber: string
   ): Promise<boolean> => {
     try {
       const res = await fetch("http://localhost:3000/api/user/registerUser", {
@@ -36,6 +38,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           lastName,
           email,
           password,
+          phoneNumber,
         }),
         credentials: "include", // 👈 สำหรับ cookie-based auth ถ้ามี
       });
@@ -67,7 +70,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     setIsLoading(true);
 
     try {
-      const success = await register(email, password, firstName, lastName);
+      const success = await register(email, password, firstName, lastName, phoneNumber);
       if (success) {
         alert("✅ ลงทะเบียนสำเร็จ! กรุณาเข้าสู่ระบบ");
         if (onSuccess) onSuccess();
@@ -135,6 +138,23 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           required
         />
       </div>
+      
+      <div className="mb-4">
+        <label
+          htmlFor="register-phone"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Phone Number
+        </label>
+        <input
+          id="register-phone"
+          type="text"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent"
+        />
+      </div>
+
 
       <div className="mb-4">
         <label

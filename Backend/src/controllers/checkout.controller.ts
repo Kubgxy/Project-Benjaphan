@@ -1,90 +1,93 @@
-import { Request, Response } from 'express'
-import SelectedCheckout from '../Models/Checkout'
-import Product from '../Models/Product'
+// import { Request, Response } from 'express'
+// // import SelectedCheckout from '../Models/Checkout'
+// // import Product from '../Models/Product'
 
-export const selectItemsForCheckout = async (req: Request, res: Response) => {
-  const userId = req.user?.userId
-  const { items } = req.body
+// import SelectedCheckout from '../Models_GPT/Checkout' // Model
+// import Product from '../Models_GPT/Product' // Model
 
-  if (!userId || !items) {
-    res.status(400).json({ message: 'Missing user or items' })
-    return 
-  }
+// export const selectItemsForCheckout = async (req: Request, res: Response) => {
+//   const userId = req.user?.userId
+//   const { items } = req.body
 
-  try {
-    // validate products exist
-    for (const item of items) {
-      const product = await Product.findOne({ id_product: item.productId })
-      if (!product) {
-        res.status(404).json({ message: `Product not found: ${item.productId}` })
-        return 
-      }
-    }
+//   if (!userId || !items) {
+//     res.status(400).json({ message: 'Missing user or items' })
+//     return 
+//   }
 
-    const existing = await SelectedCheckout.findOne({ userId })
+//   try {
+//     // validate products exist
+//     for (const item of items) {
+//       const product = await Product.findOne({ id_product: item.productId })
+//       if (!product) {
+//         res.status(404).json({ message: `Product not found: ${item.productId}` })
+//         return 
+//       }
+//     }
 
-    if (existing) {
-      existing.items = items
-      await existing.save()
-    } else {
-      await SelectedCheckout.create({ userId, items })
-    }
+//     const existing = await SelectedCheckout.findOne({ userId })
 
-    res.status(200).json({ success: true, message: 'Selected items saved for checkout' })
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ message: 'Server error', error })
-  }
-}
+//     if (existing) {
+//       existing.items = items
+//       await existing.save()
+//     } else {
+//       await SelectedCheckout.create({ userId, items })
+//     }
 
-export const getCheckoutSummary = async (req: Request, res: Response) => {
-  const userId = req.user?.userId
+//     res.status(200).json({ success: true, message: 'Selected items saved for checkout' })
+//   } catch (error) {
+//     console.error(error)
+//     res.status(500).json({ message: 'Server error', error })
+//   }
+// }
 
-  if (!userId) {
-    res.status(400).json({ message: 'Missing user' })
-    return 
-  }
+// export const getCheckoutSummary = async (req: Request, res: Response) => {
+//   const userId = req.user?.userId
 
-  try {
-    const selected = await SelectedCheckout.findOne({ userId })
+//   if (!userId) {
+//     res.status(400).json({ message: 'Missing user' })
+//     return 
+//   }
 
-    if (!selected || selected.items.length === 0) {
-    res.status(200).json({ message: 'No selected items', items: [] })
-      return 
-    }
+//   try {
+//     const selected = await SelectedCheckout.findOne({ userId })
 
-    let subtotal = 0
-    const detailedItems = []
+//     if (!selected || selected.items.length === 0) {
+//     res.status(200).json({ message: 'No selected items', items: [] })
+//       return 
+//     }
 
-    for (const item of selected.items) {
-      const product = await Product.findOne({ id_product: item.productId })
+//     let subtotal = 0
+//     const detailedItems = []
 
-      if (!product) continue
+//     for (const item of selected.items) {
+//       const product = await Product.findOne({ id_product: item.productId })
 
-      const total = product.price * item.quantity
-      subtotal += total
+//       if (!product) continue
 
-      detailedItems.push({
-        productId: item.productId,
-        name: product.name,
-        price: product.price,
-        quantity: item.quantity,
-        size: item.size,
-        images: product.images,
-      })
-    }
+//       const total = product.price * item.quantity
+//       subtotal += total
 
-    const shipping = 50
-    const total = subtotal + shipping 
+//       detailedItems.push({
+//         productId: item.productId,
+//         name: product.name,
+//         price: product.price,
+//         quantity: item.quantity,
+//         size: item.size,
+//         images: product.images,
+//       })
+//     }
 
-    res.status(200).json({
-      items: detailedItems,
-      subtotal,
-      shipping,
-      total,
-    }) 
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ message: 'Server error', error })
-  }
-}
+//     const shipping = 50
+//     const total = subtotal + shipping 
+
+//     res.status(200).json({
+//       items: detailedItems,
+//       subtotal,
+//       shipping,
+//       total,
+//     }) 
+//   } catch (error) {
+//     console.error(error)
+//     res.status(500).json({ message: 'Server error', error })
+//   }
+// }

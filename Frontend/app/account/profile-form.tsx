@@ -10,6 +10,7 @@ export function ProfileForm() {
   const { user, updateProfile, logout } = useAuth();
   const [firstName, setFirstName] = useState(user?.firstName || "")
   const [lastName, setLastName] = useState(user?.lastName || "")
+  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "")
   const [email, setEmail] = useState(user?.email || "")
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -26,6 +27,7 @@ export function ProfileForm() {
         firstName,
         lastName,
         email,
+        phoneNumber,
       })
 
       if (result) {
@@ -82,6 +84,20 @@ export function ProfileForm() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent"
+          required
+        />
+      </div>
+
+      <div className="mb-4">
+        <label htmlFor="profile-email" className="block text-sm font-medium text-gray-700 mb-1">
+          Phone Number
+        </label>
+        <input
+          id="profile-email"
+          type="number"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent"
           required
         />

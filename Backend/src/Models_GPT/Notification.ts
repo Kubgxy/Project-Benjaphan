@@ -14,6 +14,6 @@ const notificationSchema = new mongoose.Schema({
   message: { type: String, required: true }, // เนื้อหาแจ้งเตือน
   link: { type: String },                    // URL หรือ path ที่เชื่อมไปหน้าอื่น (optional)
   isRead: { type: Boolean, default: false }, // อ่านแล้วหรือยัง
-}, { timestamps: true });                    // createdAt, updatedAt
+}, { collection: 'Notifications', timestamps: true });                    // createdAt, updatedAt
 
 export default mongoose.model('Notification', notificationSchema);

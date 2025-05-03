@@ -23,6 +23,6 @@ const couponSchema = new mongoose.Schema({
   minSpend: { type: Number, default: 0 },   // ยอดซื้อขั้นต่ำ
   
   isActive: { type: Boolean, default: true } // เปิดปิดคูปอง
-}, { timestamps: true });                   // createdAt, updatedAt
+}, { collection: 'Coupons', timestamps: true });                   // createdAt, updatedAt
 
 export default mongoose.model('Coupon', couponSchema);

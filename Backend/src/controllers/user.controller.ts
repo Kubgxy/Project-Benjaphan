@@ -3,7 +3,10 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 // Model
-import User from "../Models/User";
+// import User from "../Models/User";
+import User from "../Models_GPT/User"; 
+import Cart from "../Models_GPT/Cart";
+import Wishlist from "../Models_GPT/Wishlist";
 
 // Register
 export const registerUser = async (
@@ -11,7 +14,7 @@ export const registerUser = async (
   res: Response,
   _next: NextFunction
 ): Promise<void> => {
-  const { firstName, lastName, email, password } = req.body;
+  const { firstName, lastName, email, password, phoneNumber, addresses } = req.body;
 
   if (!firstName || !lastName || !email || !password) {
     res
@@ -36,7 +39,20 @@ export const registerUser = async (
       lastName,
       email,
       password: hashedPassword, // ใช้ password ที่ hash แล้ว
+      phoneNumber,
+      addresses,
+      provider: "local",
     });
+    await newUser.save();
+
+    const cart = new Cart({ userId: newUser._id });
+    await cart.save();
+
+    const wishlist = new Wishlist({ userId: newUser._id });
+    await wishlist.save();
+    
+    newUser.cartId = cart._id;
+    newUser.wishlistId = wishlist._id;
     await newUser.save();
 
     res.status(201).json({
@@ -47,6 +63,10 @@ export const registerUser = async (
         lastName: newUser.lastName,
         email: newUser.email,
         role: newUser.role,
+        phoneNumber: newUser.phoneNumber,
+        addresses: newUser.addresses,
+        cartId: newUser.cartId,
+        wishlistId: newUser.wishlistId,
       },
     });
   } catch (error) {
@@ -74,7 +94,12 @@ export const loginUser = async (
       return;
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!user.password) {
+      res.status(500).json({ message: "❌ Server error: Password is missing" });
+      return;
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password as string);
     if (!isPasswordValid) {
       res.status(401).json({ message: "❌ Invalid password" });
       return;
@@ -178,5 +203,112 @@ export const updateMe = async (
       .json({ message: "Profile updated successfully", user: updatedUser });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
+  }
+};
+
+//Get Address
+export const getAddress = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+  try {
+    const user = await User.findById(req.user?.userId).select('addresses');
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+    res.status(200).json({ addresses: user.addresses });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+export const addAddress = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+  try {
+    const { label, addressLine, city, province, postalCode, country } = req.body;
+    const userId = req.user?.userId;
+
+    if (!label || !addressLine || !city || !province || !postalCode || !country) {
+      res.status(400).json({ message: '❌ Please provide all address fields' });
+      return;
+    }
+
+    const newAddress = {
+      label,
+      addressLine,
+      city,
+      province,
+      postalCode,
+      country
+    };
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $push: { addresses: newAddress } },
+      { new: true, runValidators: true }
+    ).select('addresses');
+
+    if (!updatedUser) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    res.status(200).json({ message: '✅ Address added successfully', addresses: updatedUser.addresses });
+  }
+  catch (error) {
+    res.status(500).json({ message: '❌ Server error', error });
+  }
+};
+
+// Update Address
+export const updateAddress = async (req: Request, res: Response) => {
+  try {
+    const { addressLine, city, province, postalCode, country, label } = req.body;
+    const userId = req.user?.userId;
+    const addressId = req.params.addressId;
+
+    if (!label || !addressLine || !city || !province || !postalCode || !country) {
+      res.status(400).json({ message: '❌ Please provide all address fields' });
+      return;
+    }
+
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: userId, 'addresses._id': addressId },
+      {
+        $set: {
+          'addresses.$': { _id: addressId, label, addressLine, city, province, postalCode, country }
+        }
+      },
+      { new: true }
+    ).select('addresses');
+
+    if (!updatedUser) {
+      res.status(404).json({ message: 'User or address not found' });
+      return;
+    }
+
+    res.status(200).json({ message: '✅ Address updated successfully', addresses: updatedUser.addresses });
+  } catch (error) {
+    res.status(500).json({ message: '❌ Server error', error });
+  }
+};
+
+
+export const deleteAddress = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const addressId = req.params.addressId;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { addresses: { _id: addressId } } },
+      { new: true }
+    ).select('addresses');
+
+    if (!updatedUser) {
+      res.status(404).json({ message: 'User or address not found' });
+      return;
+    }
+
+    res.status(200).json({ message: '✅ Address deleted successfully', addresses: updatedUser.addresses });
+  } catch (error) {
+    res.status(500).json({ message: '❌ Server error', error });
   }
 };

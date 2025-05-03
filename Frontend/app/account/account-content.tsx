@@ -10,6 +10,8 @@ import {
   CreditCard,
   Settings,
   ShoppingBag,
+  MapPinHouse,
+  MapPinCheck,
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
@@ -46,6 +48,16 @@ interface Order {
   items: OrderItem[];
 }
 
+interface Address {
+  _id: string;
+  label: string;
+  addressLine: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  country: string;
+}
+
 export function AccountContent() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, logout, setUser } = useAuth();
@@ -53,6 +65,17 @@ export function AccountContent() {
   const [showLoginForm, setShowLoginForm] = useState(true);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [newAddress, setNewAddress] = useState({
+    _id: "",
+    label: "",
+    addressLine: "",
+    city: "",
+    province: "",
+    postalCode: "",
+    country: "Thailand",
+  });
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -116,9 +139,12 @@ export function AccountContent() {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/order/getOrdersByUser", {
-        credentials: "include",
-      });
+      const res = await fetch(
+        "http://localhost:3000/api/order/getOrdersByUser",
+        {
+          credentials: "include",
+        }
+      );
       const data = await res.json();
       if (data.success) {
         setOrders(data.orders);
@@ -126,6 +152,56 @@ export function AccountContent() {
     } catch (error) {
       console.error("Failed to fetch orders:", error);
     }
+  };
+
+  const fetchAddresses = async () => {
+    const res = await fetch("http://localhost:3000/api/user/getAddress", {
+      credentials: "include",
+    });
+    const data = await res.json();
+    setAddresses(data.addresses);
+  };
+
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
+
+  const handleAdd = async () => {
+    await fetch("http://localhost:3000/api/user/addAddress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(newAddress),
+    });
+    setNewAddress({
+      _id: "",
+      label: "",
+      addressLine: "",
+      city: "",
+      province: "",
+      postalCode: "",
+      country: "Thailand",
+    });
+    fetchAddresses();
+  };
+
+  const handleUpdate = async (addressId: string) => {
+    await fetch(`http://localhost:3000/api/user/updateAddress/${addressId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(newAddress), // ต้องส่ง field ใหม่ๆ ที่จะ update
+    });
+    fetchAddresses();
+  };
+
+  const handleDelete = async (addressId: string) => {
+    await fetch(`http://localhost:3000/api/user/deleteAddress/${addressId}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+    fetchAddresses();
   };
 
   if (isLoading) {
@@ -230,8 +306,16 @@ export function AccountContent() {
                   { tab: "profile", icon: <User />, label: "Profile" },
                   { tab: "orders", icon: <Package />, label: "Orders" },
                   { tab: "wishlist", icon: <Heart />, label: "Wishlist" },
-                  { tab: "addresses", icon: <CreditCard />, label: "Addresses" },
-                  { tab: "payment", icon: <CreditCard />, label: "Payment Methods" },
+                  {
+                    tab: "addresses",
+                    icon: <MapPinHouse />,
+                    label: "Addresses",
+                  },
+                  {
+                    tab: "payment",
+                    icon: <CreditCard />,
+                    label: "Payment Methods",
+                  },
                   { tab: "settings", icon: <Settings />, label: "Settings" },
                 ].map(({ tab, icon, label }) => (
                   <button
@@ -269,16 +353,16 @@ export function AccountContent() {
             <div className="p-6">
               {activeTab === "profile" && (
                 <div>
-                  <h2 className="text-xl font-medium mb-6">
-                    ข้อมูลส่วนตัว
-                  </h2>
+                  <h2 className="text-xl font-medium mb-6">ข้อมูลส่วนตัว</h2>
                   <ProfileForm />
                 </div>
               )}
 
               {activeTab === "orders" && (
                 <div>
-                  <h2 className="text-xl font-medium mb-6">ประวัติการสั่งซื้อ</h2>
+                  <h2 className="text-xl font-medium mb-6">
+                    ประวัติการสั่งซื้อ
+                  </h2>
                   {orders.length === 0 ? (
                     <div className="text-center py-8">
                       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
@@ -350,6 +434,202 @@ export function AccountContent() {
                           </p>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              {activeTab === "addresses" && (
+                <div>
+                  {showForm ? (
+                    // 👉 โซนฟอร์มเพิ่ม/แก้ไขที่อยู่
+                    <div className="space-y-2">
+                      <h3 className="flex items-center gap-2 text-lg font-medium mb-2 text-brown-800">
+                        <MapPinCheck />
+                        {newAddress._id ? "แก้ไขที่อยู่" : "เพิ่มที่อยู่ใหม่"}
+                      </h3>
+
+                      <input
+                        type="text"
+                        placeholder="สถานที่ (บ้าน, ออฟฟิศ)"
+                        value={newAddress.label}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            label: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded px-3 py-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="ที่อยู่ (เลขที่, ถนน)"
+                        value={newAddress.addressLine}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            addressLine: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded px-3 py-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="อำเภอ / เขต / ตำบล"
+                        value={newAddress.city}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            city: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded px-3 py-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="จังหวัด"
+                        value={newAddress.province}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            province: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded px-3 py-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="รหัสไปรษณีย์"
+                        value={newAddress.postalCode}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            postalCode: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded px-3 py-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="ประเทศ"
+                        value={newAddress.country}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            country: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded px-3 py-2"
+                      />
+
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="luxury"
+                          onClick={() => {
+                            if (newAddress._id) {
+                              handleUpdate(newAddress._id);
+                            } else {
+                              handleAdd();
+                            }
+                            setShowForm(false);
+                          }}
+                        >
+                          {newAddress._id
+                            ? "บันทึกการแก้ไข"
+                            : "เพิ่มที่อยู่ใหม่"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowForm(false)}
+                        >
+                          ยกเลิก
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    // 👉 โซนแสดงรายการที่อยู่ + ปุ่มเพิ่ม
+                    <div>
+                      <h2 className="flex items-center gap-2 text-xl font-medium mb-6 text-brown-800">
+                        <MapPinHouse />
+                        ที่อยู่ของคุณ
+                      </h2>
+
+                      {addresses.length === 0 ? (
+                        <div className="text-center">
+                          <p className="text-gray-600 mb-4">
+                            คุณยังไม่มีที่อยู่
+                          </p>
+                          <Button
+                            variant="luxury"
+                            onClick={() => {
+                              setNewAddress({
+                                _id: "",
+                                label: "",
+                                addressLine: "",
+                                city: "",
+                                province: "",
+                                postalCode: "",
+                                country: "Thailand",
+                              });
+                              setShowForm(true);
+                            }}
+                          >
+                            เพิ่มที่อยู่ใหม่
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          {addresses.map((addr, index) => (
+                            <div
+                              key={index}
+                              className="border rounded p-4 shadow-sm flex justify-between items-start"
+                            >
+                              <div>
+                                <p className="font-medium">{addr.label}</p>
+                                <p className="text-sm text-gray-500">
+                                  {addr.addressLine}, {addr.city},{" "}
+                                  {addr.province}, {addr.postalCode},{" "}
+                                  {addr.country}
+                                </p>
+                              </div>
+                              <div className="space-x-2">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    setNewAddress(addr);
+                                    setShowForm(true); // 👉 กดแก้ไข → เปิดฟอร์ม
+                                  }}
+                                >
+                                  แก้ไข
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  onClick={() => handleDelete(addr._id)}
+                                >
+                                  ลบ
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                          <Button
+                            className="mt-4"
+                            variant="luxury"
+                            onClick={() => {
+                              setNewAddress({
+                                _id: "",
+                                label: "",
+                                addressLine: "",
+                                city: "",
+                                province: "",
+                                postalCode: "",
+                                country: "Thailand",
+                              });
+                              setShowForm(true); // 👉 กดเพิ่มใหม่ → เปิดฟอร์ม
+                            }}
+                          >
+                            เพิ่มที่อยู่ใหม่
+                          </Button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
