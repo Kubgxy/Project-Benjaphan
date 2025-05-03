@@ -32,12 +32,7 @@ export function ProductDetail({
 }: { params: { id: string } } & ProductDetailProps) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState<string | undefined>(
-    product?.availableSizes ? product.availableSizes[0].size : undefined
-  );
-  const [selectedColor, setSelectedColor] = useState<string | undefined>(
-    product?.availableColors ? product.availableColors[0].name : undefined
-  );
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [addedToCart, setAddedToCart] = useState(false);
   const { toast } = useToast();
 
@@ -53,7 +48,7 @@ export function ProductDetail({
   const [averageRating, setAverageRating] = useState<number>(0);
   const [totalReviews, setTotalReviews] = useState<number>(0);
   interface Review {
-    userId?: { firstName: string; lastName: string, avatar: string };
+    userId?: { firstName: string; lastName: string; avatar: string };
     productId: string;
     rating: number;
     comment: string;
@@ -68,7 +63,6 @@ export function ProductDetail({
       toast({ title: "⚠️ กรุณาเลือกขนาดสินค้า", variant: "destructive" });
       return;
     }
-
     if (isAddingToCart) return; // กันกดรัว
     setIsAddingToCart(true);
 
@@ -90,6 +84,17 @@ export function ProductDetail({
         return;
       }
 
+      if (availableStock <= 0) {
+        toast({ title: "❌ สินค้าหมดสต็อก", variant: "destructive" });
+        return;
+      }
+
+      if (quantity > availableStock) {
+        toast({ title: "❌ จำนวนเกินสต็อกที่มี", variant: "destructive" });
+        return;
+      }
+      
+
       setAddedToCart(true);
       toast({ title: "✅ เพิ่มสินค้าลงตะกร้าสำเร็จ!" });
 
@@ -109,6 +114,17 @@ export function ProductDetail({
       setIsAddingToCart(false); // รีเซ็ตสถานะการเพิ่มลงตะกร้า
     }
   };
+
+  useEffect(() => {
+    const selected = product.availableSizes?.find(
+      (sizeObj) => sizeObj.size === selectedSize
+    );
+    if (selected) {
+      setQuantity(selected.quantity > 0 ? 1 : 0);
+    } else {
+      setQuantity(0);
+    }
+  }, [selectedSize]);
 
   const incrementQuantity = () => {
     const selectedSizeObj = product.availableSizes?.find(
@@ -132,16 +148,14 @@ export function ProductDetail({
     try {
       const response = await axios.get(
         "http://localhost:3000/api/wishlist/getWishlist",
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       );
       const wishlistItems = response.data.wishlist?.products || [];
       const exists = wishlistItems.some(
         (item: any) =>
-          (typeof item === "string" && item === product._id) || // ถ้าเป็น ObjectId string
-          (item._id && item._id === product._id)               // ถ้า populate มาเป็น object
-      );      
+          (item.productId && item.productId === product._id) ||
+          (item.productId && item.productId._id === product._id)
+      );
       setIsInWishlist(exists);
     } catch (error) {
       console.error("Error checking wishlist:", error);
@@ -213,15 +227,23 @@ export function ProductDetail({
   const handleSubmitReview = async (rating: number, comment: string) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-  
+
     try {
       if (comment.trim() === "" && rating > 0) {
         // ส่งแค่ดาว
-        await axios.post("http://localhost:3000/api/review/addReview", { productId: product._id, rating }, { withCredentials: true });
+        await axios.post(
+          "http://localhost:3000/api/review/addReview",
+          { productId: product._id, rating },
+          { withCredentials: true }
+        );
         toast({ title: "✅ ขอบคุณสำหรับการให้ดาว!" });
       } else if (comment.trim() !== "" && rating > 0) {
         // ส่งคอมเมนต์ + ดาว
-        await axios.post("http://localhost:3000/api/review/addReview", { productId: product._id, rating, comment }, { withCredentials: true });
+        await axios.post(
+          "http://localhost:3000/api/review/addReview",
+          { productId: product._id, rating, comment },
+          { withCredentials: true }
+        );
         toast({ title: "✅ ขอบคุณสำหรับการรีวิว!" });
         setReviewComment("");
       }
@@ -232,13 +254,14 @@ export function ProductDetail({
       toast({
         title: "❌ ไม่สามารถส่งรีวิวได้",
         description:
-          error.response?.data?.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
+          error.response?.data?.message ||
+          "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
-  };  
+  };
 
   const fetchUserRating = async () => {
     try {
@@ -266,41 +289,23 @@ export function ProductDetail({
         <ArrowLeft className="h-4 w-4 mr-2" />
         กลับไปยังสินค้าทั้งหมด
       </Link>
-  
+
       <div className="grid md:grid-cols-2 gap-12">
-        <div className="space-y-4">
-          <div className="relative w-full bg-white">
-            <ReactImageMagnify
-              {...{
-                smallImage: {
-                  alt: product.name,
-                  isFluidWidth: true,
-                  src: `http://localhost:3000${product.images[selectedImage]}`,
-                  sizes: "(max-width: 2000px) 100vw, 200px",
-                },
-                largeImage: {
-                  src: `http://localhost:3000${product.images[selectedImage]}`,
-                  sizes: "(max-width: 8000px)",
-                  width: 2000,
-                  height: 800,
-                },
-                enlargedImagePosition: "beside",
-                isHintEnabled: true,
-                shouldUsePositiveSpaceLens: true,
-                enlargedImageContainerClassName:
-                  "rounded-lg shadow-xl border border-gray-300 overflow-hidden w-[500px] h-full",
-                lensStyle: {
-                  backgroundColor: "rgba(255,255,255,0.3)",
-                  border: "1px solid #999",
-                },
-                enlargedImageContainerDimensions: {
-                  width: "110%",
-                  height: "100%",
-                },
-              }}
+        <div className="space-y-4 ml-[20px]">
+          <div className="relative w-[650px] h-[500px]   bg-white">
+            <Image
+              src={
+                product.images && product.images.length > 0
+                  ? `http://localhost:3000${product.images[selectedImage]}`
+                  : "/placeholder.svg"
+              }
+              alt={product.name}
+              fill
+              className="object-cover"
+              priority
             />
           </div>
-  
+
           <div className="grid grid-cols-4 gap-2">
             {product.images.map((image, index) => (
               <div
@@ -325,7 +330,7 @@ export function ProductDetail({
             ))}
           </div>
         </div>
-  
+
         <div className="mt-4">
           <h1 className="text-3xl font-display font-medium text-gray-900 mb-2">
             {product.name}
@@ -333,11 +338,11 @@ export function ProductDetail({
           <p className="text-2xl font-medium text-gray-900 mb-6">
             {formatPrice(product.price)}
           </p>
-  
+
           <div className="mb-6">
             <p className="text-gray-600">{product.description}</p>
           </div>
-  
+
           <div className="mb-6">
             <h3 className="text-sm font-medium text-gray-900 mb-2">Details</h3>
             <ul className="list-disc pl-5 text-gray-600 space-y-1">
@@ -346,7 +351,7 @@ export function ProductDetail({
               ))}
             </ul>
           </div>
-  
+
           {product.availableSizes && (
             <div className="mb-8">
               <h3 className="text-sm font-medium text-gray-900 mb-2">Size</h3>
@@ -370,7 +375,7 @@ export function ProductDetail({
               </div>
             </div>
           )}
-  
+
           <div className="mb-8">
             <h3 className="text-sm font-medium text-gray-900 mb-2">Quantity</h3>
             <div className="flex items-center">
@@ -409,17 +414,18 @@ export function ProductDetail({
               </span>
             </div>
           </div>
-  
+
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <Button
               variant="luxury"
               size="lg"
               className="flex-1"
               onClick={handleAddToCart}
+              disabled={!selectedSize || availableStock === 0 || quantity === 0}
             >
               เพิ่มลงตะกร้า
             </Button>
-  
+
             <Button
               variant={isInWishlist ? "outline" : "luxuryOutline"}
               size="lg"
@@ -434,12 +440,12 @@ export function ProductDetail({
                 className={`h-5 w-5 ${isInWishlist ? "fill-red-500" : ""}`}
               />
             </Button>
-  
+
             <Button variant="luxuryOutline" size="lg" className="sm:w-auto">
               <Share2 className="h-5 w-5" />
             </Button>
           </div>
-  
+
           {/* ⭐⭐⭐⭐⭐ ให้คะแนน + คอมเมนต์ */}
           <div className="mb-4">
             <textarea
@@ -451,22 +457,24 @@ export function ProductDetail({
           </div>
           <div className="flex items-center mb-4">
             <span className="text-sm text-gray-700 mr-2">ให้คะแนนสินค้า:</span>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  onClick={() => {
-                    setSelectedRating(star);
-                    if (reviewComment.trim() === "") {
-                      if (!isSubmitting) {
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                onClick={() => {
+                  setSelectedRating(star);
+                  if (reviewComment.trim() === "") {
+                    if (!isSubmitting) {
                       handleSubmitReview(star, "");
-                      }
                     }
-                  }}
-                  className={`h-6 w-6 cursor-pointer transition-all ${
-                    star <= selectedRating ? "fill-gold-500 text-gold-500" : "text-gray-300"
-                  }`}
-                />
-              ))}
+                  }
+                }}
+                className={`h-6 w-6 cursor-pointer transition-all ${
+                  star <= selectedRating
+                    ? "fill-gold-500 text-gold-500"
+                    : "text-gray-300"
+                }`}
+              />
+            ))}
             <span className="ml-2 text-sm text-gray-700">
               {averageRating.toFixed(1)} / 5 ({totalReviews} รีวิว)
             </span>
@@ -478,8 +486,8 @@ export function ProductDetail({
             onClick={() => handleSubmitReview(selectedRating, reviewComment)}
             disabled={
               isSubmitting ||
-              selectedRating === 0 ||                  // ต้องมีดาว
-              reviewComment.trim() === ""             // ต้องมีคอมเมนต์ (เพราะปุ่มนี้ไว้ส่งคอมเมนต์)
+              selectedRating === 0 || // ต้องมีดาว
+              reviewComment.trim() === "" // ต้องมีคอมเมนต์ (เพราะปุ่มนี้ไว้ส่งคอมเมนต์)
             }
           >
             ส่งรีวิว
@@ -489,7 +497,7 @@ export function ProductDetail({
               คุณให้คะแนนไปแล้ว {selectedRating} ดาว ขอบคุณครับ ❤️
             </p>
           )}
-  
+
           {addedToCart && (
             <div className="p-4 bg-green-50 text-green-700 border border-green-200 rounded-md flex items-center mb-6">
               <Check className="h-5 w-5 mr-2" />
@@ -498,7 +506,7 @@ export function ProductDetail({
           )}
         </div>
       </div>
-  
+
       {/* รีวิวทั้งหมด */}
       <div className="mt-16">
         <h3 className="text-lg font-medium mb-4">
@@ -526,8 +534,7 @@ export function ProductDetail({
                   <span className="text-white font-bold">
                     {r.userId?.firstName.charAt(0).toUpperCase()}
                   </span>
-                )
-              }
+                )}
               </div>
 
               {/* ข้อมูลรีวิว */}
@@ -541,13 +548,17 @@ export function ProductDetail({
                       <Star
                         key={star}
                         className={`h-4 w-4 ${
-                          star <= r.rating ? "fill-gold-500 text-gold-500" : "text-gray-300"
+                          star <= r.rating
+                            ? "fill-gold-500 text-gold-500"
+                            : "text-gray-300"
                         }`}
                       />
                     ))}
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mt-1">{r.comment || "ไม่มีข้อความรีวิว"}</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  {r.comment || "ไม่มีข้อความรีวิว"}
+                </p>
               </div>
             </div>
           ))}
@@ -566,7 +577,9 @@ export function ProductDetail({
               <button
                 className="px-2 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
                 onClick={() => fetchProductReviews(currentPage + 1)}
-                disabled={currentPage === Math.ceil(totalReviews / reviewsPerPage)}
+                disabled={
+                  currentPage === Math.ceil(totalReviews / reviewsPerPage)
+                }
               >
                 ถัดไป
               </button>
@@ -574,7 +587,7 @@ export function ProductDetail({
           </div>
         </div>
       </div>
-  
+
       <div className="mt-16 grid md:grid-cols-3 gap-8">
         {product.features && product.features.length > 0 && (
           <div className="mt-16 grid md:grid-cols-3 gap-8">
@@ -594,5 +607,4 @@ export function ProductDetail({
       </div>
     </div>
   );
-  
 }

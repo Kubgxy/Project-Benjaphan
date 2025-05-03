@@ -10,11 +10,10 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Product, AvailableSize, AvailableColor } from "@/lib/types";
 
-
 // 🟢 สร้าง Function แปลง Product → ProductCardProps
 const mapProductToCardProduct = (product: Product) => ({
-  id_product: product.id_product,          // Include id_product
-  _id: product._id,                        // Include _id
+  id_product: product.id_product, // Include id_product
+  _id: product._id, // Include _id
   name: product.name,
   price: product.price,
   description: product.description,
@@ -39,7 +38,6 @@ const mapProductToCardProduct = (product: Product) => ({
   availableSizes: product.availableSizes,
   availableColors: product.availableColors,
 });
-
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
@@ -78,8 +76,8 @@ export default function ProductsPage() {
 
   // ✅ Filter by category
   let filteredProducts = categoryFilter
-  ? products.filter((product) => product.category === categoryFilter)   
-  : products;
+    ? products.filter((product) => product.category === categoryFilter)
+    : products;
 
   // ✅ Sort products
   switch (sortOption) {
@@ -110,8 +108,6 @@ export default function ProductsPage() {
   const currentCategory = categoryFilter
     ? categories.find((cat) => cat.slug === categoryFilter)?.name
     : "สินค้าทั้งหมด";
-
-
 
   return (
     <div className="min-h-screen bg-cream-50">
@@ -199,12 +195,20 @@ export default function ProductsPage() {
           <p className="text-center text-brown-800">กำลังโหลดสินค้า...</p>
         ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id_product}
-                product={mapProductToCardProduct(product)}
-              />
-            ))}
+            {filteredProducts
+              .sort((a, b) => {
+                if (a.category === "chaloms" && b.category !== "chaloms")
+                  return -1;
+                if (a.category !== "chaloms" && b.category === "chaloms")
+                  return 1;
+                return 0;
+              })
+              .map((product) => (
+                <ProductCard
+                  key={product.id_product}
+                  product={mapProductToCardProduct(product)}
+                />
+              ))}
           </div>
         ) : (
           <div className="text-center py-12 bg-white rounded-lg shadow-sm">
