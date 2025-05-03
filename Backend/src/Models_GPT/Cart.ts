@@ -6,6 +6,8 @@ const cartItemSchema = new mongoose.Schema({
     ref: 'Product',
     required: true                           // ต้องมี product
   },
+  name: { type: String },  // ✅ snapshot name
+  images: [{ type: String }],               // รูปภาพ snapshot ตอนหยิบเข้าตะกร้า
   size: { type: String },                   // ไซส์ที่เลือก เช่น S, M, L
   quantity: { type: Number, default: 1 },   // จำนวนที่เลือก
   priceAtAdded: { type: Number },           // ราคา ณ เวลาหยิบเข้าตะกร้า (กันราคาถูกแก้ภายหลัง)

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { createOrder } from "@/actions/order-actions";
 import { formatPrice } from "@/lib/utils";
 import { ShoppingCart, MapPinHouse, Package, Banknote } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 export function CheckoutForm() {
   const router = useRouter();
@@ -20,45 +21,25 @@ export function CheckoutForm() {
   const [loading, setLoading] = useState(true);
   const [showShippingModal, setShowShippingModal] = useState(false);
   const modalRef = useRef<HTMLDialogElement>(null);
-  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
+  const [paymentMethod] = useState("bank_transfer");
+  const [addressList, setAddressList] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    null
+  );
 
   const [shippingInfo, setShippingInfo] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
+    label: "",
     address: "",
     city: "",
     state: "",
     postalCode: "",
+    country: "Thailand",
   });
 
-  useEffect(() => {
-    if (!isShippingInfoValid()) {
-      setShowShippingModal(true);
-      modalRef.current?.showModal();
-    }
-  }, []); // ✅ แก้เป็น [] เพื่อให้เช็กครั้งแรกตอนเข้าหน้า
-
-  const isShippingInfoValid = () => {
-    return (
-      shippingInfo.firstName.trim() &&
-      shippingInfo.lastName.trim() &&
-      shippingInfo.phone.trim() &&
-      shippingInfo.address.trim() &&
-      shippingInfo.city.trim() &&
-      shippingInfo.state.trim() &&
-      shippingInfo.postalCode.trim()
-    );
-  };
-
-  const handleSaveShipping = () => {
-    setShowShippingModal(false);
-    modalRef.current?.close();
-  };
-
+  // โหลด checkout summary
   useEffect(() => {
     axios
-      .get("http://localhost:3000/api/checkout/summary", {
+      .get("http://localhost:3000/api/order/checkoutSummary", {
         withCredentials: true,
       })
       .then((res) => {
@@ -73,6 +54,84 @@ export function CheckoutForm() {
       })
       .finally(() => setLoading(false));
   }, [router]);
+
+  // โหลด address list
+  useEffect(() => {
+    axios
+      .get("http://localhost:3000/api/user/getAddress", {
+        withCredentials: true,
+      })
+      .then((res) => {
+        setAddressList(res.data.addresses || []);
+        if (res.data.addresses.length > 0) {
+          const defaultAddr = res.data.addresses[0];
+          setSelectedAddressId(defaultAddr._id);
+          setShippingInfo({
+            label: defaultAddr.label,
+            address: defaultAddr.addressLine,
+            city: defaultAddr.city,
+            state: defaultAddr.province,
+            postalCode: defaultAddr.postalCode,
+            country: defaultAddr.country,
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("❌ Failed to load addresses:", err);
+      });
+  }, []);
+
+  const handleSaveShipping = () => {
+    if (selectedAddressId) {
+      axios
+        .patch(
+          `http://localhost:3000/api/user/updateAddress/${selectedAddressId}`,
+          {
+            label: shippingInfo.label,
+            addressLine: shippingInfo.address,
+            city: shippingInfo.city,
+            province: shippingInfo.state,
+            postalCode: shippingInfo.postalCode,
+            country: shippingInfo.country,
+          },
+          { withCredentials: true }
+        )
+        .then(() => {
+          toast({
+            title: "✅ แก้ไขที่อยู่เรียบร้อยแล้ว",
+            description: "กรุณาเลือกที่อยู่เพื่อทำการสั่งซื้อ",
+          });
+          window.location.reload();
+        })
+        .catch(() => toast({
+          title: "❌ แก้ไขที่อยู่ล้มเหลว",
+          description: "กรุณาลองใหม่อีกครั้ง",
+        }));
+    } else {
+      axios
+        .post(
+          "http://localhost:3000/api/user/addAddress",
+          {
+            label: shippingInfo.label,
+            addressLine: shippingInfo.address,
+            city: shippingInfo.city,
+            province: shippingInfo.state,
+            postalCode: shippingInfo.postalCode,
+            country: shippingInfo.country,
+          },
+          { withCredentials: true }
+        )
+        .then(() => {
+          toast({
+            title: "✅ เพิ่มที่อยู่เรียบร้อยแล้ว",
+            description: "กรุณาเลือกที่อยู่เพื่อทำการสั่งซื้อ",
+          });
+          window.location.reload();
+        })
+        .catch(() => alert("❌ เพิ่มที่อยู่ล้มเหลว"));
+    }
+    modalRef.current?.close();
+  };
 
   const handlePlaceOrder = async () => {
     setIsSubmitting(true);
@@ -112,121 +171,75 @@ export function CheckoutForm() {
   }
 
   return (
-    <div className="container mx-auto p-4  max-w-6xl">
+    <div className="container mx-auto p-4 max-w-6xl">
       <h1 className="flex items-center gap-2 text-3xl font-display font-medium text-brown-800 mb-8">
         <ShoppingCart className="w-8 h-8 text-yellow-500" />
         ทำการสั่งซื้อ
       </h1>
-      {/* MODAL ส่วนกรอกที่อยู่ */}
+
+      {/* MODAL เพิ่ม/แก้ไขที่อยู่ */}
       <dialog
         ref={modalRef}
         className="rounded-lg p-6 w-full max-w-3xl z-50 bg-white shadow-lg"
       >
         <h2 className="flex gap-2 text-lg font-semibold mb-4 text-brown-800">
           <MapPinHouse className="w-6 h-6 text-yellow-500" />
-          กรอกที่อยู่จัดส่ง
+          {selectedAddressId ? "แก้ไขที่อยู่" : "เพิ่มที่อยู่ใหม่"}
         </h2>
 
         <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium mb-1">ชื่อ</label>
-            <input
-              type="text"
-              placeholder="กรอกชื่อ"
-              value={shippingInfo.firstName}
-              onChange={(e) =>
-                setShippingInfo({ ...shippingInfo, firstName: e.target.value })
-              }
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">นามสกุล</label>
-            <input
-              type="text"
-              placeholder="กรอกนามสกุล"
-              value={shippingInfo.lastName}
-              onChange={(e) =>
-                setShippingInfo({ ...shippingInfo, lastName: e.target.value })
-              }
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">เบอร์โทร</label>
-            <input
-              type="number"
-              placeholder="กรอกเบอร์โทร"
-              value={shippingInfo.phone}
-              onChange={(e) =>
-                setShippingInfo({ ...shippingInfo, phone: e.target.value })
-              }
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">ที่อยู่</label>
-            <input
-              type="text"
-              placeholder="กรอกที่อยู่"
-              value={shippingInfo.address}
-              onChange={(e) =>
-                setShippingInfo({ ...shippingInfo, address: e.target.value })
-              }
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">เขต/อำเภอ</label>
-            <input
-              type="text"
-              placeholder="กรอกเขต/อำเภอ"
-              value={shippingInfo.city}
-              onChange={(e) =>
-                setShippingInfo({ ...shippingInfo, city: e.target.value })
-              }
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">จังหวัด</label>
-            <input
-              type="text"
-              placeholder="กรอกจังหวัด"
-              value={shippingInfo.state}
-              onChange={(e) =>
-                setShippingInfo({ ...shippingInfo, state: e.target.value })
-              }
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              รหัสไปรษณีย์
-            </label>
-            <input
-              type="number"
-              placeholder="กรอกรหัสไปรษณีย์"
-              value={shippingInfo.postalCode}
-              onChange={(e) =>
-                setShippingInfo({ ...shippingInfo, postalCode: e.target.value })
-              }
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
+          <input
+            type="text"
+            placeholder="ป้ายกำกับ (บ้าน / ออฟฟิศ)"
+            value={shippingInfo.label}
+            onChange={(e) =>
+              setShippingInfo({ ...shippingInfo, label: e.target.value })
+            }
+            className="w-full border rounded px-3 py-2"
+          />
+          <input
+            type="text"
+            placeholder="ที่อยู่"
+            value={shippingInfo.address}
+            onChange={(e) =>
+              setShippingInfo({ ...shippingInfo, address: e.target.value })
+            }
+            className="w-full border rounded px-3 py-2"
+          />
+          <input
+            type="text"
+            placeholder="เขต/อำเภอ"
+            value={shippingInfo.city}
+            onChange={(e) =>
+              setShippingInfo({ ...shippingInfo, city: e.target.value })
+            }
+            className="w-full border rounded px-3 py-2"
+          />
+          <input
+            type="text"
+            placeholder="จังหวัด"
+            value={shippingInfo.state}
+            onChange={(e) =>
+              setShippingInfo({ ...shippingInfo, state: e.target.value })
+            }
+            className="w-full border rounded px-3 py-2"
+          />
+          <input
+            type="number"
+            placeholder="รหัสไปรษณีย์"
+            value={shippingInfo.postalCode}
+            onChange={(e) =>
+              setShippingInfo({ ...shippingInfo, postalCode: e.target.value })
+            }
+            className="w-full border rounded px-3 py-2"
+          />
         </div>
 
         <button
           onClick={handleSaveShipping}
           className="mt-4 w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded"
         >
-          บันทึกที่อยู่
+          บันทึก
         </button>
       </dialog>
 
@@ -235,51 +248,65 @@ export function CheckoutForm() {
         <div className="flex justify-between items-center mb-2">
           <h2 className="flex gap-2 text-lg font-semibold text-brown-800 items-center">
             <MapPinHouse className="w-6 h-6 text-yellow-500" />
-            กรอกที่อยู่จัดส่ง
+            ที่อยู่จัดส่ง
           </h2>
-          {!shippingInfo.firstName ||
-          !shippingInfo.phone ||
-          !shippingInfo.address ? (
-            <button
-              className="bg-yellow-500 hover:bg-yellow-600  text-white text-sm px-4 py-2 rounded transition"
-              onClick={() => {
-                setShowShippingModal(true);
-                modalRef.current?.showModal();
-              }}
-            >
-              เพิ่มที่อยู่
-            </button>
-          ) : (
-            <button
-              className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded transition"
-              onClick={() => {
-                setShowShippingModal(true);
-                modalRef.current?.showModal();
-              }}
-            >
-              เปลี่ยนที่อยู่
-            </button>
-          )}
+          <button
+            className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm px-4 py-2 rounded"
+            onClick={() => {
+              setSelectedAddressId(null);
+              setShippingInfo({
+                label: "",
+                address: "",
+                city: "",
+                state: "",
+                postalCode: "",
+                country: "Thailand",
+              });
+              modalRef.current?.showModal();
+            }}
+          >
+            เพิ่มที่อยู่ใหม่
+          </button>
         </div>
 
-        {/* ส่วนข้อความเตือนหรือแสดงข้อมูล */}
-        {!shippingInfo.firstName ||
-        !shippingInfo.phone ||
-        !shippingInfo.address ? (
-          <p className="text-red-500 text-sm mb-2">
-            ⚠ กรุณากรอกที่อยู่เพื่อจัดส่งสินค้า
-          </p>
+        {addressList.length > 0 ? (
+          <>
+            <select
+              value={selectedAddressId || ""}
+              onChange={(e) => {
+                const addr = addressList.find((a) => a._id === e.target.value);
+                if (addr) {
+                  setSelectedAddressId(addr._id);
+                  setShippingInfo({
+                    label: addr.label,
+                    address: addr.addressLine,
+                    city: addr.city,
+                    state: addr.province,
+                    postalCode: addr.postalCode,
+                    country: addr.country,
+                  });
+                }
+              }}
+              className="w-full border rounded px-3 py-2 mb-2"
+            >
+              {addressList.map((addr) => (
+                <option key={addr._id} value={addr._id}>
+                  จัดส่งที่ : {addr.label} {addr.addressLine}, {addr.city},{" "}
+                  {addr.province} {addr.postalCode}
+                </option>
+              ))}
+            </select>
+            <button
+              className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm px-4 py-2 rounded"
+              onClick={() => modalRef.current?.showModal()}
+            >
+              แก้ไขที่อยู่นี้
+            </button>
+          </>
         ) : (
-          <div className="mb-2">
-            <p className="font-medium">
-              {shippingInfo.firstName} {shippingInfo.lastName} |{" "}
-              {shippingInfo.phone}
-            </p>
-            <p className="text-sm text-gray-700">
-              {shippingInfo.address}, {shippingInfo.city}, {shippingInfo.state},{" "}
-              {shippingInfo.postalCode}
-            </p>
-          </div>
+          <p className="text-red-500 text-sm">
+            ⚠ กรุณาเพิ่มที่อยู่จัดส่งก่อนทำการสั่งซื้อ
+          </p>
         )}
       </div>
 
@@ -314,14 +341,14 @@ export function CheckoutForm() {
                 </p>
               </div>
             </div>
-            <p className="font-medium">{formatPrice(item.price)}</p>
+            <p className="font-medium">{formatPrice(subtotal)}</p>
           </div>
         ))}
       </div>
 
       {/* สรุปยอดสั่งซื้อ */}
       <div className="bg-white p-4 rounded shadow mb-4">
-        <div className="flex justify-between mb-2 ">
+        <div className="flex justify-between mb-2">
           <span className="text-brown-800">ราคารวมสินค้า</span>
           <span>{formatPrice(subtotal)}</span>
         </div>
@@ -342,13 +369,23 @@ export function CheckoutForm() {
       {error && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
       )}
-      <Button
-        onClick={handlePlaceOrder}
-        className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded text-lg font-semibold"
-        disabled={isSubmitting || !isShippingInfoValid()}
-      >
-        {isSubmitting ? "กำลังประมวลผล..." : "ยืนยันคำสั่งซื้อ"}
-      </Button>
+      <div className="flex gap-4">
+        <Button
+          onClick={() => router.push("/cart")}
+          className="w-full bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded text-lg font-semibold"
+          disabled={isSubmitting}
+        >
+          ยกเลิก
+        </Button>
+        <Button
+          onClick={handlePlaceOrder}
+          className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded text-lg font-semibold"
+          disabled={isSubmitting || !selectedAddressId}
+        >
+          {isSubmitting ? "กำลังประมวลผล..." : "ยืนยันคำสั่งซื้อ"}
+        </Button>
+
+      </div>
     </div>
   );
 }
