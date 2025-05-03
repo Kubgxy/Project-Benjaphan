@@ -581,7 +581,7 @@ export function AccountContent() {
                           {addresses.map((addr, index) => (
                             <div
                               key={index}
-                              className="border rounded p-4 shadow-sm flex justify-between items-start"
+                              className="border rounded p-4 shadow-sm mb-4 flex justify-between items-start"
                             >
                               <div>
                                 <p className="font-medium">{addr.label}</p>
