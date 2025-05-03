@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
-import Review from "../Models/Review";
-import Product from "../Models/Product";
+// import Review from "../Models/Review";
+// import Product from "../Models/Product";
+
+import Review from "../Models_GPT/Review";
+import Product from "../Models_GPT/Product";
+
 import mongoose from "mongoose";
 
 // ✅ เพิ่มรีวิวใหม่ (หลายรอบได้)

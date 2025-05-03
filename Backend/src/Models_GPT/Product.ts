@@ -34,7 +34,7 @@ const productSchema = new mongoose.Schema({
 
   metaTitle: { type: String },                   // SEO title
   metaDescription: { type: String }              // SEO description
-}, { timestamps: true });
+}, { collection: 'Products', timestamps: true });
 
 // 💡 Virtual field → คำนวณ stock รวมจาก availableSizes
 productSchema.virtual('stock').get(function () {

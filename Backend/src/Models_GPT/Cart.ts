@@ -21,6 +21,6 @@ const cartSchema = new mongoose.Schema({
   items: [cartItemSchema],                  // สินค้าในตะกร้า (array)
   promotionApplied: { type: String },       // โค้ดโปรโมชั่นที่ใช้ (เช่น COUPON2025)
   updatedAt: { type: Date, default: Date.now } // เวลาอัปเดตล่าสุด
-}, { timestamps: true });                   // createdAt, updatedAt
+}, { collection: 'Cart', timestamps: true });                   // createdAt, updatedAt
 
 export default mongoose.model('Cart', cartSchema);

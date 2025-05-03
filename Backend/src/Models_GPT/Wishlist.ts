@@ -17,6 +17,6 @@ const wishlistSchema = new mongoose.Schema({
     unique: true                           // หนึ่ง user มีหนึ่ง wishlist
   },
   products: [wishlistItemSchema]           // สินค้าใน wishlist (array)
-}, { timestamps: true });                  // createdAt, updatedAt
+}, { collection: 'Wishlist', timestamps: true });                  // createdAt, updatedAt
 
 export default mongoose.model('Wishlist', wishlistSchema);

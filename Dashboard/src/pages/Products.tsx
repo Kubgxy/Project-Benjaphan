@@ -83,6 +83,8 @@ const Products: React.FC = () => {
   });
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
+  const IMAGE_BASE_URL = "http://localhost:3000";
+
   const fetchProducts = async () => {
     try {
       const response = await axios.get(
@@ -90,9 +92,8 @@ const Products: React.FC = () => {
         { withCredentials: true }
       );
       setProducts(response.data.products);
-      console.log(response.data.products);
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("❌ Error fetching products:", error);
     }
   };
 
@@ -114,11 +115,10 @@ const Products: React.FC = () => {
     );
   };
 
-  // ✅ ใช้ได้แล้วตรงนี้
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name
       .toLowerCase()
-      .includes(searchTerm.toLowerCase()); // ✅ ตรงนี้!
+      .includes(searchTerm.toLowerCase());
     const matchesCategory =
       categoryFilter !== "all" ? product.category === categoryFilter : true;
     const matchesStatus =
@@ -129,6 +129,8 @@ const Products: React.FC = () => {
         : true;
     return matchesSearch && matchesCategory && matchesStatus;
   });
+
+  
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     if (
@@ -142,6 +144,7 @@ const Products: React.FC = () => {
       return sortConfig.direction === "asc" ? 1 : -1;
     }
     return 0;
+    
   });
 
   const handleAddProduct = async (e: React.FormEvent) => {
@@ -161,9 +164,7 @@ const Products: React.FC = () => {
       formData.append("isNewArrival", newProduct.isNewArrival.toString());
       formData.append("isBestseller", newProduct.isBestseller.toString());
       formData.append("isOnSale", newProduct.isOnSale.toString());
-      console.log("images", newProduct.images);
       newProduct.images.forEach((image) => {
-        console.log("Appending image:", image);
         formData.append("images", image);
       });
 
@@ -179,15 +180,102 @@ const Products: React.FC = () => {
       toast({ title: "✅ เพิ่มสินค้าสำเร็จ!" });
       setAddDialogOpen(false);
       fetchProducts();
+      resetNewProduct();
     } catch (error) {
       console.error("❌ Error adding product:", error);
       toast({ title: "❌ เพิ่มสินค้าไม่สำเร็จ" });
     }
   };
 
-  const handleDeleteClick = (productId: string) => {
-    setProductToDelete(productId);
-    setDeleteDialogOpen(true);
+  const handleUpdateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const formData = new FormData();
+      formData.append("name", newProduct.name);
+      formData.append("category", newProduct.category);
+      formData.append("price", newProduct.price.toString());
+      formData.append("description", newProduct.description);
+      formData.append("details", JSON.stringify(newProduct.details));
+      formData.append(
+        "availableSizes",
+        JSON.stringify(newProduct.availableSizes)
+      );
+      formData.append("isNewArrival", newProduct.isNewArrival.toString());
+      formData.append("isBestseller", newProduct.isBestseller.toString());
+      formData.append("isOnSale", newProduct.isOnSale.toString());
+      newProduct.images.forEach((image) => {
+        formData.append("images", image);
+      });
+
+      await axios.patch(
+        `http://localhost:3000/api/product/updateProducts/${newProduct.id_product}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        }
+      );
+
+      toast({ title: "✅ อัปเดตสินค้าสำเร็จ!" });
+      setAddDialogOpen(false);
+      fetchProducts();
+      resetNewProduct();
+    } catch (error) {
+      console.error("❌ Error updating product:", error);
+      toast({ title: "❌ อัปเดตสินค้าไม่สำเร็จ" });
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
+    try {
+      await axios.delete(
+        `http://localhost:3000/api/product/delProducts/${productToDelete}`,
+        { withCredentials: true }
+      );
+      
+      toast({ title: "✅ ลบสินค้าสำเร็จ!" });
+      fetchProducts();
+    } catch (error) {
+      console.error("❌ Error deleting product:", error);
+      toast({ title: "❌ ลบสินค้าไม่สำเร็จ" });
+    } finally {
+      setDeleteDialogOpen(false);
+      setProductToDelete(null);
+    }
+  };
+
+  const handleEditClick = (product: Product) => {
+    setNewProduct({
+      id_product: product.id_product,
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      availableSizes: product.availableSizes,
+      description: product.description,
+      details: product.details,
+      images: [] as File[],
+      isNewArrival: product.isNewArrival,
+      isBestseller: product.isBestseller,
+      isOnSale: product.isOnSale,
+    });
+    setAddDialogOpen(true);
+  };
+
+  const resetNewProduct = () => {
+    setNewProduct({
+      id_product: "",
+      name: "",
+      category: "",
+      price: 0,
+      availableSizes: [],
+      description: "",
+      details: [],
+      images: [],
+      isNewArrival: false,
+      isBestseller: false,
+      isOnSale: false,
+    });
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -210,9 +298,9 @@ const Products: React.FC = () => {
     toast({ title: "CSV Export ยังไม่ทำ" });
   };
 
-  const IMAGE_BASE_URL = "http://localhost:3000";
-
   const uniqueCategories = Array.from(new Set(products.map((p) => p.category)));
+
+
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -312,7 +400,9 @@ const Products: React.FC = () => {
             <TableBody>
               {sortedProducts.length > 0 ? (
                 sortedProducts.map((product) => (
+                  
                   <TableRow key={product._id}>
+                    
                     <TableCell>
                       <Checkbox
                         checked={selectedProducts.includes(product._id)}
@@ -362,14 +452,22 @@ const Products: React.FC = () => {
                       <Button variant="ghost" size="icon">
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEditClick(product)} // <<< โหลดข้อมูลเข้า Dialog
+                      >
                         <Edit className="w-4 h-4" />
                       </Button>
+
                       <Button
                         variant="ghost"
                         size="icon"
                         className="text-ruby hover:text-ruby/80"
-                        onClick={() => handleDeleteClick(product._id)}
+                        onClick={() => {
+                          setProductToDelete(product._id); // <<< ต้องเซต id ที่จะลบ
+                          setDeleteDialogOpen(true);
+                        }}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -401,7 +499,7 @@ const Products: React.FC = () => {
             >
               ยกเลิก
             </Button>
-            {/* <Button variant="destructive" onClick={handleDeleteConfirm}>ลบ</Button> */}
+            <Button variant="destructive" onClick={handleDeleteConfirm}>ลบ</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -412,7 +510,12 @@ const Products: React.FC = () => {
           <DialogHeader>
             <DialogTitle>เพิ่มสินค้าใหม่</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleAddProduct} className="space-y-4">
+          <form
+            onSubmit={
+              newProduct.id_product ? handleUpdateProduct : handleAddProduct
+            }
+            className="space-y-4"
+          >
             <Input
               name="id_product"
               placeholder="รหัสสินค้า"
@@ -451,7 +554,6 @@ const Products: React.FC = () => {
             />
             {/* ❌ ลบ stock ออก */}
 
-            {/* ✅ เพิ่ม availableSizes แบบใหม่ (เช่น S:10,M:5,L:7) */}
             {/* เพิ่ม Sizes แบบ Dynamic */}
             <div className="space-y-2">
               <label className="font-medium">ขนาดและจำนวน:</label>
@@ -556,7 +658,9 @@ const Products: React.FC = () => {
                 <span>ลดราคา</span>
               </label>
             </div>
-            <Button type="submit">บันทึก</Button>
+            <Button type="submit">
+              {newProduct.id_product ? "อัปเดตสินค้า" : "บันทึก"}
+            </Button>
           </form>
         </DialogContent>
       </Dialog>

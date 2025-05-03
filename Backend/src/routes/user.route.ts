@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { registerUser, loginUser, logoutUser } from '../controllers/user.controller';
+import { registerUser, loginUser, logoutUser, getAddress, addAddress, updateAddress, deleteAddress } from '../controllers/user.controller';
 import { updateMe, getUserProfile } from '../controllers/user.controller';
 import { verifyToken } from '../middlewares/verifyToken';
 import { upload } from '../middlewares/avatarUpload.middleware';
@@ -20,5 +20,9 @@ user.post('/loginUser', loginUser);
 user.post('/logoutUser', logoutUser);
 user.get('/getUserProfile', verifyToken, getUserProfile);
 user.patch('/updateUser',verifyToken, upload.single('avatar'), updateMe);
+user.get('/getAddress', verifyToken, getAddress);
+user.post('/addAddress', verifyToken, addAddress);
+user.patch('/updateAddress/:addressId', verifyToken, updateAddress);
+user.delete('/deleteAddress/:addressId', verifyToken, deleteAddress);
 
 export default user;

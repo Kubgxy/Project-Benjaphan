@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
-import Wishlist from "../Models/Wishlist";
-import Product from "../Models/Product";
+
+// import Wishlist from "../Models/Wishlist";
+// import Product from "../Models/Product";
+
+import Wishlist from "../Models_GPT/Wishlist";
+import Product from "../Models_GPT/Product";
 
 export const addToWishlist = async (req: Request, res: Response) => {
   const userId = req.user?.userId;

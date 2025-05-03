@@ -1,148 +1,152 @@
-import { Request, Response } from 'express';
-import Order from '../Models/Order';
-import Product from '../Models/Product';
-import { v4 as uuidv4 } from 'uuid';
+// import { Request, Response } from 'express';
+// // import Order from '../Models/Order';
+// // import Product from '../Models/Product';
 
-export const createOrder = async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
-  const {
-    items, // [{ productId, quantity, size }]
-    shippingInfo,
-    paymentMethod,
-  } = req.body;
+// import Order from '../Models_GPT/Order'; // Model
+// import Product from '../Models_GPT/Product'; // Model
 
-  if (!userId || !items || !shippingInfo ) {
-    res.status(400).json({ message: 'Missing required fields' });
-    return;
-  }
+// import { v4 as uuidv4 } from 'uuid';
 
-  try {
-    let subtotal = 0;
-    const orderItems = [];
+// export const createOrder = async (req: Request, res: Response) => {
+//   const userId = req.user?.userId;
+//   const {
+//     items, // [{ productId, quantity, size }]
+//     shippingInfo,
+//     paymentMethod,
+//   } = req.body;
 
-    // validate and prepare items
-    for (const item of items) {
-      const product = await Product.findOne({ id_product: item.productId });
-      if (!product) {
-        res.status(404).json({ message: `Product not found: ${item.productId}` });
-        return;
-      }
+//   if (!userId || !items || !shippingInfo ) {
+//     res.status(400).json({ message: 'Missing required fields' });
+//     return;
+//   }
 
-      const totalItemPrice = product.price * item.quantity;
-      subtotal += totalItemPrice;
+//   try {
+//     let subtotal = 0;
+//     const orderItems = [];
 
-      orderItems.push({
-        productId: item.productId,
-        name: product.name,
-        price: product.price,
-        quantity: item.quantity,
-        size: item.size,
-        images: product.images,
-      });
-    }
+//     // validate and prepare items
+//     for (const item of items) {
+//       const product = await Product.findOne({ id_product: item.productId });
+//       if (!product) {
+//         res.status(404).json({ message: `Product not found: ${item.productId}` });
+//         return;
+//       }
 
-    const shippingFee = 50;
-    const total = subtotal + shippingFee ;
+//       const totalItemPrice = product.price * item.quantity;
+//       subtotal += totalItemPrice;
 
-    const orderId = `ORD-${uuidv4()}`;
+//       orderItems.push({
+//         productId: item.productId,
+//         name: product.name,
+//         price: product.price,
+//         quantity: item.quantity,
+//         size: item.size,
+//         images: product.images,
+//       });
+//     }
 
-    const newOrder = await Order.create({
-      orderId,
-      userId,
-      items: orderItems,
-      subtotal,
-      shippingFee,
-      total,
-      shippingInfo,
-      paymentMethod,
-      paymentStatus: 'pending',
-      orderStatus: 'pending',
-    });
+//     const shippingFee = 50;
+//     const total = subtotal + shippingFee ;
 
-    res.status(201).json({
-      success: true,
-      message: 'Order created successfully',
-      orderId: newOrder.orderId,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error });
-  }
-};
+//     const orderId = `ORD-${uuidv4()}`;
 
-export const getOrderById = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user?.userId;
-    if (!userId) {
-      res.status(401).json({ message: 'Unauthorized' });
-      return 
-    }
+//     const newOrder = await Order.create({
+//       orderId,
+//       userId,
+//       items: orderItems,
+//       subtotal,
+//       shippingFee,
+//       total,
+//       shippingInfo,
+//       paymentMethod,
+//       paymentStatus: 'pending',
+//       orderStatus: 'pending',
+//     });
 
-    if (!/^ORD-[\w-]+$/.test(req.params.orderId)) {
-      res.status(400).json({ message: 'Invalid orderId format' });
-      return 
-    }
+//     res.status(201).json({
+//       success: true,
+//       message: 'Order created successfully',
+//       orderId: newOrder.orderId,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Server error', error });
+//   }
+// };
 
-    const order = await Order.findOne({ orderId: req.params.orderId, userId }).lean();
-    if (!order) {
-      res.status(404).json({ message: 'Order not found' });
-      return 
-    }
+// export const getOrderById = async (req: Request, res: Response) => {
+//   try {
+//     const userId = req.user?.userId;
+//     if (!userId) {
+//       res.status(401).json({ message: 'Unauthorized' });
+//       return 
+//     }
 
-    const { _id, __v, ...safeOrder } = order;
-    res.json(safeOrder);
-  } catch (error) {
-    console.error('❌ getOrderById error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+//     if (!/^ORD-[\w-]+$/.test(req.params.orderId)) {
+//       res.status(400).json({ message: 'Invalid orderId format' });
+//       return 
+//     }
 
-export const getOrdersByUser = async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
+//     const order = await Order.findOne({ orderId: req.params.orderId, userId }).lean();
+//     if (!order) {
+//       res.status(404).json({ message: 'Order not found' });
+//       return 
+//     }
 
-  if (!userId) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return 
-  }
+//     const { _id, __v, ...safeOrder } = order;
+//     res.json(safeOrder);
+//   } catch (error) {
+//     console.error('❌ getOrderById error:', error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// };
 
-  try {
-    const orders = await Order.find({ userId })
-      .sort({ createdAt: -1 })
-      .select(
-        'orderId total orderStatus paymentStatus createdAt items subtotal shippingFee'
-      );
+// export const getOrdersByUser = async (req: Request, res: Response) => {
+//   const userId = req.user?.userId;
 
-    if (!orders || orders.length === 0) {
-      res.status(200).json({ success: true, orders: [] });
-      return 
-    }
+//   if (!userId) {
+//     res.status(401).json({ message: 'Unauthorized' });
+//     return 
+//   }
 
-    // Optional: map เพื่อ clean response (เช่นลบ __v, _id)  
-    const cleanedOrders = orders.map((order) => ({
-      orderId: order.orderId,
-      total: order.total,
-      subtotal: order.subtotal,
-      shippingFee: order.shippingFee,
-      orderStatus: order.orderStatus,
-      paymentStatus: order.paymentStatus,
-      createdAt: order.createdAt,
-      items: order.items.map((item: any) => ({
-        productId: item.productId, // string code
-        name: item.name,
-        images: item.images,
-        price: item.price,
-        quantity: item.quantity,
-        size: item.size,
-      })),
-    }));
+//   try {
+//     const orders = await Order.find({ userId })
+//       .sort({ createdAt: -1 })
+//       .select(
+//         'orderId total orderStatus paymentStatus createdAt items subtotal shippingFee'
+//       );
 
-    res.status(200).json({ success: true, orders: cleanedOrders });
-    return 
-  } catch (error) {
-    console.error('❌ getOrdersByUser error:', error);
-    res.status(500).json({ message: 'Server error', error });
-    return 
-  }
-};
+//     if (!orders || orders.length === 0) {
+//       res.status(200).json({ success: true, orders: [] });
+//       return 
+//     }
+
+//     // Optional: map เพื่อ clean response (เช่นลบ __v, _id)  
+//     const cleanedOrders = orders.map((order) => ({
+//       orderId: order.orderId,
+//       total: order.total,
+//       subtotal: order.subtotal,
+//       shippingFee: order.shippingFee,
+//       orderStatus: order.orderStatus,
+//       paymentStatus: order.paymentStatus,
+//       createdAt: order.createdAt,
+//       items: order.items.map((item: any) => ({
+//         productId: item.productId, // string code
+//         name: item.name,
+//         images: item.images,
+//         price: item.price,
+//         quantity: item.quantity,
+//         size: item.size,
+//       })),
+//     }));
+
+//     res.status(200).json({ success: true, orders: cleanedOrders });
+//     return 
+//   } catch (error) {
+//     console.error('❌ getOrdersByUser error:', error);
+//     res.status(500).json({ message: 'Server error', error });
+//     return 
+//   }
+// };
 
   

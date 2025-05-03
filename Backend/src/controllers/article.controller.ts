@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import Article from "../Models/Article";
+// import Article from "../Models/Article";
+import Article from "../Models_GPT/Article"; // Model
 import slugify from "slugify";
 
 

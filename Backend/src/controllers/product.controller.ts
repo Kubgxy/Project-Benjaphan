@@ -1,11 +1,14 @@
 import { Request, Response, NextFunction } from "express";
-import Product from "../Models/Product";
+import mongoose from "mongoose";
+// import Product from "../Models/Product";
+import Product from "../Models_GPT/Product"; // Model
 
 // ✅ Helper: แปลง boolean string เป็น boolean
 const toBoolean = (value: any) => value === 'true' || value === true;
 
 // ✅ Helper: แปลงเป็น array ถ้าไม่ใช่ array
 const toArray = (value: any) => Array.isArray(value) ? value : [value];
+
 
 // ✅ List ของ field ที่อนุญาตให้อัปเดต
 const allowedFields = [
@@ -118,44 +121,47 @@ export const addProduct = async (req: Request, res: Response): Promise<void> => 
   };
 
 // ✅ Update product + Validate + คงรูปเดิมถ้าไม่ได้ upload ใหม่
-export const updateProduct = async (req: Request, res: Response): Promise<void> => {
-    const id = req.params.id;
-  
-    try {
-      const images = (req.files as Express.Multer.File[] || []).map(file => `/uploads/${file.filename}`);
-      const existingProduct = await Product.findOne({ id_product: id });
-  
-      if (!existingProduct) {
-        res.status(404).json({ message: "Product not found" });
-        return;
-      }
-  
-      const updateData = prepareProductData(req.body, images.length > 0 ? images : existingProduct.images);
-  
-      // ❌ ป้องกันการแก้ id_product
-      if (updateData.id_product && updateData.id_product !== existingProduct.id_product) {
-        throw new Error('Cannot change id_product');
-      }
-  
-      const product = await Product.findOneAndUpdate({ id_product: id }, updateData, { new: true });
-      res.status(200).json({ message: "Product updated successfully", product });
-    } catch (error: any) {
-      res.status(400).json({ message: error.message || "Invalid input", error });
-    }
-  };
-  
-
-// ✅ Delete product
-export const deleteProduct = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+export const updateProduct = async (req: Request, res: Response) => {
   const id = req.params.id;
   try {
-    const product = await Product.findOneAndDelete({ id_product: id });
+    const images = (req.files as Express.Multer.File[] || []).map(file => `/uploads/products/${file.filename}`);
+    const existingProduct = await Product.findOne({ id_product: id });
+    if (!existingProduct) {
+      res.status(404).json({ message: "Product not found" });
+      return 
+    }
+
+    const updateData = prepareProductData(req.body, images.length > 0 ? images : existingProduct.images);
+
+    if (updateData.id_product && updateData.id_product !== existingProduct.id_product) {
+      res.status(400).json({ message: "Cannot change id_product" });
+      return 
+    }
+
+    const product = await Product.findOneAndUpdate({ id_product: id }, updateData, { new: true });
+    res.status(200).json({ message: "Product updated successfully", product });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+  
+// ✅ Delete product
+export const deleteProduct = async (req: Request, res: Response) => {
+  const id = req.params.id;
+  try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ message: "Invalid product _id" });
+      return 
+    }
+    const product = await Product.findByIdAndDelete(id);
     if (!product) {
       res.status(404).json({ message: "Product not found" });
-      return;
+      return 
     }
-    res.status(200).json({ message: "Product deleted successfully", product });
+    res.status(200).json({ message: "Product deleted successfully" });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Server error", error });
   }
 };

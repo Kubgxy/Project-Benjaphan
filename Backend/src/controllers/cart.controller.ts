@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
-import Cart from "../Models/Cart";
-import Product from "../Models/Product";
+// import Cart from "../Models/Cart";
+// import Product from "../Models/Product";
+
+import Cart from "../Models_GPT/Cart"; // Model
+import Product from "../Models_GPT/Product"; // Model
 
 // ✅ Add to cart
 export const addToCart = async (req: Request, res: Response): Promise<void> => {
@@ -79,7 +82,7 @@ export const removeCartItem = async (req: Request, res: Response) => {
     );
 
     // 🔄 อัปเดตตะกร้า
-    cart.items = newItems;
+    cart.items.splice(0, cart.items.length, ...newItems);
     await cart.save();
 
     res.status(200).json({ message: "Item removed from cart", cart });

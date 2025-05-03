@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 
-// 📦 ที่อยู่ย่อย (เก็บหลายที่)
 const addressSchema = new mongoose.Schema({
   label: { type: String },                      // เช่น "บ้าน", "ออฟฟิศ"
   addressLine: { type: String },               // ที่อยู่เต็มบรรทัด
@@ -8,7 +7,7 @@ const addressSchema = new mongoose.Schema({
   province: { type: String },
   postalCode: { type: String },
   country: { type: String, default: "Thailand" }
-}, { _id: false });
+}, { _id: true });
 
 const userSchema = new mongoose.Schema({
   firstName: { type: String },
@@ -58,6 +57,6 @@ const userSchema = new mongoose.Schema({
     ref: 'Notification'
   }]
 
-}, { timestamps: true });                             // createdAt, updatedAt
+}, { collection: 'Users', timestamps: true });                             // createdAt, updatedAt
 
 export default mongoose.model('User', userSchema);

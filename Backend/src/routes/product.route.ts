@@ -34,8 +34,8 @@ product.post(
 // 🟢 Update product by id_product (admin เท่านั้น + รองรับ upload รูป)
 product.patch(
   "/updateProducts/:id",
-//   verifyToken,
-//   verifyAdmin,
+  verifyToken,
+  verifyAdmin,
   productUpload.array("images", 5), // ✅ รองรับอัปโหลดหลายรูป (ถ้ามี)
   updateProduct
 );
