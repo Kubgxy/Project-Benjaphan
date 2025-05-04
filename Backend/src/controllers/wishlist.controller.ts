@@ -62,7 +62,11 @@ export const getWishlist = async (req: Request, res: Response) => {
   const userId = req.user?.userId;
 
   try {
-    const wishlist = await Wishlist.findOne({ userId: userId }).populate("products.productId");
+    const wishlist = await Wishlist.findOne({ userId: userId })
+      .populate({
+      path: "products.productId",
+      select: "name id_product images price",  // เลือก field ที่ frontend ต้องใช้
+    });
 
     if (!wishlist) {
       res.status(200).json({ wishlist: { products: [] } });

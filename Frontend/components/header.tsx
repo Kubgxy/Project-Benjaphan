@@ -3,13 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import axios from "axios";
 import { Search, ShoppingBag, Menu, X, User, Heart } from "lucide-react";
 import { useCart } from "@/context/cart-context";
 import { useWishlist } from "@/context/wishlist-context";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
-import { products } from "@/lib/data";
 import { SearchPopover } from "@/components/search-popover";
+import { Product, SearchItem } from "@/lib/types"; // Import the correct type for Product
 
 export function Header() {
   const { itemCount } = useCart();
@@ -20,6 +21,23 @@ export function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const searchBtnRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await axios.get("http://localhost:3000/api/product/getAllProducts"); // ← ดึงข้อมูลจริง
+        setProducts(res.data.products);
+        console.log("Fetched products:", res.data);
+      } catch (err) {
+        console.error("Failed to fetch products", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -28,18 +46,31 @@ export function Header() {
   }, []);
 
   // ทำให้ค้นหาแบบ google (พิมพ์แล้วเลือก suggestion หรือ enter ไป search page)
-  function handleSearchResult(item: any) {
+  function handleSearchResult(item: SearchItem) {
     setSearchOpen(false);
     if (!item) return;
+  
     if (item.id === "__search__") {
-      // กรณี enter หรือกดค้นหาโดยไม่มี suggestion ตรง
       router.push(`/search?q=${encodeURIComponent(item.name)}`);
     } else {
-      // กรณีเลือกสินค้าจาก suggestion
-      router.push(`/product/${item.id}`);
+      router.push(`/product/${item.productId}`);
     }
   }
 
+  const BACKEND_URL = "http://localhost:3000"; // URL ของ backend
+  // const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL; // ถ้าใช้ env variable
+
+  // แปลงเป็น SearchItem (ถ้า SearchPopover ใช้ type นี้)
+  const searchItems: SearchItem[] = products.map(p => ({
+    id: p._id,                // MongoDB _id
+    productId: p.id_product,  // Bencharm-002
+    name: p.name,
+    description: p.description,
+    image: p.images?.[0]
+      ? `${BACKEND_URL}${p.images[0]}`
+      : "/placeholder.svg",
+  }));
+  
   return (
     <>
       <div className="bg-gold-600 text-white py-2 text-center text-sm font-medium">
@@ -85,10 +116,10 @@ export function Header() {
                 หน้าแรก
               </Link>
               <Link
-                href="/blog"
+                href="/auspicious"
                 className="text-sm font-medium text-brown-800 hover:text-gold-600 transition-colors"
               >
-                บทความ
+                เครื่องประดับมงคล
               </Link>
               <Link
                 href="/product"
@@ -97,10 +128,10 @@ export function Header() {
                 สินค้าทั้งหมด
               </Link>
               <Link
-                href="/auspicious"
+                href="/blog"
                 className="text-sm font-medium text-brown-800 hover:text-gold-600 transition-colors"
               >
-                เครื่องประดับมงคล
+                บทความ
               </Link>
               <Link
                 href="/about"
@@ -236,7 +267,7 @@ export function Header() {
         isOpen={searchOpen}
         anchorRef={searchBtnRef}
         onClose={() => setSearchOpen(false)}
-        product={products}
+        products={searchItems}
         onResultClick={handleSearchResult}
       />
     </>
