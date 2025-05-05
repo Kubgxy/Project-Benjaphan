@@ -395,27 +395,27 @@ export function ProductDetail({
         กลับไปยังสินค้าทั้งหมด
       </Link>
 
-      <div className="grid md:grid-cols-2 gap-12">
-        <div className="space-y-4 ml-[20px]">
-          <div className="relative w-[650px] h-[500px]   bg-white">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div className="space-y-4">
+          <div className="relative w-full h-[300px] sm:h-[400px] md:h-[500px] bg-white">
             <Image
               src={
                 product.images && product.images.length > 0
                   ? `http://localhost:3000${product.images[selectedImage]}`
                   : "/placeholder.svg"
               }
-              alt={product.name}
+              alt={product.name || "Product Image"}
               fill
               className="object-cover"
               priority
             />
           </div>
 
-          <div className="grid grid-cols-4 gap-2">
+          <div className="flex overflow-x-auto gap-2">
             {product.images.map((image, index) => (
               <div
                 key={index}
-                className={`relative h-24 bg-gray-50 border cursor-pointer ${
+                className={`relative min-w-[80px] h-24 bg-gray-50 border cursor-pointer ${
                   selectedImage === index
                     ? "border-gold-500"
                     : "border-gray-200"
@@ -436,7 +436,7 @@ export function ProductDetail({
           </div>
         </div>
 
-        <div className="mt-4">
+        <div>
           <h1 className="text-3xl font-display font-medium text-gray-900 mb-2">
             {product.name}
           </h1>
@@ -457,32 +457,30 @@ export function ProductDetail({
             </ul>
           </div>
 
-          {product.availableSizes && (
-            <div className="mb-8">
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Size</h3>
-              <div className="flex flex-wrap gap-2">
-                {product.availableSizes.map((sizeObj, index) => (
-                  <button
-                    key={`${sizeObj.size}-${index}`}
-                    className={`h-16 w-16 rounded-full border flex flex-col items-center justify-center text-sm focus:outline-none ${
-                      selectedSize === sizeObj.size
-                        ? "border-gold-500 bg-gold-50 text-gold-600"
-                        : "border-gray-300 hover:border-gold-500"
-                    }`}
-                    onClick={() => setSelectedSize(sizeObj.size)}
-                  >
-                    <span>{sizeObj.size}</span>
-                    <span className="text-xs text-gray-500">
-                      {sizeObj.quantity} ชิ้น
-                    </span>
-                  </button>
-                ))}
-              </div>
+          <div className="mb-8">
+            <h3 className="text-sm font-medium text-gray-900 mb-2">Size</h3>
+            <div className="flex flex-wrap gap-2">
+              {product.availableSizes.map((sizeObj, index) => (
+                <button
+                  key={`${sizeObj.size}-${index}`}
+                  className={`h-16 w-16 rounded-full border flex flex-col items-center justify-center text-sm focus:outline-none ${
+                    selectedSize === sizeObj.size
+                      ? "border-gold-500 bg-gold-50 text-gold-600"
+                      : "border-gray-300 hover:border-gold-500"
+                  }`}
+                  onClick={() => setSelectedSize(sizeObj.size)}
+                >
+                  <span>{sizeObj.size}</span>
+                  <span className="text-xs text-gray-500">
+                    {sizeObj.quantity} ชิ้น
+                  </span>
+                </button>
+              ))}
             </div>
-          )}
+          </div>
 
           <div className="mb-8">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">Quantity</h3>
+            <h3 className="text-sm font-medium text-gray-900 mb-2">จำนวน</h3>
             <div className="flex items-center">
               <button
                 className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-l"
@@ -520,17 +518,16 @@ export function ProductDetail({
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4  mb-6">
             <Button
               variant="luxury"
               size="lg"
-              className="flex-1"
+              className="flex-1 pt-2 pb-2"
               onClick={handleAddToCart}
               disabled={!selectedSize || availableStock === 0 || quantity === 0}
             >
               เพิ่มลงตะกร้า
             </Button>
-
             <Button
               variant={isInWishlist ? "outline" : "luxuryOutline"}
               size="lg"
@@ -550,7 +547,6 @@ export function ProductDetail({
               <Share2 className="h-5 w-5" />
             </Button>
           </div>
-
           {/* ⭐⭐⭐⭐⭐ ให้คะแนน + คอมเมนต์ */}
           <div className="mb-4">
             <textarea

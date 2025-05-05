@@ -6,6 +6,16 @@ import { CartProvider } from "@/context/cart-context"
 import { WishlistProvider } from "@/context/wishlist-context"
 import { AuthProvider } from "@/context/auth-context"
 import { Toaster } from "@/components/ui/toaster"
+import { Charmonman } from "next/font/google"
+
+const charmonman = Charmonman({
+  subsets: ["latin", "thai"],
+  display: "swap",
+  variable: "--font-charmonman",
+  weight: ["400", "700"],
+})
+
+
 
 // ฟอนต์หลักสำหรับเนื้อหา - Sarabun เป็นฟอนต์ไทยที่อ่านง่ายและดูเรียบหรู
 const sarabun = Sarabun({
@@ -45,7 +55,7 @@ export default function RootLayout({
   return (
     <html lang="th">
       <link rel="icon" href="/logo-bencharm.png" sizes="any" /> 
-      <body className={`${sarabun.variable} ${mitr.variable} ${prompt.variable} font-sans bg-cream-50`}>
+      <body className={`${sarabun.variable} ${mitr.variable} ${prompt.variable} ${charmonman.variable} font-sans bg-cream-50`}>
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>
