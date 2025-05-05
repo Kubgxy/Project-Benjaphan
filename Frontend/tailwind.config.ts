@@ -21,6 +21,7 @@ const config: Config = {
         sans: ["var(--font-sarabun)"],
         heading: ["var(--font-mitr)"],
         display: ["var(--font-prompt)"],
+        charm: ['Charmonman', 'cursive'],
       },
       colors: {
         gold: {

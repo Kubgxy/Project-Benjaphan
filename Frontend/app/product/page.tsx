@@ -159,8 +159,37 @@ export default function ProductsPage() {
 
         {/* Category Tabs */}
         <div className="mb-8 bg-white p-4 rounded-lg shadow-sm">
-          <Tabs defaultValue={categoryFilter || "all"} className="w-full">
-            <TabsList className="w-full overflow-x-auto flex flex-nowrap justify-start mb-4 pb-2 bg-cream-50 p-1 rounded-md">
+          {/* Mobile Dropdown */}
+          <div className="md:hidden mb-4">
+            <select
+              className="w-full border border-gold-300 rounded px-4 py-2"
+              value={categoryFilter || "all"}
+              onChange={(e) => {
+                const selected = e.target.value;
+                const url = new URL(window.location.href);
+                if (selected === "all") {
+                  url.searchParams.delete("category");
+                } else {
+                  url.searchParams.set("category", selected);
+                }
+                window.location.href = url.toString();
+              }}
+            >
+              <option value="all">ทั้งหมด</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.slug}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Desktop Tabs */}
+          <Tabs
+            defaultValue={categoryFilter || "all"}
+            className="w-full hidden md:block"
+          >
+            <TabsList className="w-full flex gap-2 flex-wrap justify-start mb-4 pb-2 bg-cream-50 p-1 rounded-md">
               <TabsTrigger
                 value="all"
                 className="px-4 py-2 whitespace-nowrap data-[state=active]:bg-gold-600 data-[state=active]:text-white"
