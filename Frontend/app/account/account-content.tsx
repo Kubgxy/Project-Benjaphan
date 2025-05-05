@@ -19,6 +19,7 @@ import { LoginForm } from "./login-form";
 import { RegisterForm } from "./register-form";
 import { ProfileForm } from "./profile-form";
 import Swal from "sweetalert2";
+import { useToast } from "@/components/ui/use-toast";
 
 type AccountTab =
   | "profile"
@@ -76,6 +77,8 @@ export function AccountContent() {
     country: "Thailand",
   });
   const [showForm, setShowForm] = useState(false);
+  const { toast } = useToast();
+
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -182,6 +185,11 @@ export function AccountContent() {
       postalCode: "",
       country: "Thailand",
     });
+    toast({
+      title: "เพิ่มที่อยู่เรียบร้อย",
+      description: "ที่อยู่ถูกเพิ่มเข้าระบบแล้ว",
+      duration: 3000,
+    });
     fetchAddresses();
   };
 
@@ -192,6 +200,11 @@ export function AccountContent() {
       credentials: "include",
       body: JSON.stringify(newAddress), // ต้องส่ง field ใหม่ๆ ที่จะ update
     });
+    toast({
+      title: "แก้ไขที่อยู่เรียบร้อย",
+      description: "ที่อยู่ถูกแก้ไขเข้าระบบแล้ว",
+      duration: 3000,
+    });
     fetchAddresses();
   };
 
@@ -200,6 +213,12 @@ export function AccountContent() {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
+    });
+    toast({
+      title: "ลบที่อยู่เรียบร้อย",
+      description: "ที่อยู่ถูกลบออกจากระบบแล้ว",
+      variant: "destructive",
+      duration: 3000,
     });
     fetchAddresses();
   };
@@ -227,7 +246,7 @@ export function AccountContent() {
                 }`}
                 onClick={() => setShowLoginForm(true)}
               >
-                เข้้าสู่ระบบ
+                เข้าสู่ระบบ
               </button>
               <button
                 className={`px-4 py-2 font-medium ${

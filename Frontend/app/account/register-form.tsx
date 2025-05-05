@@ -3,9 +3,8 @@
 import type React from "react";
 
 import { useState } from "react";
-import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
-
+import { useToast } from "@/components/ui/use-toast";
 interface RegisterFormProps {
   onSuccess?: () => void;
 }
@@ -19,6 +18,8 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const { toast } = useToast();
+
 
   const register = async (
     email: string,
@@ -72,7 +73,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     try {
       const success = await register(email, password, firstName, lastName, phoneNumber);
       if (success) {
-        alert("✅ ลงทะเบียนสำเร็จ! กรุณาเข้าสู่ระบบ");
+        toast({ description: "✅ ลงทะเบียนสำเร็จ! กรุณาเข้าสู่ระบบ" });
         if (onSuccess) onSuccess();
       } else {
         setError("❌ ลงทะเบียนไม่สำเร็จ");

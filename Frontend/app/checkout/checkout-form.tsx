@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { createOrder } from "@/actions/order-actions";
 import { formatPrice } from "@/lib/utils";
-import { ShoppingCart, MapPinHouse, Package, Banknote } from "lucide-react";
+import { ShoppingCart, MapPinHouse, Package, Banknote, X } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
 export function CheckoutForm() {
@@ -100,13 +100,17 @@ export function CheckoutForm() {
           toast({
             title: "✅ แก้ไขที่อยู่เรียบร้อยแล้ว",
             description: "กรุณาเลือกที่อยู่เพื่อทำการสั่งซื้อ",
+            duration: 3000,
           });
           window.location.reload();
         })
-        .catch(() => toast({
-          title: "❌ แก้ไขที่อยู่ล้มเหลว",
-          description: "กรุณาลองใหม่อีกครั้ง",
-        }));
+        .catch(() =>
+          toast({
+            title: "❌ แก้ไขที่อยู่ล้มเหลว",
+            description: "กรุณาลองใหม่อีกครั้ง",
+            duration: 3000,
+          })
+        );
     } else {
       axios
         .post(
@@ -125,6 +129,7 @@ export function CheckoutForm() {
           toast({
             title: "✅ เพิ่มที่อยู่เรียบร้อยแล้ว",
             description: "กรุณาเลือกที่อยู่เพื่อทำการสั่งซื้อ",
+            duration: 3000,
           });
           window.location.reload();
         })
@@ -182,6 +187,12 @@ export function CheckoutForm() {
         ref={modalRef}
         className="rounded-lg p-6 w-full max-w-3xl z-50 bg-white shadow-lg"
       >
+        <button
+          className="absolute top-5 right-5 text-gray-500 hover:text-red-500"
+          onClick={() => modalRef.current?.close()}
+        >
+          <X className="w-6 h-6" />
+        </button>
         <h2 className="flex gap-2 text-lg font-semibold mb-4 text-brown-800">
           <MapPinHouse className="w-6 h-6 text-yellow-500" />
           {selectedAddressId ? "แก้ไขที่อยู่" : "เพิ่มที่อยู่ใหม่"}
@@ -341,7 +352,9 @@ export function CheckoutForm() {
                 </p>
               </div>
             </div>
-            <p className="font-medium">{formatPrice(subtotal)}</p>
+            <p className="font-medium">
+              {formatPrice(item.priceAtAdded * item.quantity)}
+            </p>
           </div>
         ))}
       </div>
@@ -384,7 +397,6 @@ export function CheckoutForm() {
         >
           {isSubmitting ? "กำลังประมวลผล..." : "ยืนยันคำสั่งซื้อ"}
         </Button>
-
       </div>
     </div>
   );

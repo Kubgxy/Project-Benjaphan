@@ -7,6 +7,7 @@ import { useRouter, } from "next/navigation";
 import { Button } from "@/components/ui/button"
 import { showSuccess, showError } from "@/lib/swal";
 import Swal from "sweetalert2";
+import { toast } from "@/components/ui/use-toast";
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -14,6 +15,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter();
+  
 
 
   const login = async (email: string, password: string): Promise<"customer" | "admin" | null> => {
@@ -55,12 +57,10 @@ export function LoginForm() {
         return;
       }
   
-      await Swal.fire({
-        icon: 'success',
-        title: 'เข้าสู่ระบบสําเร็จ!',
-        timer: 2000,
-        timerProgressBar: true,
-        showConfirmButton: false
+      toast({
+        title: "เข้าสู่ระบบสำเร็จ",
+        description: "ยินดีต้อนรับกลับมา!",
+        variant: "default",
       });
   
       if (role === "customer") {

@@ -11,6 +11,7 @@ import { useWishlist } from "@/context/wishlist-context";
 import { useCart } from "@/context/cart-context";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 
 export interface AvailableSize {
@@ -50,6 +51,12 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
   const { toast } = useToast();
   const [addedToCart, setAddedToCart] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const router = useRouter();
+
+
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -72,6 +79,14 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
       });
     } catch (error) {
       console.error("❌ Error adding to cart:", error);
+      if (
+        axios.isAxiosError(error) &&
+        (error.response?.status === 401 ||
+          error.response?.data?.message === "No token provided")
+      ) {
+        setShowLoginModal(true);
+        return; // ไม่ต้องขึ้น toast อีก
+      }
       toast({
         title: "เกิดข้อผิดพลาด",
         description: "ไม่สามารถเพิ่มสินค้าลงตะกร้าได้ กรุณาลองใหม่อีกครั้ง",
@@ -125,6 +140,14 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
       // ไม่ต้องเรียก checkWishlistStatus() ซ้ำที่นี่
     } catch (error) {
       console.error("Error updating wishlist:", error);
+      if (
+        axios.isAxiosError(error) &&
+        (error.response?.status === 401 ||
+          error.response?.data?.message === "No token provided")
+      ) {
+        setShowLoginModal(true);
+        return; // ไม่ต้องขึ้น toast อีก
+      }
       toast({
         title: "❌ เกิดข้อผิดพลาด",
         description: "ไม่สามารถอัปเดตรายการโปรดได้",
@@ -135,6 +158,7 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
 
   return (
     <div className="group">
+      
       <div
         className={`relative ${
           featured ? "h-96" : "h-80"
@@ -218,6 +242,92 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
           </p>
         </div>
       </Link>
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow max-w-sm w-full relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500"
+              onClick={() => setShowLoginModal(false)}
+            >
+              ✖
+            </button>
+
+            <h2 className="text-xl font-semibold mb-4 text-center">
+              กรุณาเข้าสู่ระบบก่อนจะทำรายการ
+            </h2>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  const res = await axios.post(
+                    "http://localhost:3000/api/user/loginUser",
+                    {
+                      email: loginEmail,
+                      password: loginPassword,
+                    },
+                    { withCredentials: true }
+                  );
+
+                  toast({
+                    title: "✅ เข้าสู่ระบบสำเร็จ!",
+                    description: "กำลังโหลดหน้าใหม่...",
+                  });
+
+                  setShowLoginModal(false);
+                  router.refresh(); // รีโหลดเพื่ออัปเดต session
+                } catch (error: any) {
+                  toast({
+                    title: "❌ เข้าสู่ระบบล้มเหลว",
+                    description:
+                      error.response?.data?.message ||
+                      "กรุณาตรวจสอบอีเมลหรือรหัสผ่าน",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              className="space-y-4"
+            >
+              <input
+                type="email"
+                placeholder="อีเมล"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                className="w-full border px-3 py-2 rounded"
+                required
+              />
+              <input
+                type="password"
+                placeholder="รหัสผ่าน"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                className="w-full border px-3 py-2 rounded"
+                required
+              />
+
+              <Button
+                type="submit"
+                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
+              >
+                เข้าสู่ระบบ
+              </Button>
+            </form>
+
+            <p className="mt-4 text-sm text-center text-gray-600">
+              หรือ <span className="font-semibold">ยังไม่มีบัญชี?</span>{" "}
+              <button
+                onClick={() => {
+                  setShowLoginModal(false);
+                  router.push("/account"); 
+                }}
+                className="text-yellow-600 hover:underline"
+              >
+                สมัครสมาชิกที่นี่
+              </button>
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

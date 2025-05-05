@@ -73,6 +73,12 @@ export function CartContent() {
         { productId, size },
         { withCredentials: true }
       );
+      toast({
+        title: "✅ ลบสินค้าสำเร็จ",
+        description: "สินค้าถูกลบออกจากตะกร้าแล้ว",
+        variant: "default",
+        duration: 3000,
+      });
       fetchCart(); // รีเฟรช cart หลังจากลบ
     } catch (error) {
       console.error("❌ Failed to remove item:", error);
@@ -103,6 +109,7 @@ export function CartContent() {
         title: "❌ ไม่สามารถอัปเดตจำนวนได้",
         description: "กรุณาลองใหม่อีกครั้ง",
         variant: "destructive",
+        duration: 3000,
       });
     }
   };
@@ -148,13 +155,34 @@ export function CartContent() {
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="p-6">
                 <table className="w-full">
-                  <thead>
-                    <tr className="border-b text-brown-800">
-                      <th className="text-left pb-4">สินค้า</th>
-                      <th className="text-center pb-4">จำนวน</th>
-                      <th className="text-right pb-4">ราคา</th>
-                    </tr>
-                  </thead>
+                <thead>
+  <tr className="border-b text-brown-800">
+    <th className="text-left pb-4">
+      <input
+        type="checkbox"
+        checked={
+          cartItems.length > 0 &&
+          cartItems.every(
+            (item) => selectedItems[`${item.productId}-${item.size}`]
+          )
+        }
+        onChange={(e) => {
+          const newSelected: { [key: string]: boolean } = {};
+          if (e.target.checked) {
+            cartItems.forEach((item) => {
+              newSelected[`${item.productId}-${item.size}`] = true;
+            });
+          }
+          setSelectedItems(newSelected);
+        }}
+        className="mr-2"
+      />
+      สินค้า
+    </th>
+    <th className="text-center pb-4">จำนวน</th>
+    <th className="text-right pb-4">ราคา</th>
+  </tr>
+</thead>
                   <tbody>
                     {cartItems.map((item) => (
                       <tr
