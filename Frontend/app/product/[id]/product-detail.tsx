@@ -470,6 +470,11 @@ export function ProductDetail({
             <span className="ml-2 text-sm text-gray-700">
               {averageRating.toFixed(1)} / 5 ({totalReviews} รีวิว)
             </span>
+            {selectedRating > 0 && (
+            <p className="text-green-600 text-sm ml-4">
+              (คุณให้คะแนนไปแล้ว {selectedRating} ดาว ขอบคุณครับ ❤️)
+            </p>
+          )}
           </div>
           <Button
             variant="luxury"
@@ -484,11 +489,7 @@ export function ProductDetail({
           >
             ส่งรีวิว
           </Button>
-          {selectedRating > 0 && (
-            <p className="text-green-600 text-sm mb-4">
-              คุณให้คะแนนไปแล้ว {selectedRating} ดาว ขอบคุณครับ ❤️
-            </p>
-          )}
+
   
           {addedToCart && (
             <div className="p-4 bg-green-50 text-green-700 border border-green-200 rounded-md flex items-center mb-6">
