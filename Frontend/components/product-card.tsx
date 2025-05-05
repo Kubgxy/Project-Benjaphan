@@ -50,23 +50,21 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
   const { toast } = useToast();
   const [addedToCart, setAddedToCart] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
-  
-  
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-  
+
     try {
       await axios.post(
         "http://localhost:3000/api/cart/addToCart",
         {
-          productId: product.id_product,          // ✅ ใช้ id_product ตรงนี้!
-          quantity: 1,                    // ✅ ใส่ default 1 ชิ้น
+          productId: product.id_product, // ✅ ใช้ id_product ตรงนี้!
+          quantity: 1, // ✅ ใส่ default 1 ชิ้น
         },
         { withCredentials: true }
       );
-  
+
       setAddedToCart(true); // 🟢 ดันเข้า context ตะกร้า
       toast({
         title: "✅ เพิ่มสินค้าลงตะกร้าสำเร็จ!",
@@ -84,59 +82,56 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
 
   const checkWishlistStatus = async () => {
     try {
-        const response = await axios.get(
-          "http://localhost:3000/api/wishlist/getWishlist",
-          {
-            withCredentials: true,
-          }
+      const response = await axios.get(
+        "http://localhost:3000/api/wishlist/getWishlist",
+        { withCredentials: true }
+      );
+      const wishlistItems = response.data.wishlist?.products || [];
+      const exists = wishlistItems.some(
+        (item: any) =>
+          (item.productId && item.productId === product._id) || // ถ้าเป็น plain ObjectId
+          (item.productId && item.productId._id === product._id) // ถ้า populate มาเป็น object
+      );
+      setIsInWishlist(exists);
+    } catch (error) {
+      console.error("Error checking wishlist:", error);
+    }
+  };
+
+  useEffect(() => {
+    checkWishlistStatus();
+  }, []);
+
+  const handleWishlist = async () => {
+    try {
+      if (isInWishlist) {
+        await axios.post(
+          "http://localhost:3000/api/wishlist/removeFromWishlist",
+          { productId: product._id },
+          { withCredentials: true }
         );
-        const wishlistItems = response.data.wishlist?.products || [];
-        const exists = wishlistItems.some(
-          (item: any) =>
-            (typeof item === "string" && item === product._id) ||
-            (item._id && item._id === product._id)
-        ); // 🟢 เช็คว่า id_product ตรงกันไหม    
-        setIsInWishlist(exists);
-      } catch (error) {
-        console.error("Error checking wishlist:", error);
+        setIsInWishlist(false); // ✅ อัปเดตทันทีใน memory
+        toast({ title: "💔 ลบออกจากรายการโปรดแล้ว" });
+      } else {
+        await axios.post(
+          "http://localhost:3000/api/wishlist/addToWishlist",
+          { productId: product._id },
+          { withCredentials: true }
+        );
+        setIsInWishlist(true); // ✅ อัปเดตทันทีใน memory
+        toast({ title: "❤️ เพิ่มลงในรายการโปรดแล้ว" });
+        console.log("ส่งไปเพิ่ม wishlist:", product._id);
       }
-    };
-  
-    useEffect(() => {
-      checkWishlistStatus();
-    }, []);
-
-      const handleWishlist = async () => {
-        try {
-          if (isInWishlist) {
-            await axios.post(
-              "http://localhost:3000/api/wishlist/removeFromWishlist",
-              { productId: product._id }, 
-              { withCredentials: true }
-            );
-            toast({ title: "💔 ลบออกจากรายการโปรดแล้ว" });
-          } else {
-            await axios.post(
-              "http://localhost:3000/api/wishlist/addToWishlist",
-              { productId: product._id },
-              { withCredentials: true }
-            );
-            toast({ title: "❤️ เพิ่มลงในรายการโปรดแล้ว" });
-            console.log("ส่งไปเพิ่ม wishlist:", product._id);
-          }
-          checkWishlistStatus(); // ✅ Refresh สถานะ
-        } catch (error) {
-          console.error("Error updating wishlist:", error);
-          toast({
-            title: "❌ เกิดข้อผิดพลาด",
-            description: "ไม่สามารถอัปเดตรายการโปรดได้",
-            variant: "destructive",
-          });
-        }
-      };
-  
-
-
+      // ไม่ต้องเรียก checkWishlistStatus() ซ้ำที่นี่
+    } catch (error) {
+      console.error("Error updating wishlist:", error);
+      toast({
+        title: "❌ เกิดข้อผิดพลาด",
+        description: "ไม่สามารถอัปเดตรายการโปรดได้",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="group">
@@ -155,7 +150,6 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-700"
           priority
-
         />
 
         {product.isNewArrival && (
@@ -187,7 +181,9 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
         </div>
         <button
           className={`absolute top-4 right-4 h-8 w-8 rounded-full bg-white flex items-center justify-center ${
-            isInWishlist ? "text-red-500" : "text-gray-600 hover:text-yellow-600"
+            isInWishlist
+              ? "text-red-500"
+              : "text-gray-600 hover:text-yellow-600"
           } transition-colors shadow-md`}
           onClick={handleWishlist}
         >

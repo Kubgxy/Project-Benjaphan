@@ -116,7 +116,7 @@ export default function Home() {
             <div className="flex flex-col items-center text-center p-6">
               <div className="relative w-16 h-16 rounded-full bg-gold-100 flex items-center justify-center mb-4">
                 <Image
-                  src="/icons/gold-quality.svg"
+                  src="/icons/ทองคำแท้.png"
                   alt="ทองคำแท้"
                   fill
                   className="object-contain"
@@ -133,7 +133,7 @@ export default function Home() {
             <div className="flex flex-col items-center text-center p-6">
               <div className="relative w-16 h-16 rounded-full bg-gold-100 flex items-center justify-center mb-4">
                 <Image
-                  src="/icons/auspicious.svg"
+                  src="/icons/เสริมดวงชะตา.png"
                   alt="เสริมดวง"
                   fill
                   className="object-contain"
@@ -150,7 +150,7 @@ export default function Home() {
             <div className="flex flex-col items-center text-center p-6">
               <div className="relative w-16 h-16 rounded-full bg-gold-100 flex items-center justify-center mb-4">
                 <Image
-                  src="/icons/craftsmanship.svg"
+                  src="/icons/งานฝีมือประณีต.png"
                   alt="งานฝีมือ"
                   fill
                   className="object-contain"

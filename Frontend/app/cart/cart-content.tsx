@@ -14,7 +14,7 @@ import { ShoppingBasket, Banknote } from "lucide-react";
 interface CartItem {
   productId: string;
   name: string;
-  price: number;
+  priceAtAdded: number;
   quantity: number;
   size: string;
   images: string[];
@@ -32,6 +32,7 @@ export function CartContent() {
   const [selectedItems, setSelectedItems] = useState<{
     [key: string]: boolean;
   }>({});
+
   const selectedCartItems = cartItems.filter(
     (item) => selectedItems[`${item.productId}-${item.size}`]
   );
@@ -40,9 +41,10 @@ export function CartContent() {
   const { toast } = useToast();
 
   const subtotal = selectedCartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
+    (acc, item) => acc + item.priceAtAdded * item.quantity,
     0
   );
+
   const shipping = selectedCartItems.length > 0 ? 50 : 0;
   const total = selectedCartItems.length > 0 ? subtotal + shipping : 0;
 
@@ -111,16 +113,18 @@ export function CartContent() {
         productId: item.productId,
         size: item.size,
         quantity: item.quantity,
+        priceAtAdded: item.priceAtAdded,
+        name: item.name,
+        images: item.images,
       }));
 
-      await axios.post(
-        "http://localhost:3000/api/checkout/select",
+      const response = await axios.post(
+        "http://localhost:3000/api/order/selectItems",
         { items },
         { withCredentials: true }
       );
 
-      // เมื่อสำเร็จ → navigate ไปหน้า checkout
-      router.push("/checkout");
+      router.push("/checkout"); // ไปหน้า checkout
     } catch (error) {
       console.error("❌ Failed to save selected items:", error);
       toast({
@@ -190,8 +194,9 @@ export function CartContent() {
                             <div>
                               <h3 className="font-medium">{item.name}</h3>
                               <p className="text-sm text-gray-600">
-                                {formatPrice(item.price)}
+                                {formatPrice(item.priceAtAdded)}
                               </p>
+
                               {item.size && (
                                 <p className="text-xs text-gray-500">
                                   Size: {item.size}
@@ -238,7 +243,7 @@ export function CartContent() {
                         <td className="py-4 text-right">
                           <div className="flex items-center justify-end">
                             <span className="font-medium">
-                              {formatPrice(item.price * item.quantity)}
+                              {formatPrice(item.priceAtAdded * item.quantity)}
                             </span>
                             <button
                               className="ml-4 text-gray-400 hover:text-red-500 transition-colors"
@@ -276,7 +281,7 @@ export function CartContent() {
                     d="M10 19l-7-7m0 0l7-7m-7 7h18"
                   />
                 </svg>
-                Continue Shopping
+                เลือกซื้อสินค้าต่อ
               </Link>
             </div>
           </div>
@@ -312,7 +317,7 @@ export function CartContent() {
                   disabled={selectedCartItems.length === 0}
                 >
                   สั่งซื้อสินค้า
-                  </Button>
+                </Button>
               </div>
             </div>
           </div>
