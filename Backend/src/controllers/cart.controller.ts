@@ -8,33 +8,33 @@ import Product from "../Models_GPT/Product"; // Model
 // ✅ Add to cart
 export const addToCart = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.userId;
-  const { productId, quantity , size} = req.body;
+  const { productId, quantity, size } = req.body;
 
-  if (!userId || !productId || !quantity ) {
+  if (!userId || !productId || !quantity) {
     res.status(400).json({ message: "Missing required fields" });
-    return; // ✅ return เฉย ๆ หยุดการทำงาน ไม่ return Response
+    return;
   }
 
   try {
     const product = await Product.findOne({ id_product: productId });
     if (!product) {
       res.status(404).json({ message: "Product not found" });
-      return; // ✅ return เฉย ๆ หยุดการทำงาน ไม่ return Response
+      return;
     }
 
-    const cart = await Cart.findOne({ userID: userId });
+    const cart = await Cart.findOne({ userId: userId });
     const newItem = {
-      productId,
-      name: product.name,
-      price: product.price,
+      productId: product._id,
+      name: product.name,                  // 💥 เก็บ snapshot
+      images: product.images, 
+      size,
       quantity,
-      size, // ✅ ใช้ size จาก req.body แทน
-      images: product.images,
+      priceAtAdded: product.price, 
     };
 
     if (cart) {
       const itemIndex = cart.items.findIndex(
-        (item) => item.productId === productId
+        (item) => item.productId.toString() === product._id.toString() && item.size === size
       );
 
       if (itemIndex > -1) {
@@ -44,44 +44,40 @@ export const addToCart = async (req: Request, res: Response): Promise<void> => {
       }
 
       await cart.save();
-      res.status(200).json({ message: "Cart updated successfully", cart }); // ✅ ไม่ return
+      res.status(200).json({ message: "Cart updated successfully", cart });
     } else {
-      const newCart = new Cart({ userID: userId, items: [newItem] });
+      const newCart = new Cart({ userId: userId, items: [newItem] });
       await newCart.save();
-      res
-        .status(201)
-        .json({ message: "Cart created successfully", cart: newCart }); // ✅ ไม่ return
+      res.status(201).json({ message: "Cart created successfully", cart: newCart });
     }
   } catch (error) {
-    res.status(500).json({ message: "Server error", error }); // ✅ ไม่ return
+    console.error("❌ Server error:", error);
+    res.status(500).json({ message: "Server error", error });
   }
 };
+
 
 // ✅ Remove item from cart
 export const removeCartItem = async (req: Request, res: Response) => {
   const userId = req.user?.userId;
-  const { productId } = req.body;
+  const { productId, size } = req.body;
 
-  // 🔒 เช็คค่าที่จำเป็น
   if (!userId || !productId ) {
     res.status(400).json({ message: "Missing required fields" });
     return;
   }
 
   try {
-    // 🔍 หา cart ของผู้ใช้
-    const cart = await Cart.findOne({ userID: userId });
+    const cart = await Cart.findOne({ userId: userId });
     if (!cart) {
       res.status(404).json({ message: "Cart not found" });
       return;
     }
 
-    // 🎯 กรองเอาสินค้าที่ไม่ตรงออก
     const newItems = cart.items.filter(
-      (item) => !(item.productId === productId)
+      (item) => !(item.productId.toString() === productId && item.size === size)
     );
 
-    // 🔄 อัปเดตตะกร้า
     cart.items.splice(0, cart.items.length, ...newItems);
     await cart.save();
 
@@ -92,6 +88,7 @@ export const removeCartItem = async (req: Request, res: Response) => {
   }
 };
 
+
 // controllers/cartController.ts
 export const updateCartItem = async (req: Request, res: Response) => {
   const userId = req.user?.userId;
@@ -99,7 +96,7 @@ export const updateCartItem = async (req: Request, res: Response) => {
 
   try {
     const updatedCart = await Cart.findOneAndUpdate(
-      { userID: userId, "items.productId": productId, "items.size": size },
+      { userId: userId, "items.productId": productId, "items.size": size  },
       { $set: { "items.$.quantity": quantity } }, // 🎯 อัปเดต quantity ใน item ที่ match
       { new: true }
     );
@@ -112,24 +109,39 @@ export const updateCartItem = async (req: Request, res: Response) => {
 };
 
 // ✅ Get cart For User
-export const getCartUser = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const userId = req.user?.userId; // ✅ ดึง userId ให้ถูกต้องก่อนนะ
+export const getCartUser = async (req: Request, res: Response): Promise<void> => {
+  const userId = req.user?.userId;
 
   try {
-    const cart = await Cart.findOne({ userID: userId });
+    const cart = await Cart.findOne({ userId: userId }).populate('items.productId', 'name images');
+
     if (!cart) {
       res.status(200).json({ message: "Cart is empty", cart: { items: [] } });
-      return; // ✅ ใช้ return ตรงนี้ได้ เพื่อหยุดการทำงานต่อ
+      return;
     }
 
-    res.status(200).json({ cart }); // ✅ ไม่ต้อง return res...
+    // 🎯 map ข้อมูลให้ง่ายสำหรับ frontend
+    const mappedItems = cart.items.map((item) => {
+      const product = item.productId as any; // หรือ as { _id: string; name: string; images: string[] }
+    
+      return {
+        productId: product._id,
+        name: product.name,
+        images: product.images,
+        size: item.size,
+        quantity: item.quantity,
+        priceAtAdded: item.priceAtAdded,
+      };
+    });
+    
+
+    res.status(200).json({ cart: { items: mappedItems } });
   } catch (error) {
+    console.error("❌ Error fetching cart:", error);
     res.status(500).json({ message: "Server error", error });
   }
 };
+
 
 // ✅ Get all carts For Admin
 export const getAllCarts = async (

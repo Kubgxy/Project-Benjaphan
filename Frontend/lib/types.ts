@@ -25,11 +25,31 @@ export interface Product {
   isNewArrival: boolean
   isBestseller: boolean
   isOnSale: boolean
-  discount?: number
-  availableSizes?: AvailableSize[] 
+  discount: number
+  availableSizes: AvailableSize[]
   availableColors?: AvailableColor[]
   materials: string[]
   stock: number
+}
+
+export interface SearchItem {
+  id: string;
+  productId: string;  // ✅ เพิ่ม field นี้ให้รู้จัก
+  name: string;
+  description?: string;
+  image?: string;
+}
+
+export interface WishlistItem {
+  productId: {
+    _id: string;
+    id_product: string;
+    name: string;
+    price: number;
+    images: string[];
+    size?: string[];
+  };
+  dateAdded: string;
 }
 
 export interface Category {

@@ -1,11 +1,12 @@
-// import express from 'express';
-// // import { createOrder, getOrderById, getOrdersByUser } from '../controllers/order.controller';
-// import { verifyToken } from '../middlewares/verifyToken';
+import express from 'express';
+import { selectItemsForCheckout, getCheckoutSummary } from '../controllers/order.controller';
+import { verifyToken } from '../middlewares/verifyToken';
 
-// const router = express.Router();
+const order = express.Router();
 
-// router.post('/createOrder', verifyToken, createOrder); // POST /orders
-// router.get('/getOrderById/:orderId', verifyToken, getOrderById); // GET /orders/:orderId
-// router.get('/getOrdersByUser', verifyToken, getOrdersByUser); // GET /orders/user
+// POST /api/order/selectItems
+order.post('/selectItems', verifyToken, selectItemsForCheckout);
+// GET /api/order/checkoutSummary
+order.get('/checkoutSummary', verifyToken, getCheckoutSummary);
 
-// export default router;
+export default order;

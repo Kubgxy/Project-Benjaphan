@@ -8,19 +8,11 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { formatPrice } from "@/lib/utils";
-
-interface Product {
-  _id: string;
-  id_product: string;
-  name: string;
-  price: number;
-  images: string[];
-  size?: string[];
-}
+import { WishlistItem } from "@/lib/types";
 
 export function WishlistContent() {
-  const [wishlistItems, setWishlistItems] = useState<Product[]>([]);
   const [addedToCart, setAddedToCart] = useState<string | null>(null);
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const { toast } = useToast();
 
   const fetchWishlist = async () => {
@@ -29,6 +21,7 @@ export function WishlistContent() {
         withCredentials: true,
       });
       const products = response.data.wishlist?.products || [];
+      console.log("Fetched wishlist items:", products);
       setWishlistItems(products);
     } catch (error) {
       console.error("❌ Error fetching wishlist:", error);
@@ -40,21 +33,21 @@ export function WishlistContent() {
     }
   };
 
-  const handleAddToCart = async (item: Product) => {
+  const handleAddToCart = async (productId: string, name: string) => {
     try {
       await axios.post(
         "http://localhost:3000/api/cart/addToCart",
         {
-          productId: item.id_product,
+          productId,
           quantity: 1,
         },
         { withCredentials: true }
       );
 
-      setAddedToCart(item.id_product);
+      setAddedToCart(productId);
       toast({
         title: "✅ เพิ่มสินค้าลงตะกร้าสำเร็จ!",
-        description: `${item.name} ถูกเพิ่มลงตะกร้าแล้ว`,
+        description: `${name} ถูกเพิ่มลงตะกร้าแล้ว`,
       });
     } catch (error) {
       console.error("❌ Error adding to cart:", error);
@@ -69,13 +62,13 @@ export function WishlistContent() {
   const handleRemoveWishlist = async (productId: string) => {
     try {
       await axios.post(
-        "http://localhost:3000/api/wishlist/removeFromWishlist", // ✅ ไม่มี s
+        "http://localhost:3000/api/wishlist/removeFromWishlist",
         { productId },
         { withCredentials: true }
       );
       toast({ title: "💔 ลบออกจากรายการโปรดแล้ว" });
       fetchWishlist();
-      console.log('sending to remove:', productId);
+      console.log("sending to remove:", productId);
     } catch (error) {
       console.error("❌ Error removing wishlist item:", error);
       toast({
@@ -83,7 +76,6 @@ export function WishlistContent() {
         description: "ไม่สามารถลบออกจากรายการโปรดได้",
         variant: "destructive",
       });
-
     }
   };
 
@@ -112,68 +104,77 @@ export function WishlistContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {wishlistItems.map((item) => (
-                    <tr key={item.id_product} className="border-b">
-                      <td className="py-4">
-                        <div className="flex items-center">
-                          <div className="relative w-16 h-16 mr-4 bg-gray-50">
-                            <Image
-                              src={`http://localhost:3000${item.images[0]}`}
-                              alt={item.name}
-                              fill
-                              className="object-contain"
-                            />
+                  {wishlistItems.map((item) => {
+                    const product = item.productId;
+                    const imageUrl = product?.images?.[0]
+                      ? `http://localhost:3000${product.images[0]}`
+                      : "/placeholder.jpg";
+
+                    return (
+                      <tr key={product._id} className="border-b">
+                        <td className="py-4">
+                          <div className="flex items-center">
+                            <div className="relative w-16 h-16 mr-4 bg-gray-50">
+                              <Image
+                                src={imageUrl}
+                                alt={product.name || "Product Image"}
+                                fill
+                                className="object-contain"
+                              />
+                            </div>
+                            <div>
+                              <Link
+                                href={`/product/${product.id_product}`}
+                                className="font-medium hover:text-gold-600 transition-colors"
+                              >
+                                {product.name}
+                              </Link>
+                              <p className="text-sm text-gray-600 md:hidden">
+                                {formatPrice(product.price)}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <Link
-                              href={`/product/${item.id_product}`}
-                              className="font-medium hover:text-gold-600 transition-colors"
+                        </td>
+                        <td className="py-4 text-right hidden md:table-cell">
+                          <span className="font-medium">
+                            {formatPrice(product.price)}
+                          </span>
+                        </td>
+                        <td className="py-4 text-right">
+                          <div className="flex items-center justify-end space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleAddToCart(product.id_product, product.name)
+                              }
+                              disabled={addedToCart === product.id_product}
                             >
-                              {item.name}
-                            </Link>
-                            <p className="text-sm text-gray-600 md:hidden">
-                              {formatPrice(item.price)}
-                            </p>
+                              {addedToCart === product.id_product ? (
+                                <>
+                                  <ShoppingBag className="h-4 w-4 mr-1" />
+                                  Added
+                                </>
+                              ) : (
+                                <>
+                                  <ShoppingBag className="h-4 w-4 mr-1" />
+                                  Add to Cart
+                                </>
+                              )}
+                            </Button>
+                            <button
+                              className="text-gray-400 hover:text-red-500 transition-colors"
+                              onClick={() =>
+                                handleRemoveWishlist(product.id_product)
+                              }
+                            >
+                              <X className="w-5 h-5" />
+                            </button>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-4 text-right hidden md:table-cell">
-                        <span className="font-medium">
-                          {formatPrice(item.price)}
-                        </span>
-                      </td>
-                      <td className="py-4 text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleAddToCart(item)}
-                            disabled={addedToCart === item.id_product}
-                          >
-                            {addedToCart === item.id_product ? (
-                              <>
-                                <ShoppingBag className="h-4 w-4 mr-1" />
-                                Added
-                              </>
-                            ) : (
-                              <>
-                                <ShoppingBag className="h-4 w-4 mr-1" />
-                                Add to Cart
-                              </>
-                            )}
-                          </Button>
-                          <button
-                            className="text-gray-400 hover:text-red-500 transition-colors"
-                            onClick={() =>
-                              handleRemoveWishlist(item.id_product)
-                            }
-                          >
-                            <X className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
