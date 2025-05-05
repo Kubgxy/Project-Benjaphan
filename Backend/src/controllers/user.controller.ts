@@ -20,37 +20,42 @@ export const registerUser = async (
     res
       .status(400)
       .json({ message: "❌ Please provide name, email, and password" });
-    return; // ✅ return แค่หยุด function, ไม่ return ค่า
+    return;
   }
 
   try {
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
     if (existingUser) {
       res.status(400).json({ message: "❌ Email already exists" });
       return;
     }
 
-    // Hash password ก่อน save
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const newUser = new User({
       firstName,
       lastName,
-      email,
-      password: hashedPassword, // ใช้ password ที่ hash แล้ว
+      email: email.toLowerCase().trim(),
+      password: hashedPassword,
       phoneNumber,
       addresses,
       provider: "local",
     });
     await newUser.save();
 
-    const cart = new Cart({ userId: newUser._id });
-    await cart.save();
+    const existingCart = await Cart.findOne({ userId: newUser._id });
+    const cart = existingCart || new Cart({ userId: newUser._id });
+    if (!existingCart) {
+      await cart.save();
+    }
 
-    const wishlist = new Wishlist({ userId: newUser._id });
-    await wishlist.save();
-    
+    const existingWishlist = await Wishlist.findOne({ userId: newUser._id });
+    const wishlist = existingWishlist || new Wishlist({ userId: newUser._id });
+    if (!existingWishlist) {
+      await wishlist.save();
+    }
+
     newUser.cartId = cart._id;
     newUser.wishlistId = wishlist._id;
     await newUser.save();
@@ -70,9 +75,11 @@ export const registerUser = async (
       },
     });
   } catch (error) {
+    console.error("❌ Register error:", error);
     res.status(500).json({ message: "❌ Server error", error });
   }
 };
+
 
 // Login
 export const loginUser = async (

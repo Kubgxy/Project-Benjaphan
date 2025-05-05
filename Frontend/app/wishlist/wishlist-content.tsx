@@ -29,6 +29,7 @@ export function WishlistContent() {
         title: "เกิดข้อผิดพลาด",
         description: "โหลดข้อมูลรายการโปรดไม่สำเร็จ",
         variant: "destructive",
+        duration: 3000,
       });
     }
   };
@@ -48,6 +49,7 @@ export function WishlistContent() {
       toast({
         title: "✅ เพิ่มสินค้าลงตะกร้าสำเร็จ!",
         description: `${name} ถูกเพิ่มลงตะกร้าแล้ว`,
+        duration: 3000,
       });
     } catch (error) {
       console.error("❌ Error adding to cart:", error);
@@ -55,6 +57,7 @@ export function WishlistContent() {
         title: "เกิดข้อผิดพลาด",
         description: "ไม่สามารถเพิ่มสินค้าลงตะกร้าได้ กรุณาลองใหม่อีกครั้ง",
         variant: "destructive",
+        duration: 3000,
       });
     }
   };
@@ -66,7 +69,7 @@ export function WishlistContent() {
         { productId },
         { withCredentials: true }
       );
-      toast({ title: "💔 ลบออกจากรายการโปรดแล้ว" });
+      toast({ title: "💔 ลบออกจากรายการโปรดแล้ว", duration: 3000 });
       fetchWishlist();
       console.log("sending to remove:", productId);
     } catch (error) {
@@ -75,6 +78,7 @@ export function WishlistContent() {
         title: "เกิดข้อผิดพลาด",
         description: "ไม่สามารถลบออกจากรายการโปรดได้",
         variant: "destructive",
+        duration: 3000,
       });
     }
   };
@@ -86,7 +90,7 @@ export function WishlistContent() {
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-display font-medium text-gray-900 mb-8">
-        My Wishlist
+        รายการโปรด
       </h1>
 
       {wishlistItems.length > 0 ? (
@@ -96,11 +100,11 @@ export function WishlistContent() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left pb-4">Product</th>
+                    <th className="text-left pb-4">สินค้า</th>
                     <th className="text-right pb-4 hidden md:table-cell">
-                      Price
+                      ราคา
                     </th>
-                    <th className="text-right pb-4">Actions</th>
+                    <th className="text-right pb-4">จัดการ</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -153,19 +157,19 @@ export function WishlistContent() {
                               {addedToCart === product.id_product ? (
                                 <>
                                   <ShoppingBag className="h-4 w-4 mr-1" />
-                                  Added
+                                  เพิ่มลงตะกร้าแล้ว
                                 </>
                               ) : (
                                 <>
                                   <ShoppingBag className="h-4 w-4 mr-1" />
-                                  Add to Cart
+                                  เพิ่มลงตะกร้า
                                 </>
                               )}
                             </Button>
                             <button
                               className="text-gray-400 hover:text-red-500 transition-colors"
                               onClick={() =>
-                                handleRemoveWishlist(product.id_product)
+                                handleRemoveWishlist(product._id)
                               }
                             >
                               <X className="w-5 h-5" />
@@ -199,7 +203,7 @@ export function WishlistContent() {
                   d="M10 19l-7-7m0 0l7-7m-7 7h18"
                 />
               </svg>
-              Continue Shopping
+              กลับไปที่หน้าสินค้า
             </Link>
           </div>
         </div>
@@ -209,13 +213,13 @@ export function WishlistContent() {
             <Heart className="h-10 w-10 text-gray-400" />
           </div>
           <h2 className="text-2xl font-display font-medium text-gray-900 mb-2">
-            Your wishlist is empty
+            ไม่มีรายการโปรด
           </h2>
           <p className="text-gray-600 mb-8">
-            Looks like you haven't added any items to your wishlist yet.
+            คุณยังไม่มีสินค้าที่บันทึกไว้ในรายการโปรดของคุณ
           </p>
           <Button variant="luxury" size="lg" asChild>
-            <Link href="/product">Start Shopping</Link>
+            <Link href="/product">กลับไปที่หน้าสินค้า</Link>
           </Button>
         </div>
       )}
