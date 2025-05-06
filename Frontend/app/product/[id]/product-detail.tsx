@@ -471,7 +471,9 @@ export function ProductDetail({
                     }`}
                     onClick={() => setSelectedSize(sizeObj.size)}
                   >
-                    <span>{sizeObj.size}</span>
+                    <span>{sizeObj.size}
+                      <p className="mt-1">{sizeObj.quantity} ชิ้น</p>
+                    </span>
 
                   </button>
                 ))}
