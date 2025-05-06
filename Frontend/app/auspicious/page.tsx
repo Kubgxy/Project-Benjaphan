@@ -151,9 +151,11 @@ export default function AuspiciousPage() {
             เลือกเครื่องประดับที่เหมาะกับราศีของคุณ
             เพื่อเสริมดวงชะตาและพลังมงคลให้ตรงกับธาตุประจำราศี
           </p>
+          <hr className=" border-brown-300" />
+          
           <div className="ml-[200px] max-w-[1500px]">
             {/* เนื้อหาส่วนที่ 1 */}
-            <div className="flex flex-col md:flex-row items-center mb-16 ml-4">
+            <div className="flex flex-col md:flex-row items-center mb-4 mt-4 ml-4">
               <div className="w-[350px] h-[350px] mb-6 md:mb-0 pt-[55px]">
                 <img
                   src="/naga1.png"
@@ -177,9 +179,13 @@ export default function AuspiciousPage() {
                 </p>
               </div>
             </div>
+            {/* เส้นใต้ (เฉพาะความกว้างบล็อกเนื้อหา) */}
+            <div className="ml-4 w-[calc(350px+50%+3rem)]">
+              <hr className=" border-brown-300" />
+            </div>
 
             {/* เนื้อหาส่วนที่ 2 */}
-            <div className="flex flex-col md:flex-row items-center mb-16">
+            <div className="flex flex-col md:flex-row items-center mb-4 mt-4 ml-4">
               <div className="w-full md:w-1/2 md:pr-12 order-2 md:order-1">
                 <h3 className="text-2xl font-semibold text-brown-800 mb-4">
                   ตระกูลเอราปถะ
@@ -207,9 +213,13 @@ export default function AuspiciousPage() {
                 />
               </div>
             </div>
+            {/* เส้นใต้ (เฉพาะความกว้างบล็อกเนื้อหา) */}
+            <div className="ml-4 w-[calc(350px+50%+3rem)]">
+              <hr className=" border-brown-300" />
+            </div>
 
             {/* เนื้อหาส่วนที่ 3 */}
-            <div className="flex flex-col md:flex-row items-center mb-16">
+            <div className="flex flex-col md:flex-row items-center mb-4 mt-4 ml-4">
               <div className="w-[350px] h-[350px] mb-6 md:mb-0 pt-[55px]">
                 <img
                   src="/naga3.png"
@@ -231,9 +241,13 @@ export default function AuspiciousPage() {
                 </p>
               </div>
             </div>
+            {/* เส้นใต้ (เฉพาะความกว้างบล็อกเนื้อหา) */}
+            <div className="ml-4 w-[calc(350px+50%+3rem)]">
+              <hr className=" border-brown-300 " />
+            </div>
 
             {/* เนื้อหาส่วนที่ 4 */}
-            <div className="flex flex-col md:flex-row items-center mb-16">
+            <div className="flex flex-col md:flex-row items-center mb-4 mt-4 ml-4">
               <div className="w-full md:w-1/2 md:pr-12 order-2 md:order-1">
                 <h3 className="text-2xl font-semibold text-brown-800 mb-4">
                   ตระกูลกัณหาโคตะมะ
@@ -261,6 +275,11 @@ export default function AuspiciousPage() {
                 />
               </div>
             </div>
+            {/* เส้นใต้ (เฉพาะความกว้างบล็อกเนื้อหา) */}
+            <div className="ml-4 w-[calc(350px+50%+3rem)]">
+              <hr className=" border-brown-300" />
+            </div>
+
           </div>
         </div>
       </section>

@@ -41,4 +41,7 @@ productSchema.virtual('stock').get(function () {
   return this.availableSizes.reduce((sum, size) => sum + size.quantity, 0);
 });
 
+productSchema.set('toObject', { virtuals: true });
+productSchema.set('toJSON', { virtuals: true });
+
 export default mongoose.model('Product', productSchema);

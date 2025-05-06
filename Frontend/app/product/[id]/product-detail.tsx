@@ -472,9 +472,7 @@ export function ProductDetail({
                     onClick={() => setSelectedSize(sizeObj.size)}
                   >
                     <span>{sizeObj.size}</span>
-                    <span className="text-xs text-gray-500">
-                      {sizeObj.quantity} ชิ้น
-                    </span>
+
                   </button>
                 ))}
               </div>
