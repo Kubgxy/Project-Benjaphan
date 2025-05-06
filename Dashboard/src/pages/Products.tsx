@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from 'react-dom';
 import { Edit, Trash2, Plus, Search, FileDown, Eye } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,29 +28,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DndContext, closestCenter, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { SortableImage } from "@/components/dashboard/SortableImage";
 import { toast } from "@/hooks/use-toast";
 import axios from "axios";
 
-interface Product {
-  _id: string;
-  id_product: string;
-  name: string;
-  category: string;
-  price: number;
-  description: string;
-  details: string[];
-  images: string[];
-  rating: number;
-  reviews: number;
-  isNewArrival: boolean;
-  isBestseller: boolean;
-  isOnSale: boolean;
-  availableSizes: {
+export interface Product {
+  _id: string;                   // MongoDB _id
+  id_product: string;            // รหัสสินค้า
+  name: string;                  // ชื่อสินค้า
+  category: string;              // หมวดหมู่
+  price: number;                 // ราคาปกติ
+  salePrice?: number;            // ราคาลด (optional)
+  discount?: number;             // ส่วนลด % (optional)
+  description?: string;          // คำอธิบายย่อ
+  details: string[];             // รายละเอียดเพิ่มเติม (array)
+  availableSizes: {             // ขนาด + จำนวน
     size: string;
     quantity: number;
   }[];
-  createdAt?: string;
-  updatedAt?: string;
+  images: string[];              // URL รูปสินค้า
+  rating: number;                // ค่าเฉลี่ย rating
+  reviews: number;               // จำนวนรีวิว
+  isNewArrival: boolean;         // flag สินค้าใหม่
+  isBestseller: boolean;         // flag ขายดี
+  isOnSale: boolean;             // flag ลดราคา
+  metaTitle?: string;            // SEO title (optional)
+  metaDescription?: string;      // SEO description (optional)
+  createdAt?: string;            // วันสร้าง (ISO string)
+  updatedAt?: string;            // วันอัปเดต (ISO string)
+  stock?: number;                // 💡 Virtual field → stock รวมจาก availableSizes
 }
 
 interface SortConfig {
@@ -59,10 +69,13 @@ interface SortConfig {
 const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [newProduct, setNewProduct] = useState({
+    _id: "",
     id_product: "",
     name: "",
     category: "",
     price: 0,
+    salePrice: 0,
+    discount: 0,
     availableSizes: [] as { size: string; quantity: number }[],
     description: "",
     details: [] as string[],
@@ -70,7 +83,10 @@ const Products: React.FC = () => {
     isNewArrival: false,
     isBestseller: false,
     isOnSale: false,
+    metaTitle: "",
+    metaDescription: "",
   });
+  const [isEditMode, setIsEditMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -82,6 +98,9 @@ const Products: React.FC = () => {
     direction: "asc",
   });
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  const sensors = useSensors(useSensor(PointerSensor));
 
   const IMAGE_BASE_URL = "http://localhost:3000";
 
@@ -92,6 +111,7 @@ const Products: React.FC = () => {
         { withCredentials: true }
       );
       setProducts(response.data.products);
+      console.log("Fetched products:", response.data.products); // Debugging line
     } catch (error) {
       console.error("❌ Error fetching products:", error);
     }
@@ -133,18 +153,14 @@ const Products: React.FC = () => {
   
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (
-      a[sortConfig.key as keyof Product] < b[sortConfig.key as keyof Product]
-    ) {
-      return sortConfig.direction === "asc" ? -1 : 1;
-    }
-    if (
-      a[sortConfig.key as keyof Product] > b[sortConfig.key as keyof Product]
-    ) {
-      return sortConfig.direction === "asc" ? 1 : -1;
-    }
+    const aValue = a[sortConfig.key as keyof Product];
+    const bValue = b[sortConfig.key as keyof Product];
+  
+    if (aValue == null || bValue == null) return 0;
+  
+    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
     return 0;
-    
   });
 
   const handleAddProduct = async (e: React.FormEvent) => {
@@ -164,6 +180,10 @@ const Products: React.FC = () => {
       formData.append("isNewArrival", newProduct.isNewArrival.toString());
       formData.append("isBestseller", newProduct.isBestseller.toString());
       formData.append("isOnSale", newProduct.isOnSale.toString());
+      formData.append("salePrice", newProduct.salePrice.toString());
+      formData.append("discount", newProduct.discount.toString());
+      formData.append("metaTitle", newProduct.metaTitle);
+      formData.append("metaDescription", newProduct.metaDescription);
       newProduct.images.forEach((image) => {
         formData.append("images", image);
       });
@@ -192,6 +212,7 @@ const Products: React.FC = () => {
     try {
       const formData = new FormData();
       formData.append("name", newProduct.name);
+      formData.append("id_product", newProduct.id_product);
       formData.append("category", newProduct.category);
       formData.append("price", newProduct.price.toString());
       formData.append("description", newProduct.description);
@@ -203,6 +224,10 @@ const Products: React.FC = () => {
       formData.append("isNewArrival", newProduct.isNewArrival.toString());
       formData.append("isBestseller", newProduct.isBestseller.toString());
       formData.append("isOnSale", newProduct.isOnSale.toString());
+      formData.append("salePrice", newProduct.salePrice.toString());
+      formData.append("discount", newProduct.discount.toString());
+      formData.append("metaTitle", newProduct.metaTitle);
+      formData.append("metaDescription", newProduct.metaDescription);
       newProduct.images.forEach((image) => {
         formData.append("images", image);
       });
@@ -247,10 +272,13 @@ const Products: React.FC = () => {
 
   const handleEditClick = (product: Product) => {
     setNewProduct({
+      _id: product._id,
       id_product: product.id_product,
       name: product.name,
       category: product.category,
       price: product.price,
+      salePrice: product.salePrice || 0,
+      discount: product.discount || 0,
       availableSizes: product.availableSizes,
       description: product.description,
       details: product.details,
@@ -258,23 +286,31 @@ const Products: React.FC = () => {
       isNewArrival: product.isNewArrival,
       isBestseller: product.isBestseller,
       isOnSale: product.isOnSale,
+      metaTitle: product.metaTitle || "",
+      metaDescription: product.metaDescription || "",
     });
+    setIsEditMode(true);
     setAddDialogOpen(true);
   };
 
   const resetNewProduct = () => {
     setNewProduct({
+      _id: "",
       id_product: "",
       name: "",
       category: "",
       price: 0,
-      availableSizes: [],
+      salePrice: 0,
+      discount: 0,
+      availableSizes: [] as { size: string; quantity: number }[],
       description: "",
-      details: [],
-      images: [],
+      details: [] as string[],
+      images: [] as File[],
       isNewArrival: false,
       isBestseller: false,
       isOnSale: false,
+      metaTitle: "",
+      metaDescription: "",
     });
   };
 
@@ -303,12 +339,17 @@ const Products: React.FC = () => {
 
 
   return (
+  <>
     <div className="space-y-4 animate-fade-in">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">สินค้า</h1>
         <Button
           className="flex items-center"
-          onClick={() => setAddDialogOpen(true)}
+          onClick={() => {
+            resetNewProduct();
+            setIsEditMode(false);
+            setAddDialogOpen(true);
+          }}
         >
           <Plus className="mr-2 h-4 w-4" />
           เพิ่มสินค้า
@@ -391,6 +432,7 @@ const Products: React.FC = () => {
                 </TableHead>
                 <TableHead>หมวดหมู่</TableHead>
                 <TableHead>ราคา</TableHead>
+                <TableHead>ราคาลด</TableHead>
                 <TableHead>คงเหลือ</TableHead>
                 <TableHead>สถานะ</TableHead>
                 <TableHead>แท็ก</TableHead>
@@ -413,7 +455,11 @@ const Products: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <img
-                        src={`${IMAGE_BASE_URL}${product.images[0]}`}
+                        src={
+                          product.images && product.images.length > 0
+                            ? `${IMAGE_BASE_URL}${product.images[0]}`
+                            : "/default-image.jpg" // ใช้รูป default สำรอง
+                        }
                         className="h-12 w-12 object-cover rounded"
                       />
                     </TableCell>
@@ -421,8 +467,11 @@ const Products: React.FC = () => {
                     <TableCell>{product.category}</TableCell>
                     <TableCell>฿{product.price.toLocaleString()}</TableCell>
                     <TableCell>
-                      {calculateStock(product.availableSizes)}
-                    </TableCell>{" "}
+                      {product.salePrice
+                        ? `฿${product.salePrice.toLocaleString()} (-${product.discount}%)`
+                        : "-"}
+                    </TableCell>
+                    <TableCell>{calculateStock(product.availableSizes)}</TableCell>
                     {/* ✅ ใช้ฟังก์ชันคำนวณ stock */}
                     <TableCell>
                       <Badge
@@ -465,7 +514,7 @@ const Products: React.FC = () => {
                         size="icon"
                         className="text-ruby hover:text-ruby/80"
                         onClick={() => {
-                          setProductToDelete(product._id); // <<< ต้องเซต id ที่จะลบ
+                          setProductToDelete(product._id);
                           setDeleteDialogOpen(true);
                         }}
                       >
@@ -505,167 +554,443 @@ const Products: React.FC = () => {
       </Dialog>
 
       {/* Add Product Dialog */}
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent>
+      <Dialog
+        open={addDialogOpen}
+        onOpenChange={(open) => {
+          setAddDialogOpen(open);
+          if (!open) {
+            setPreviewImage(null); // ✅ ปิด popup preview ทุกครั้งที่ dialog ปิด
+          }
+        }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto w-full max-w-4xl">
           <DialogHeader>
-            <DialogTitle>เพิ่มสินค้าใหม่</DialogTitle>
+            <DialogTitle>
+              {isEditMode ? "แก้ไขสินค้า" : "เพิ่มสินค้าใหม่"}
+              <hr className="my-2 border-t border-gray-300"></hr>
+            </DialogTitle>
           </DialogHeader>
-          <form
-            onSubmit={
-              newProduct.id_product ? handleUpdateProduct : handleAddProduct
-            }
-            className="space-y-4"
-          >
-            <Input
-              name="id_product"
-              placeholder="รหัสสินค้า"
-              required
-              value={newProduct.id_product}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, id_product: e.target.value })
-              }
-            />
-            <Input
-              name="name"
-              placeholder="ชื่อสินค้า"
-              required
-              value={newProduct.name}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, name: e.target.value })
-              }
-            />
-            <Input
-              name="category"
-              placeholder="หมวดหมู่"
-              required
-              value={newProduct.category}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, category: e.target.value })
-              }
-            />
-            <Input
-              name="price"
-              placeholder="ราคา"
-              required
-              value={newProduct.price}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, price: Number(e.target.value) })
-              }
-            />
-            {/* ❌ ลบ stock ออก */}
 
-            {/* เพิ่ม Sizes แบบ Dynamic */}
-            <div className="space-y-2">
-              <label className="font-medium">ขนาดและจำนวน:</label>
-              {newProduct.availableSizes.map((sizeObj, index) => (
-                <div key={index} className="flex space-x-2 items-center">
-                  <Input
-                    placeholder="ไซส์ (เช่น S, M, L)"
-                    value={sizeObj.size}
-                    onChange={(e) => {
-                      const updated = [...newProduct.availableSizes];
-                      updated[index].size = e.target.value;
-                      setNewProduct({ ...newProduct, availableSizes: updated });
-                    }}
-                  />
-                  <Input
-                    placeholder="จำนวน"
-                    type="text"
-                    value={sizeObj.quantity}
-                    onChange={(e) => {
-                      const updated = [...newProduct.availableSizes];
-                      updated[index].quantity = Number(e.target.value);
-                      setNewProduct({ ...newProduct, availableSizes: updated });
-                    }}
-                  />
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => {
-                      const updated = newProduct.availableSizes.filter(
-                        (_, i) => i !== index
-                      );
-                      setNewProduct({ ...newProduct, availableSizes: updated });
+          <form
+            onSubmit={isEditMode ? handleUpdateProduct : handleAddProduct}
+            className="space-y-1"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* ซ้าย: ข้อมูลหลัก */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">ข้อมูลสินค้า</h2>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                      ⓘ
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={8}>
+                      ใส่รายละเอียดของสินค้า <br />
+                      เช่น <strong>รหัสสินค้า</strong>, <strong>ชื่อสินค้า</strong>, <br />
+                      <strong>หมวดหมู่</strong> (เช่น ชะลอม, กำไล, น้ำหอม) <br />
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Input
+                  placeholder="รหัสสินค้า"
+                  required
+                  value={newProduct.id_product}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, id_product: e.target.value })
+                  }
+                />
+                <Input
+                  placeholder="ชื่อสินค้า"
+                  required
+                  value={newProduct.name}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, name: e.target.value })
+                  }
+                />
+                <Input
+                  placeholder="หมวดหมู่ (เช่น ชะลอม, กำไล, น้ำหอม)"
+                  required
+                  value={newProduct.category}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, category: e.target.value })
+                  }
+                />
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-semibold">ราคา</h2>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                        ⓘ
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" sideOffset={8}>
+                        ใส่ <strong>ราคา</strong> ของสินค้าเป็นจำนวนเต็ม เช่น 100,350,500 <br />
+                        กรอก <strong>ส่วนลด</strong> เป็นเปอร์เซ็นต์ เช่น 20% <br />
+                        และ <strong>ราคาลด</strong> จะคำนวณให้โดยอัตโนมัติ <br />
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <div className="flex flex-col w-full">
+                      <Input
+                        type="number"
+                        placeholder="ราคา (บาท)"
+                        required
+                        value={newProduct.price === 0 ? "" : newProduct.price}
+                        onChange={(e) => {
+                          const price = e.target.value === "" ? 0 : Number(e.target.value);
+                          const discount = Math.min(newProduct.discount, 100); // กันส่วนลดเกิน 100%
+                          const salePrice = price && discount
+                            ? Math.round(price - price * (discount / 100))
+                            : 0;
+                          setNewProduct({
+                            ...newProduct,
+                            price,
+                            discount,
+                            salePrice,
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col w-full">
+                      <Input
+                        type="number"
+                        placeholder="ส่วนลด (%)"
+                        value={newProduct.discount === 0 ? "" : newProduct.discount}
+                        onChange={(e) => {
+                          let discount = e.target.value === "" ? 0 : Number(e.target.value);
+                          if (discount > 100) discount = 100; // ไม่ให้เกิน 100%
+                          const price = newProduct.price;
+                          const salePrice = price && discount
+                            ? Math.round(price - price * (discount / 100))
+                            : 0;
+                          setNewProduct({
+                            ...newProduct,
+                            discount,
+                            salePrice,
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col w-full">
+                      <Input
+                        type="number"
+                        placeholder="ราคาลด (บาท)"
+                        value={newProduct.salePrice === 0 ? "" : newProduct.salePrice}
+                        disabled
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">รายละเอียด</h2>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                        ⓘ
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" sideOffset={8}>
+                        ใส่ <strong>รายละเอียดสั้น</strong> เพื่อสรุปจุดเด่นหรือข้อมูลสำคัญ เช่น สี, วัสดุ, เหมาะกับใคร <br />
+                        <strong>Meta Title</strong> คือ ชื่อ SEO ของสินค้า ควรเขียนกระชับชัดเจน เช่น “สร้อยทองแท้ 96.5%” <br />
+                        <strong>Meta Description</strong> คือ คำอธิบาย SEO ใช้บอกจุดขาย, จุดเด่น, หรือโปรโมชั่น ของสินค้า <br />
+                        เช่น “สร้อยทองแท้ราคาพิเศษ ลดสูงสุด 20% ส่งฟรี” <br />
+                      </TooltipContent>
+                    </Tooltip>
+                </div>
+                <Input
+                  placeholder="รายละเอียดสั้น"
+                  value={newProduct.description}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, description: e.target.value })
+                  }
+                />
+                <Input
+                  placeholder="Meta Title"
+                  value={newProduct.metaTitle}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, metaTitle: e.target.value })
+                  }
+                />
+                <Input
+                  placeholder="Meta Description"
+                  value={newProduct.metaDescription}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, metaDescription: e.target.value })
+                  }
+                />
+
+                <div className="flex flex-wrap gap-4">
+                  <label className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={newProduct.isNewArrival}
+                      onCheckedChange={(checked) =>
+                        setNewProduct({ ...newProduct, isNewArrival: !!checked })
+                      }
+                    />
+                    <span>ใหม่</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={newProduct.isBestseller}
+                      onCheckedChange={(checked) =>
+                        setNewProduct({ ...newProduct, isBestseller: !!checked })
+                      }
+                    />
+                    <span>ขายดี</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={newProduct.isOnSale}
+                      onCheckedChange={(checked) =>
+                        setNewProduct({ ...newProduct, isOnSale: !!checked })
+                      }
+                    />
+                    <span>ลดราคา</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* ขวา: รายละเอียดเพิ่มเติม + ขนาดและจำนวน */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">รายละเอียดเพิ่มเติม</h2>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                      ⓘ
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={8}>
+                      ใส่รายละเอียดเพิ่มเติม เช่น <br />
+                      "น้ำหนัก: 0.5 บาท", "ทองคำแท้ผสม", "ดีไซน์ลายดอกไม้", <br />
+                      "รับประกันสินค้าตลอดชีพ", "มีใบรับประกันสินค้า"
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                {newProduct.details.map((detail, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <Input
+                      placeholder={`รายละเอียด #${index + 1}`}
+                      value={detail}
+                      onChange={(e) => {
+                        const updated = [...newProduct.details];
+                        updated[index] = e.target.value;
+                        setNewProduct({ ...newProduct, details: updated });
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => {
+                        const updated = newProduct.details.filter((_, i) => i !== index);
+                        setNewProduct({ ...newProduct, details: updated });
+                      }}
+                    >
+                      🗑️
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    setNewProduct({
+                      ...newProduct,
+                      details: [...newProduct.details, ""],
+                    })
+                  }
+                >
+                  ➕ เพิ่มรายละเอียด
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">ขนาดและจำนวนสินค้า</h2>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                        ⓘ
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" sideOffset={8}>
+                        ใส่ <strong>ไซส์</strong> และ <strong>จำนวน</strong> ของสินค้า เช่น <br />
+                        "ไซส์ S: 10 ชิ้น", "ไซส์ M: 5 ชิ้น", "ไซส์ L: 0 ชิ้น" <br />
+                        ถ้าไม่มีไซส์ใดๆ ให้ใส่เป็น 0 เพื่อปิดการขายไซส์นั้นๆ
+                      </TooltipContent>
+                    </Tooltip>
+                </div>
+                {newProduct.availableSizes.map((sizeObj, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <Input
+                      placeholder="ไซส์ (เช่น S, M, L)"
+                      value={sizeObj.size}
+                      onChange={(e) => {
+                        const updated = [...newProduct.availableSizes];
+                        updated[index].size = e.target.value;
+                        setNewProduct({ ...newProduct, availableSizes: updated });
+                      }}
+                    />
+                    <Input
+                      placeholder="จำนวน"
+                      type="number"
+                      value={sizeObj.quantity}
+                      onChange={(e) => {
+                        const updated = [...newProduct.availableSizes];
+                        updated[index].quantity = Number(e.target.value);
+                        setNewProduct({ ...newProduct, availableSizes: updated });
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => {
+                        const updated = newProduct.availableSizes.filter(
+                          (_, i) => i !== index
+                        );
+                        setNewProduct({ ...newProduct, availableSizes: updated });
+                      }}
+                    >
+                      🗑️
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    setNewProduct({
+                      ...newProduct,
+                      availableSizes: [
+                        ...newProduct.availableSizes,
+                        { size: "", quantity: 0 },
+                      ],
+                    })
+                  }
+                >
+                  ➕ เพิ่มไซส์
+                </Button>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">รูปภาพและแท็ก</h2>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        ⓘ
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={8}>
+                      อัปโหลด <strong>รูปภาพสินค้า</strong> <br />
+                      เช่น รูปภาพหลัก, รูปภาพมุมต่างๆ, รูปภาพการใช้งาน <br />
+                      สามารถลากเพื่อจัดเรียงลำดับได้
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+
+                <Input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) =>
+                    setNewProduct({
+                      ...newProduct,
+                      images: e.target.files ? Array.from(e.target.files) : [],
+                    })
+                  }
+                />
+
+                {newProduct.images.length > 0 && (
+                  <DndContext
+                    collisionDetection={closestCenter}
+                    sensors={sensors}
+                    onDragEnd={({ active, over }) => {
+                      if (active.id !== over?.id) {
+                        const oldIndex = parseInt(active.id as string);
+                        const newIndex = parseInt(over?.id as string);
+                        const reordered = arrayMove(newProduct.images, oldIndex, newIndex);
+                        setNewProduct({ ...newProduct, images: reordered });
+                      }
                     }}
                   >
-                    🗑️
-                  </Button>
-                </div>
-              ))}
+                    <SortableContext
+                      items={newProduct.images.map((_, i) => i.toString())}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="flex gap-2 flex-wrap mt-2">
+                        {newProduct.images.map((file, index) => (
+                          <SortableImage
+                            key={index}
+                            id={index.toString()}
+                            file={file}
+                            index={index}
+                            onRemove={(idx) => {
+                              const updated = newProduct.images.filter((_, i) => i !== idx);
+                              setNewProduct({ ...newProduct, images: updated });
+                            }}
+                            onPreview={(url) => setPreviewImage(url)}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                )}
+
+                
+              </div>
+            </div>
+            
+            
+            {/* SECTION: ปุ่มล่าง */}
+            <DialogFooter className="flex justify-between">
               <Button
                 type="button"
-                style={{ marginLeft: "10px" }}
-                onClick={() =>
-                  setNewProduct({
-                    ...newProduct,
-                    availableSizes: [
-                      ...newProduct.availableSizes,
-                      { size: "", quantity: 0 },
-                    ],
-                  })
-                }
+                variant="outline"
+                onClick={resetNewProduct}
               >
-                เพิ่มไซส์
+                ล้างค่า
               </Button>
-            </div>
-
-            <Input
-              name="description"
-              placeholder="รายละเอียด"
-              value={newProduct.description}
-              onChange={(e) =>
-                setNewProduct({ ...newProduct, description: e.target.value })
-              }
-            />
-            <Input
-              name="images"
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) =>
-                setNewProduct({
-                  ...newProduct,
-                  images: e.target.files ? Array.from(e.target.files) : [],
-                })
-              }
-            />
-            <div className="flex items-center space-x-4">
-              <label className="flex items-center space-x-2">
-                <Checkbox
-                  checked={newProduct.isNewArrival}
-                  onCheckedChange={(checked) =>
-                    setNewProduct({ ...newProduct, isNewArrival: !!checked })
-                  }
-                />
-                <span>ใหม่</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <Checkbox
-                  checked={newProduct.isBestseller}
-                  onCheckedChange={(checked) =>
-                    setNewProduct({ ...newProduct, isBestseller: !!checked })
-                  }
-                />
-                <span>ขายดี</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <Checkbox
-                  checked={newProduct.isOnSale}
-                  onCheckedChange={(checked) =>
-                    setNewProduct({ ...newProduct, isOnSale: !!checked })
-                  }
-                />
-                <span>ลดราคา</span>
-              </label>
-            </div>
-            <Button type="submit">
-              {newProduct.id_product ? "อัปเดตสินค้า" : "บันทึก"}
-            </Button>
+              <Button type="submit">
+                {isEditMode ? "อัปเดตสินค้า" : "บันทึกสินค้า"}
+              </Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+
     </div>
-  );
+ {/* ✅ POPUP Preview แยกออกมาอยู่นอก Dialog เลย */}
+ {previewImage &&
+  createPortal(
+    <div
+      className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center no-dialog-close"
+      onClick={() => setPreviewImage(null)} // คลิกพื้นหลังเพื่อปิด
+    >
+      <div
+        className="relative"
+        onClick={(e) => e.stopPropagation()} // กันไม่ให้คลิกทะลุ
+      >
+        <button
+          onClick={() => setPreviewImage(null)}
+          className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 text-lg"
+        >
+          ×
+        </button>
+        <img
+          src={previewImage}
+          alt="Preview"
+          className="max-w-full max-h-screen object-contain rounded shadow-lg"
+        />
+      </div>
+    </div>,
+    document.body
+  )
+}
+  </>
+);
 };
 
 export default Products;
