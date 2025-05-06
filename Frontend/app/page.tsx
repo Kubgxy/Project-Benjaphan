@@ -61,50 +61,48 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-cream-50">
       <Header />
-
       {/* Hero Section */}
-      <section className="relative h-[90vh]  flex items-center">
+      <section className="relative w-full min-h-[60vh] sm:min-h-[70vh] md:min-h-[90vh] flex items-center">
         <div className="absolute inset-0 z-0">
           <Image
             src="/bg/ChatGPT Image 30 เม.ย. 2568 05_00_23.png"
             alt="เครื่องประดับทองคำแท้"
             fill
-            className="object-cover z-0"
+            className="object-cover object-center sm:object-top"
             priority
           />
           <div className="absolute inset-0 bg-black bg-opacity-40"></div>
         </div>
 
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl text-white">
-            <h1 className="text-5xl md:text-7xl font-display font-medium leading-tight mb-6">
-              เบญจภัณฑ์ ๕
-            </h1>
-            <h2 className="text-4xl gold-text-gradient">
-              ของดีมีศรัทธา เสริมบุญหนา วาสนาเปล่งประกาย
-            </h2>
-            <p className="text-lg md:text-lg mb-8 text-white/90 font-light">
-              เปล่งประกายทั้งภายนอกและภายใน เสริมโชคลาภ ดึงดูดความสำเร็จ
-              ให้ชีวิตงดงามทุกก้าว
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button
-                variant="default"
-                size="lg"
-                className="bg-gold-600 hover:bg-gold-700 text-base"
-                asChild
-              >
-                <Link href="/product">ดูสินค้าทั้งหมด</Link>
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="text-base bg-transparent text-white border-white hover:bg-white/10"
-                asChild
-              >
-                <Link href="/auspicious">เครื่องประดับมงคล</Link>
-              </Button>
-            </div>
+        {/* ตรงนี้ค่อยใส่ container ข้างใน ไม่ล้อมทั้ง section */}
+        <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 text-center sm:text-left max-w-screen-xl mx-auto ">
+          <h1 className="text-3xl text-gold-600 sm:text-4xl md:text-6xl font-charm font-semibold mb-6 leading-tight">
+            เบญจภัณฑ์ ๕
+          </h1>
+          <h2 className="text-2xl font-charm sm:text-3xl md:text-4xl text-gold-600 mb-6 leading-tight">
+            ของดีมีศรัทธา เสริมบุญหนา วาสนาเปล่งประกาย
+          </h2>
+          <p className="text-base font-charm sm:text-lg mb-6 text-white/90 font-light">
+            เปล่งประกายทั้งภายนอกและภายใน เสริมโชคลาภ ดึงดูดความสำเร็จ
+            ให้ชีวิตงดงามทุกก้าว
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center sm:justify-start">
+            <Button
+              variant="default"
+              size="lg"
+              className="bg-gold-600 hover:bg-gold-700 text-base"
+              asChild
+            >
+              <Link href="/product">ดูสินค้าทั้งหมด</Link>
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="text-base bg-transparent text-white border-white hover:bg-white/10"
+              asChild
+            >
+              <Link href="/auspicious">เครื่องประดับมงคล</Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -182,7 +180,6 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 lg:ml-[280px] gap-8 items-center justify-center px-4 md:px-0 mx-auto">
-
             {featuredCategories.map((category) => (
               <Link
                 key={category.id}
@@ -190,7 +187,6 @@ export default function Home() {
                 className="group"
               >
                 <div className="relative h-80 w-full overflow-hidden rounded-lg shadow-md">
-
                   <Image
                     src={category.image || "/placeholder.svg"}
                     alt={category.name}
@@ -247,7 +243,13 @@ export default function Home() {
                   ...product,
                   id: product.id_product, // ✅ เปลี่ยนจาก _id → id_product ที่ backend ใช้จริง
                 };
-                return <ProductCard key={product.id_product} product={productWithId} featured />;
+                return (
+                  <ProductCard
+                    key={product.id_product}
+                    product={productWithId}
+                    featured
+                  />
+                );
               })
             ) : (
               <p>ยังไม่มีสินค้ามาใหม่ตอนนี้</p> // ✅ กรณีไม่มีสินค้า
@@ -306,34 +308,39 @@ export default function Home() {
 
       {/* Bestsellers Section */}
       {bestsellers.length > 0 && (
-  <section className="py-20 bg-white">
-    <div className="container mx-auto px-4">
-      <div className="text-center mb-12">
-        <h2 className="text-3xl md:text-4xl font-heading font-medium text-brown-800 mb-4">
-          สินค้าขายดี
-        </h2>
-        <p className="text-brown-600 max-w-2xl mx-auto">
-          เครื่องประดับทองคำแท้ยอดนิยม ที่ลูกค้าให้ความไว้วางใจเลือกซื้อมากที่สุด
-        </p>
-      </div>
+        <section className="py-20 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-heading font-medium text-brown-800 mb-4">
+                สินค้าขายดี
+              </h2>
+              <p className="text-brown-600 max-w-2xl mx-auto">
+                เครื่องประดับทองคำแท้ยอดนิยม
+                ที่ลูกค้าให้ความไว้วางใจเลือกซื้อมากที่สุด
+              </p>
+            </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {loadingBestsellers ? (
-          <p>กำลังโหลดสินค้าขายดี...</p>
-        ) : (
-          bestsellers.map((product) => {
-            const productWithId = {
-              ...product,
-              id: product.id_product, // ✅ ตรงนี้เหมือนกัน
-            };
-            return <ProductCard key={product.id_product} product={productWithId} />;
-          })
-        )}
-      </div>
-    </div>
-  </section>
-)}
-
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {loadingBestsellers ? (
+                <p>กำลังโหลดสินค้าขายดี...</p>
+              ) : (
+                bestsellers.map((product) => {
+                  const productWithId = {
+                    ...product,
+                    id: product.id_product, // ✅ ตรงนี้เหมือนกัน
+                  };
+                  return (
+                    <ProductCard
+                      key={product.id_product}
+                      product={productWithId}
+                    />
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* คุณค่าของแบรนด์ */}
       <section className="py-20 bg-cream-50">
@@ -417,8 +424,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-
 
       {/* Newsletter Section */}
       <section className="py-20 bg-gold-600 text-white">

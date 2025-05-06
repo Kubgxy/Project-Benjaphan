@@ -327,36 +327,38 @@ export function CheckoutForm() {
           <Package className="w-5 h-5 text-yellow-500" />
           สินค้าที่สั่งซื้อแล้ว
         </h2>
-        {checkoutItems.map((item) => (
-          <div
-            key={item.productId}
-            className="flex items-center justify-between py-2 border-b"
-          >
-            <div className="flex w-auto h-auto items-center">
-              <Image
-                src={
-                  item.images?.[0]
-                    ? `http://localhost:3000${item.images[0]}`
-                    : "/placeholder.svg"
-                }
-                alt={item.name}
-                width={64}
-                height={64}
-                className="object-cover mr-4"
-                priority
-              />
-              <div>
-                <p className="font-medium text-brown-800">{item.name}</p>
-                <p className="text-sm text-gray-500">
-                  ขนาด: {item.size} | จำนวน: {item.quantity}
-                </p>
-              </div>
-            </div>
-            <p className="font-medium">
-              {formatPrice(item.priceAtAdded * item.quantity)}
-            </p>
-          </div>
-        ))}
+        {checkoutItems.map((item, index) => (
+  <div
+    key={item._id?.toString() || item.id_product || index}
+    className="flex items-center justify-between py-2 border-b"
+  >
+    <div className="flex items-center">
+      <Image
+        src={
+          item.images?.[0]
+            ? `http://localhost:3000${item.images[0]}`
+            : "/placeholder.svg"
+        }
+        alt={item.name}
+        width={24}
+        height={24}
+        className="object-cover mr-4 w-[80px] h-[80px]"
+        priority
+      />
+
+      <div>
+        <p className="font-medium text-brown-800">{item.name}</p>
+        <p className="text-sm text-gray-500">
+          ขนาด: {item.size} | จำนวน: {item.quantity}
+        </p>
+      </div>
+    </div>
+    <p className="font-medium">
+      {formatPrice(item.priceAtAdded * item.quantity)}
+    </p>
+  </div>
+))}
+
       </div>
 
       {/* สรุปยอดสั่งซื้อ */}
