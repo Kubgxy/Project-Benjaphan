@@ -152,37 +152,159 @@ export function CartContent() {
       {cartItems.length > 0 ? (
         <div className="grid md:grid-cols-3 gap-8">
           <div className="md:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            {/* Mobile View (Card Style) */}
+{/* Mobile View (Card Style) */}
+<div className="md:hidden space-y-4">
+  {/* Select All Checkbox */}
+  <div className="bg-white rounded-lg shadow-sm p-4 flex items-center">
+    <input
+      type="checkbox"
+      checked={
+        cartItems.length > 0 &&
+        cartItems.every(
+          (item) => selectedItems[`${item.productId}-${item.size}`]
+        )
+      }
+      onChange={(e) => {
+        const newSelected: { [key: string]: boolean } = {};
+        if (e.target.checked) {
+          cartItems.forEach((item) => {
+            newSelected[`${item.productId}-${item.size}`] = true;
+          });
+        }
+        setSelectedItems(newSelected);
+      }}
+      className="mr-2"
+    />
+    <span className="font-medium text-brown-800">เลือกสินค้าทั้งหมด</span>
+  </div>
+
+  {cartItems.map((item) => (
+    <div
+      key={`${item.productId}-${item.size}`}
+      className="bg-white rounded-lg shadow-sm p-4"
+    >
+      <div className="flex items-center mb-3">
+        <input
+          type="checkbox"
+          checked={
+            selectedItems[`${item.productId}-${item.size}`] || false
+          }
+          onChange={(e) =>
+            setSelectedItems({
+              ...selectedItems,
+              [`${item.productId}-${item.size}`]: e.target.checked,
+            })
+          }
+          className="mr-2"
+        />
+        <div className="relative w-20 h-20 bg-gray-50 rounded-md overflow-hidden">
+          <Image
+            src={
+              item.images[0]
+                ? `http://localhost:3000${item.images[0]}`
+                : "/placeholder.svg"
+            }
+            alt={item.name}
+            fill
+            className="object-contain"
+          />
+        </div>
+        <div className="ml-4">
+          <h3 className="font-medium">{item.name}</h3>
+          <p className="text-sm text-gray-600">
+            {formatPrice(item.priceAtAdded)}
+          </p>
+          {item.size && (
+            <p className="text-xs text-gray-500">Size: {item.size}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center">
+          <button
+            className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-l"
+            onClick={() =>
+              handleUpdateQuantity(
+                item.productId,
+                item.size,
+                item.quantity - 1
+              )
+            }
+            disabled={item.quantity <= 1}
+          >
+            <Minus className="w-4 h-4" />
+          </button>
+          <input
+            type="text"
+            value={item.quantity}
+            className="w-12 h-8 text-center border-t border-b border-gray-300"
+            readOnly
+          />
+          <button
+            className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-r"
+            onClick={() =>
+              handleUpdateQuantity(
+                item.productId,
+                item.size,
+                item.quantity + 1
+              )
+            }
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+        <span className="font-medium">
+          {formatPrice(item.priceAtAdded * item.quantity)}
+        </span>
+      </div>
+
+      <button
+        className="w-full text-center text-white rounded-md py-2 bg-red-500 hover:bg-red-600 text-sm"
+        onClick={() => handleRemoveItem(item.productId, item.size)}
+      >
+        ลบออกจากตะกร้า
+      </button>
+    </div>
+  ))}
+</div>
+
+
+            {/* Desktop & Tablet View (Table Style) */}
+            <div className="hidden md:block bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="p-6">
                 <table className="w-full">
-                <thead>
-  <tr className="border-b text-brown-800">
-    <th className="text-left pb-4">
-      <input
-        type="checkbox"
-        checked={
-          cartItems.length > 0 &&
-          cartItems.every(
-            (item) => selectedItems[`${item.productId}-${item.size}`]
-          )
-        }
-        onChange={(e) => {
-          const newSelected: { [key: string]: boolean } = {};
-          if (e.target.checked) {
-            cartItems.forEach((item) => {
-              newSelected[`${item.productId}-${item.size}`] = true;
-            });
-          }
-          setSelectedItems(newSelected);
-        }}
-        className="mr-2"
-      />
-      สินค้า
-    </th>
-    <th className="text-center pb-4">จำนวน</th>
-    <th className="text-right pb-4">ราคา</th>
-  </tr>
-</thead>
+                  <thead>
+                    <tr className="border-b text-brown-800">
+                      <th className="text-left pb-4">
+                        <input
+                          type="checkbox"
+                          checked={
+                            cartItems.length > 0 &&
+                            cartItems.every(
+                              (item) =>
+                                selectedItems[`${item.productId}-${item.size}`]
+                            )
+                          }
+                          onChange={(e) => {
+                            const newSelected: { [key: string]: boolean } = {};
+                            if (e.target.checked) {
+                              cartItems.forEach((item) => {
+                                newSelected[`${item.productId}-${item.size}`] =
+                                  true;
+                              });
+                            }
+                            setSelectedItems(newSelected);
+                          }}
+                          className="mr-2"
+                        />
+                        สินค้า
+                      </th>
+                      <th className="text-center pb-4">จำนวน</th>
+                      <th className="text-right pb-4">ราคา</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {cartItems.map((item) => (
                       <tr
@@ -224,7 +346,6 @@ export function CartContent() {
                               <p className="text-sm text-gray-600">
                                 {formatPrice(item.priceAtAdded)}
                               </p>
-
                               {item.size && (
                                 <p className="text-xs text-gray-500">
                                   Size: {item.size}
