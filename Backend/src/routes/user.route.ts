@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { registerUser, loginUser, logoutUser, getAddress, addAddress, updateAddress, deleteAddress } from '../controllers/user.controller';
+import { registerUser, loginUser, logoutUser, getAddress, addAddress, updateAddress, deleteAddress, getAllCustomers } from '../controllers/user.controller';
 import { updateMe, getUserProfile } from '../controllers/user.controller';
 import { verifyToken } from '../middlewares/verifyToken';
 import { upload } from '../middlewares/avatarUpload.middleware';
+import { verifyAdmin } from '../middlewares/verifyAdmin';
 
 
 const user = Router();
@@ -25,4 +26,6 @@ user.post('/addAddress', verifyToken, addAddress);
 user.patch('/updateAddress/:addressId', verifyToken, updateAddress);
 user.delete('/deleteAddress/:addressId', verifyToken, deleteAddress);
 
+// Admin Route (เฉพาะ admin)
+user.get('/getAllCustomers',verifyToken ,verifyAdmin, getAllCustomers); // Get all customers
 export default user;
