@@ -121,6 +121,20 @@ const Products: React.FC = () => {
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    if (!addDialogOpen) {
+      setPreviewImage(null);
+    }
+  }, [addDialogOpen]);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPreviewImage(null);
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [previewImage]);
+
   const requestSort = (key: string) => {
     const direction =
       sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
@@ -554,15 +568,14 @@ const Products: React.FC = () => {
       </Dialog>
 
       {/* Add Product Dialog */}
-      <Dialog
-        open={addDialogOpen}
-        onOpenChange={(open) => {
-          setAddDialogOpen(open);
-          if (!open) {
-            setPreviewImage(null); // ✅ ปิด popup preview ทุกครั้งที่ dialog ปิด
-          }
-        }}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto w-full max-w-4xl">
+      <>
+      {!previewImage && (
+    <Dialog
+      open={addDialogOpen}
+      onOpenChange={setAddDialogOpen}
+    >
+
+    <DialogContent className="max-h-[90vh] overflow-y-auto w-full max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {isEditMode ? "แก้ไขสินค้า" : "เพิ่มสินค้าใหม่"}
@@ -960,22 +973,28 @@ const Products: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
+      )}
+    </>
 
     </div>
  {/* ✅ POPUP Preview แยกออกมาอยู่นอก Dialog เลย */}
  {previewImage &&
   createPortal(
     <div
-      className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center no-dialog-close"
-      onClick={() => setPreviewImage(null)} // คลิกพื้นหลังเพื่อปิด
+      id="preview-layer"
+      className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center"
+      onClick={() => setPreviewImage(null)}
     >
       <div
         className="relative"
-        onClick={(e) => e.stopPropagation()} // กันไม่ให้คลิกทะลุ
+        onClick={(e) => e.stopPropagation()} // กันคลิกทะลุ
       >
         <button
-          onClick={() => setPreviewImage(null)}
-          className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 text-lg"
+          className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 text-lg cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            setPreviewImage(null);
+          }}
         >
           ×
         </button>
@@ -987,8 +1006,7 @@ const Products: React.FC = () => {
       </div>
     </div>,
     document.body
-  )
-}
+  )}
   </>
 );
 };
