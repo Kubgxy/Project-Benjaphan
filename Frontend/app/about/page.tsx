@@ -46,18 +46,18 @@ export default function AboutPage() {
               <p className="text-brown-600 text-sm sm:text-base mb-3">
                 เบญจภัณฑ์ ๕
               </p>
-              <p className="text-brown-600 text-sm sm:text-base mb-3">
+              <p className="text-brown-600 text-sm sm:text-base mb-3 indent-paragraph">
                 ธุรกิจที่มุ่งมั่นสร้างสรรค์ ผลิตภัณฑ์สายบุญ สายมู
                 เพื่อเป็นอีกหนึ่งสื่อกลางในการส่งต่อแรงศรัทธาและความเชื่ออย่างถูกวิธี...
               </p>
-              <p className="text-brown-600 text-sm sm:text-base mb-3">
+              <p className="text-brown-600 text-sm sm:text-base mb-3 indent-paragraph">
                 ตามความเชื่อโบราณ พญานาคราช จะประทานพรด้านทรัพย์ โชคลาภ
                 และความสำเร็จ...
               </p>
-              <p className="text-brown-600 text-sm sm:text-base mb-3">
+              <p className="text-brown-600 text-sm sm:text-base mb-3 ">
                 จากศรัทธาอันแน่วแน่และความตั้งใจจริงของเจ้าของแบรนด์...
               </p>
-              <p className="text-brown-600 text-sm sm:text-base">
+              <p className="text-brown-600 text-sm sm:text-base indent-paragraph">
                 เบญจภัณฑ์ ๕
                 อยากเป็นส่วนหนึ่งในการช่วยให้ทุกคำขอของลูกค้าได้เชื่อมโยงกับบุญอย่างถูกต้อง...
               </p>

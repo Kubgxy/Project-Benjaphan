@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   MapPinHouse,
   MapPinCheck,
+  LogIn,
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
@@ -277,9 +278,9 @@ export function AccountContent() {
       ข้อมูลบัญชีผู้ใช้
       </h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-[280px]">
       {/* Sidebar */}
-      <div className="lg:col-span-1">
+      <div className="lg:col-span-1 lg:w-[330px]">
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-200">
           <div className="flex flex-col items-center lg:flex-row lg:items-start">
@@ -296,7 +297,7 @@ export function AccountContent() {
             }
             alt={user?.firstName || "User"}
             fill
-            className="object-cover"
+            className="object-cover w-full h-full"
             />
             <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs">
             เปลี่ยนรูป
@@ -355,9 +356,10 @@ export function AccountContent() {
           ))}
           <button
             type="button"
-            className="w-full flex items-center px-3 py-2 text-sm rounded-md text-red-600 hover:bg-red-50"
+            className="w-full flex items-center px-3 py-2 gap-4 text-sm rounded-md text-brown-800 hover:text-brown-900 hover:bg-gray-50"
             onClick={handleLogout}
           >
+            <LogIn />
             Logout
           </button>
           </nav>
