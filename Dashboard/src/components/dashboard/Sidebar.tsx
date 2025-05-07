@@ -66,7 +66,7 @@ const navSections = [
         href: '/dashboard/articles',
       },
       {
-        label: 'ข้อความ',
+        label: 'ติดต่อเรา',
         icon: MessageSquare,
         href: '/dashboard/messages',
         badge: 3,

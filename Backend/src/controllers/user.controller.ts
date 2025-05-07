@@ -80,7 +80,6 @@ export const registerUser = async (
   }
 };
 
-
 // Login
 export const loginUser = async (
   req: Request,
@@ -297,7 +296,7 @@ export const updateAddress = async (req: Request, res: Response) => {
   }
 };
 
-
+// Delete Address
 export const deleteAddress = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
@@ -317,5 +316,15 @@ export const deleteAddress = async (req: Request, res: Response) => {
     res.status(200).json({ message: '✅ Address deleted successfully', addresses: updatedUser.addresses });
   } catch (error) {
     res.status(500).json({ message: '❌ Server error', error });
+  }
+};
+
+// Get all customers (Admin only)
+export const getAllCustomers = async (_req: Request, res: Response, _next: NextFunction): Promise<void> => {
+  try {
+    const customers = await User.find({ role: 'customer' }).select('-password');
+    res.status(200).json({ customers });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
   }
 };

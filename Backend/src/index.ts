@@ -42,6 +42,7 @@ app.use(bodyParser.json({
   import wishlist from './routes/wishlist.route';
   import review from './routes/review.route';
   import order from './routes/order.route';
+  import contact from './routes/contact.route';
 
   // Use routes
   app.use('/api/user', user);
@@ -51,6 +52,7 @@ app.use(bodyParser.json({
   app.use('/api/wishlist', wishlist);
   app.use('/api/review', review);
   app.use('/api/order', order);
+  app.use('/api/contact', contact);
 
   // Serve static files
   app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
