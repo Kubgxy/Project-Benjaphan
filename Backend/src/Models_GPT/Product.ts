@@ -38,8 +38,10 @@ const productSchema = new mongoose.Schema({
 
 // 💡 Virtual field → คำนวณ stock รวมจาก availableSizes
 productSchema.virtual('stock').get(function () {
+  if (!Array.isArray(this.availableSizes)) return 0;  // ✅ กัน null/undefined
   return this.availableSizes.reduce((sum, size) => sum + size.quantity, 0);
 });
+
 
 productSchema.set('toObject', { virtuals: true });
 productSchema.set('toJSON', { virtuals: true });
