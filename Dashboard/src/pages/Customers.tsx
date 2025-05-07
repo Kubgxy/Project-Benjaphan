@@ -1,14 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import {
-  Download,
-  ArrowUp,
-  ArrowDown,
-  MoreHorizontal,
-  UserCog,
-  Ban,
-  Download as DownloadIcon,
-} from "lucide-react";
+import { Download, ArrowUp, ArrowDown, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -20,24 +12,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -47,6 +23,12 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { format } from "date-fns";
 
 type CustomerStatus = "active" | "unverified";
@@ -67,7 +49,7 @@ const Customers = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
-  const [showCustomerDetails, setShowCustomerDetails] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -75,9 +57,7 @@ const Customers = () => {
       try {
         const res = await axios.get(
           "http://localhost:3000/api/user/getAllCustomers",
-          {
-            withCredentials: true,
-          }
+          { withCredentials: true }
         );
         if (res.status !== 200) {
           throw new Error("Failed to fetch customers");
@@ -85,16 +65,17 @@ const Customers = () => {
         if (res.data.customers.length === 0) {
           throw new Error("No customers found");
         }
+
+        // ✅ เก็บข้อมูลทั้งหมด + เพิ่ม field ที่ต้องใช้ใน frontend
         const formatted = res.data.customers.map((c: any) => ({
-          id: c._id,
-          name: `${c.firstName} ${c.lastName}`,
-          email: c.email,
-          phone: c.phoneNumber,
+          ...c,
+          fullName: `${c.firstName} ${c.lastName}`,
           avatar: c.avatar ? `http://localhost:3000${c.avatar}` : null,
-          registeredDate: new Date(c.createdAt),
-          orders: c.orders ? c.orders.length : 0,
+          registeredDate: c.createdAt ? new Date(c.createdAt) : null,
+          ordersCount: c.orders ? c.orders.length : 0,
           status: c.isVerified ? "active" : "unverified",
         }));
+
         setCustomers(formatted);
       } catch (error) {
         toast({ title: "Error", description: "Failed to load customers" });
@@ -109,20 +90,22 @@ const Customers = () => {
   const filteredCustomers = customers.filter(
     (customer) =>
       (filterStatus === "all" || customer.status === filterStatus) &&
-      (customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.phone.includes(searchQuery))
+      (customer.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.phoneNumber?.includes(searchQuery))
   );
 
   const sortedCustomers = [...filteredCustomers].sort((a, b) => {
     if (sortBy === "registeredDate") {
       return sortDirection === "asc"
-        ? a.registeredDate.getTime() - b.registeredDate.getTime()
-        : b.registeredDate.getTime() - a.registeredDate.getTime();
+        ? (a.registeredDate?.getTime() || 0) -
+            (b.registeredDate?.getTime() || 0)
+        : (b.registeredDate?.getTime() || 0) -
+            (a.registeredDate?.getTime() || 0);
     } else {
       return sortDirection === "asc"
-        ? a.orders - b.orders
-        : b.orders - a.orders;
+        ? a.ordersCount - b.ordersCount
+        : b.ordersCount - a.ordersCount;
     }
   });
 
@@ -146,6 +129,11 @@ const Customers = () => {
         description: "Your CSV file is ready for download.",
       });
     }, 1500);
+  };
+
+  const handleViewDetails = (customer: any) => {
+    setSelectedCustomer(customer);
+    setIsModalOpen(true);
   };
 
   return (
@@ -255,6 +243,7 @@ const Customers = () => {
                   ))}
               </TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -278,27 +267,30 @@ const Customers = () => {
                     <TableCell>
                       <Skeleton className="h-4 w-16" />
                     </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
                   </TableRow>
                 ))
             ) : sortedCustomers.length > 0 ? (
               sortedCustomers.map((customer) => (
-                <TableRow key={customer.id}>
+                <TableRow key={customer._id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar>
                         <AvatarImage
                           src={customer.avatar || "/default-avatar.png"}
-                          alt={customer.name}
+                          alt={customer.fullName}
                           className="h-16 w-16 object-cover"
                         />
                         <AvatarFallback>
-                          {customer.name.substring(0, 2).toUpperCase()}
+                          {customer.fullName.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{customer.name}</div>
+                        <div className="font-medium">{customer.fullName}</div>
                         <div className="text-xs text-muted-foreground">
-                          ID : {customer.id}
+                          ID : {customer._id}
                         </div>
                       </div>
                     </div>
@@ -306,13 +298,15 @@ const Customers = () => {
                   <TableCell>
                     <div className="text-sm">{customer.email}</div>
                     <div className="text-xs text-muted-foreground">
-                      Tel : {customer.phone}
+                      Tel : {customer.phoneNumber}
                     </div>
                   </TableCell>
                   <TableCell>
-                    {format(customer.registeredDate, "dd MMM yyyy")}
+                    {customer.registeredDate
+                      ? format(customer.registeredDate, "dd MMM yyyy")
+                      : "-"}
                   </TableCell>
-                  <TableCell>{customer.orders}</TableCell>
+                  <TableCell>{customer.ordersCount}</TableCell>
                   <TableCell>
                     <Badge
                       className={
@@ -323,11 +317,22 @@ const Customers = () => {
                         customer.status.slice(1)}
                     </Badge>
                   </TableCell>
+                  <TableCell>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center gap-2"
+                      onClick={() => handleViewDetails(customer)}
+                    >
+                      <Eye className="h-4 w-4" />
+                      รายละเอียด
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-4">
+                <TableCell colSpan={6} className="text-center py-4">
                   No customers found
                 </TableCell>
               </TableRow>
@@ -335,6 +340,128 @@ const Customers = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Modal แสดงรายละเอียดลูกค้า */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl font-semibold">
+              รายละเอียดลูกค้า
+            </DialogTitle>
+          </DialogHeader>
+          {selectedCustomer && (
+            <div className="space-y-6">
+              {/* รูปภาพ + ชื่อ */}
+              <div className="flex flex-col items-center text-center space-y-2">
+                <Avatar className="h-24 w-24 ring-2 ring-primary">
+                  <AvatarImage
+                    src={selectedCustomer.avatar || "/default-avatar.png"}
+                    alt={selectedCustomer.fullName}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="text-lg">
+                    {selectedCustomer.fullName.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="text-lg font-bold">
+                    {selectedCustomer.fullName}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedCustomer.email}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Tel: {selectedCustomer.phoneNumber}
+                  </p>
+                </div>
+              </div>
+
+              {/* ข้อมูลหลัก */}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p>
+                    <span className="font-semibold">Role:</span>{" "}
+                    {selectedCustomer.role}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Provider:</span>{" "}
+                    {selectedCustomer.provider}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Points:</span>{" "}
+                    {selectedCustomer.points}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Level:</span>{" "}
+                    {selectedCustomer.level}
+                  </p>
+                </div>
+                <div>
+                  <p>
+                    <span className="font-semibold">สถานะ:</span>{" "}
+                    <span
+                      className={
+                        selectedCustomer.isVerified
+                          ? "text-green-600 font-semibold"
+                          : "text-yellow-600 font-semibold"
+                      }
+                    >
+                      {selectedCustomer.isVerified ? "Verified" : "Unverified"}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="font-semibold">วันที่สมัคร:</span>{" "}
+                    {selectedCustomer.createdAt
+                      ? format(
+                          new Date(selectedCustomer.createdAt),
+                          "dd MMM yyyy HH:mm"
+                        )
+                      : "-"}
+                  </p>
+                </div>
+              </div>
+
+              {/* ที่อยู่ */}
+              {selectedCustomer.addresses &&
+                selectedCustomer.addresses.length > 0 && (
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium mb-2 text-base">📍 ที่อยู่:</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p>
+                          <span className="font-semibold">Label:</span>{" "}
+                          {selectedCustomer.addresses[0].label}
+                        </p>
+                        <p>
+                          <span className="font-semibold">Address:</span>{" "}
+                          {selectedCustomer.addresses[0].addressLine}
+                        </p>
+                        <p>
+                          <span className="font-semibold">City:</span>{" "}
+                          {selectedCustomer.addresses[0].city}
+                        </p>
+                      </div>
+                      <div>
+                        <p>
+                          <span className="font-semibold">Province:</span>{" "}
+                          {selectedCustomer.addresses[0].province}
+                        </p>
+                        <p>
+                          <span className="font-semibold">Postal Code:</span>{" "}
+                          {selectedCustomer.addresses[0].postalCode}
+                        </p>
+                        <p>
+                          <span className="font-semibold">Country:</span>{" "}
+                          {selectedCustomer.addresses[0].country}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

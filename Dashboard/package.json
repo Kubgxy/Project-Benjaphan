@@ -65,6 +65,8 @@
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "sonner": "^1.5.0",
+    "sweetalert": "^2.1.2",
+    "sweetalert2": "^11.21.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.3",
