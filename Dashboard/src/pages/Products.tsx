@@ -65,6 +65,10 @@ interface SortConfig {
   key: string;
   direction: "asc" | "desc";
 }
+interface CombinedImageItem {
+  type: "url" | "file";
+  value: string | File;
+}
 
 const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -99,6 +103,9 @@ const Products: React.FC = () => {
   });
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  // 🏗 เพิ่ม state รวมรูป (URL + File) → ใช้เป็นตัวกลางหลัก
+  const [combinedImages, setCombinedImages] = useState<CombinedImageItem[]>([]);
 
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -223,8 +230,11 @@ const Products: React.FC = () => {
 
   const handleUpdateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("🛠 combinedImages ก่อนส่ง:", combinedImages);
+
     try {
       const formData = new FormData();
+  
       formData.append("name", newProduct.name);
       formData.append("id_product", newProduct.id_product);
       formData.append("category", newProduct.category);
@@ -242,10 +252,25 @@ const Products: React.FC = () => {
       formData.append("discount", newProduct.discount.toString());
       formData.append("metaTitle", newProduct.metaTitle);
       formData.append("metaDescription", newProduct.metaDescription);
-      newProduct.images.forEach((image) => {
-        formData.append("images", image);
-      });
 
+      // แยกรูปที่เป็นไฟล์ใหม่
+      const filesToSend = combinedImages
+        .filter((item) => item.type === "file")
+        .map((item) => item.value as File);
+  
+      // แยกรูปเดิม (URL) ส่งไปบอก backend ว่าไม่ต้องลบทิ้ง
+      const existingUrls = combinedImages
+        .filter((item) => item.type === "url")
+        .map((item) => item.value as string);
+  
+      // ✅ ส่ง URL เดิม
+      formData.append("existingImages", JSON.stringify(existingUrls));
+  
+      // ✅ ส่งไฟล์ใหม่
+      filesToSend.forEach((file) => {
+        formData.append("images", file);
+      });
+  
       await axios.patch(
         `http://localhost:3000/api/product/updateProducts/${newProduct.id_product}`,
         formData,
@@ -254,7 +279,7 @@ const Products: React.FC = () => {
           withCredentials: true,
         }
       );
-
+  
       toast({ title: "✅ อัปเดตสินค้าสำเร็จ!" });
       setAddDialogOpen(false);
       fetchProducts();
@@ -303,6 +328,9 @@ const Products: React.FC = () => {
       metaTitle: product.metaTitle || "",
       metaDescription: product.metaDescription || "",
     });
+    // ⚡ โหลดรูปเดิมเข้า combinedImages
+    setCombinedImages(product.images.map((url) => ({ type: "url", value: url })));
+
     setIsEditMode(true);
     setAddDialogOpen(true);
   };
@@ -349,8 +377,6 @@ const Products: React.FC = () => {
   };
 
   const uniqueCategories = Array.from(new Set(products.map((p) => p.category)));
-
-
 
   return (
   <>
@@ -575,7 +601,7 @@ const Products: React.FC = () => {
       onOpenChange={setAddDialogOpen}
     >
 
-    <DialogContent className="max-h-[90vh] overflow-y-auto w-full max-w-4xl">
+    <DialogContent className="max-h-[90vh] overflow-y-auto w-full max-w-4xl overflow-visible">
           <DialogHeader>
             <DialogTitle>
               {isEditMode ? "แก้ไขสินค้า" : "เพิ่มสินค้าใหม่"}
@@ -908,51 +934,64 @@ const Products: React.FC = () => {
                   type="file"
                   accept="image/*"
                   multiple
-                  onChange={(e) =>
-                    setNewProduct({
-                      ...newProduct,
-                      images: e.target.files ? Array.from(e.target.files) : [],
-                    })
-                  }
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      const filesArray = Array.from(e.target.files);
+
+                      setCombinedImages((prev) => [
+                        ...prev,
+                        ...filesArray.map((file) => ({
+                            type: "file" as const,
+                            value: file,
+                        })),
+                    ]);
+                    }
+                  }}
                 />
 
-                {newProduct.images.length > 0 && (
+                {/* Drag and Drop Sortable Context */}
+                {combinedImages.length > 0 && (
                   <DndContext
-                    collisionDetection={closestCenter}
-                    sensors={sensors}
-                    onDragEnd={({ active, over }) => {
-                      if (active.id !== over?.id) {
-                        const oldIndex = parseInt(active.id as string);
-                        const newIndex = parseInt(over?.id as string);
-                        const reordered = arrayMove(newProduct.images, oldIndex, newIndex);
-                        setNewProduct({ ...newProduct, images: reordered });
-                      }
-                    }}
+                  collisionDetection={closestCenter}
+                  sensors={sensors}
+                  onDragEnd={({ active, over }) => {
+                    if (!active.id || !over?.id) return;
+                
+                    const oldIndex = parseInt(active.id as string);
+                    const newIndex = parseInt(over.id as string);
+                    const reordered = arrayMove(combinedImages, oldIndex, newIndex);
+                
+                    // ⚡ อัพเดต combinedImages โดยตรง (รวมทั้งไฟล์ใหม่ + URL เดิม)
+                    setCombinedImages(reordered);
+                  }}
+                >
+                  <SortableContext
+                    items={combinedImages.map((_, i) => i.toString())}
+                    strategy={verticalListSortingStrategy}
                   >
-                    <SortableContext
-                      items={newProduct.images.map((_, i) => i.toString())}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <div className="flex gap-2 flex-wrap mt-2">
-                        {newProduct.images.map((file, index) => (
-                          <SortableImage
-                            key={index}
-                            id={index.toString()}
-                            file={file}
-                            index={index}
-                            onRemove={(idx) => {
-                              const updated = newProduct.images.filter((_, i) => i !== idx);
-                              setNewProduct({ ...newProduct, images: updated });
-                            }}
-                            onPreview={(url) => setPreviewImage(url)}
-                          />
-                        ))}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
+                    <div className="flex gap-2 flex-wrap mt-2">
+                    {combinedImages.map((item, index) => (
+                      <SortableImage
+                        key={index}
+                        id={index.toString()}
+                        index={index}
+                        imageUrl={
+                          item.type === "file"
+                            ? URL.createObjectURL(item.value as File)
+                            : `${IMAGE_BASE_URL}${item.value as string}`
+                        }
+                        onRemove={(idx) => {
+                          const updated = combinedImages.filter((_, i) => i !== idx);
+                          setCombinedImages(updated);
+                        }}
+                        onPreview={(url) => setPreviewImage(url)}
+                      />
+                    ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
                 )}
 
-                
               </div>
             </div>
             

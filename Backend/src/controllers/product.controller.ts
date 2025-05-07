@@ -131,7 +131,16 @@ export const updateProduct = async (req: Request, res: Response) => {
       return 
     }
 
-    const updateData = prepareProductData(req.body, images.length > 0 ? images : existingProduct.images);
+    // ✅ 1. ดึง existingImages จาก req.body (เป็น JSON string)
+    const existingImages = req.body.existingImages
+    ? JSON.parse(req.body.existingImages)
+    : existingProduct.images;  // fallback ถ้าไม่ได้ส่งมา
+
+    // ✅ 2. รวมรูปเดิม + รูปใหม่เข้าด้วยกัน
+    const combinedImages = [...existingImages, ...images];
+
+    // ✅ 3. ส่งรวมเข้าไปใน prepareProductData
+    const updateData = prepareProductData(req.body, combinedImages);
 
     if (updateData.id_product && updateData.id_product !== existingProduct.id_product) {
       res.status(400).json({ message: "Cannot change id_product" });

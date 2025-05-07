@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { updateProductRating } from "../utils/updateProductRating";
 
 const replySchema = new mongoose.Schema(
   {
@@ -36,6 +37,18 @@ const reviewSchema = new mongoose.Schema(
     reply: replySchema, // แอดมินตอบกลับ (optional)
   },
   { collection: "Reviews", timestamps: true }
-); // createdAt, updatedAt
+);
+
+// ✅ post-save: เมื่อรีวิวถูกสร้าง
+reviewSchema.post("save", async function (doc) {
+    await updateProductRating(doc.productId);
+});
+  
+// ✅ post-delete: เมื่อรีวิวถูกลบ
+reviewSchema.post("findOneAndDelete", async function (doc: any) {
+    if (doc) {
+        await updateProductRating(doc.productId);
+    }
+});
 
 export default mongoose.model("Review", reviewSchema);
