@@ -1,25 +1,17 @@
-
-import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Search, 
-  MessageSquare, 
-  CheckCircle, 
-  Circle, 
-  Trash2,
-  Filter
-} from 'lucide-react';
-import { 
-  Table, 
-  TableHeader, 
-  TableRow, 
-  TableHead, 
-  TableBody, 
-  TableCell 
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { MessageSquare, MailCheck, MailX, Mail, Trash2 } from "lucide-react";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -27,366 +19,497 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { format } from 'date-fns';
-import { Skeleton } from '@/components/ui/skeleton';
+} from "@/components/ui/dialog";
+import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { DatePickerWithRange } from '@/components/ui/date-range-picker';
-
-// Mock messages data
-const mockMessages = [
-  {
-    id: 'MSG001',
-    name: 'Somchai Jaidee',
-    email: 'somchai@example.com',
-    phone: '+66 98 765 4321',
-    subject: 'Question about Lucky Dragon Pendant',
-    message: 'Hello, I\'m interested in purchasing the Lucky Dragon Pendant but I have a question about its size. Could you provide the dimensions? Also, is it suitable for daily wear or more for special occasions? Thank you!',
-    date: new Date('2023-04-18T14:32:00'),
-    read: false
-  },
-  {
-    id: 'MSG002',
-    name: 'Nattapong Wongsa',
-    email: 'nattapong@example.com',
-    phone: '+66 91 234 5678',
-    subject: 'Order Shipping Inquiry',
-    message: 'I placed an order (Order #1234) three days ago and haven\'t received any shipping confirmation. Could you please check the status of my order? I need these items before next weekend for a special ceremony.',
-    date: new Date('2023-04-17T09:15:00'),
-    read: true
-  },
-  {
-    id: 'MSG003',
-    name: 'Pranee Sawasdee',
-    email: 'pranee@example.com',
-    phone: '+66 83 456 7890',
-    subject: 'Custom Amulet Request',
-    message: 'I\'m interested in getting a custom amulet made for my father\'s 60th birthday. He was born in the year of the dragon and I\'d like something special that brings good fortune and long life. Do you offer custom pieces? What would the process and timeline look like?',
-    date: new Date('2023-04-16T16:45:00'),
-    read: false
-  },
-  {
-    id: 'MSG004',
-    name: 'Siriwan Thongchai',
-    email: 'siriwan@example.com',
-    phone: '+66 86 789 0123',
-    subject: 'Wholesale Inquiry',
-    message: 'I run a small gift shop in Chiang Mai and am interested in wholesale opportunities for your lucky bamboo arrangements and smaller amulets. Could you please send me your wholesale catalog and minimum order requirements? Thank you for your time.',
-    date: new Date('2023-04-15T11:20:00'),
-    read: true
-  },
-  {
-    id: 'MSG005',
-    name: 'Arthit Sakda',
-    email: 'arthit@example.com',
-    phone: '+66 82 345 6789',
-    subject: 'Question about Feng Shui Consultation',
-    message: 'I noticed on your website that you offer Feng Shui consultations. I\'ve recently moved into a new home and would like to arrange the space to maximize positive energy and prosperity. Do you provide remote consultations or would you need to visit in person? What are your fees for this service?',
-    date: new Date('2023-04-14T13:55:00'),
-    read: false
-  },
-];
+} from "@/components/ui/select";
+import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import axios from "axios";
+import Swal from "sweetalert2"; // ✅ ใช้ SweetAlert2 Toast
 
 const Messages = () => {
   const { toast } = useToast();
-  const [messages, setMessages] = useState(mockMessages);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [readFilter, setReadFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [messages, setMessages] = useState<any[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalUnread, setTotalUnread] = useState(0);
+  const [totalRead, setTotalRead] = useState(0);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [readFilter, setReadFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedMessage, setSelectedMessage] = useState<(typeof messages)[0] | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<any | null>(null);
   const [showMessageDialog, setShowMessageDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  
-  // Count unread messages
-  const unreadCount = messages.filter(msg => !msg.read).length;
 
-  // Filter messages
-  const filteredMessages = messages.filter(message => 
-    (readFilter === 'all' || 
-     (readFilter === 'read' && message.read) || 
-     (readFilter === 'unread' && !message.read)) &&
-    (
-      message.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      message.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      message.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      message.message.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+  const unreadCount = messages.filter((msg) => !msg.isRead).length;
+
+  const filteredMessages = messages.filter(
+    (message) =>
+      (readFilter === "all" ||
+        (readFilter === "read" && message.isRead) ||
+        (readFilter === "unread" && !message.isRead)) &&
+      (message.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        message.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        message.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        message.message.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  // Sort messages by date (newest first)
-  const sortedMessages = [...filteredMessages].sort((a, b) => 
-    b.date.getTime() - a.date.getTime()
+  const sortedMessages = [...filteredMessages].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
-  // Handle message view
-  const viewMessage = (message: (typeof messages)[0]) => {
+  const viewMessage = (message: any) => {
     setSelectedMessage(message);
     setShowMessageDialog(true);
-    
-    // Mark as read if not already
-    if (!message.read) {
-      markAsRead(message.id);
+
+    if (!message.isRead) {
+      markAsRead(message._id);
     }
   };
 
-  // Mark message as read
-  const markAsRead = (messageId: string) => {
-    setMessages(prevMessages => 
-      prevMessages.map(msg => 
-        msg.id === messageId ? { ...msg, read: true } : msg
-      )
-    );
+  const markAsRead = async (messageId: string) => {
+    try {
+      await axios.patch(
+        `http://localhost:3000/api/contact/markContactAsRead/${messageId}`,
+        {},
+        { withCredentials: true }
+      );
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === messageId ? { ...msg, isRead: true } : msg
+        )
+      );
+    } catch (error) {
+      console.error("Error marking as read:", error);
+    }
   };
 
-  // Open delete confirmation dialog
-  const openDeleteDialog = (message: (typeof messages)[0]) => {
+  const openDeleteDialog = (message: any) => {
     setSelectedMessage(message);
     setShowDeleteDialog(true);
   };
 
-  // Handle message delete
-  const handleDeleteMessage = () => {
+  const handleDeleteMessage = async () => {
     if (!selectedMessage) return;
-    
     setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setMessages(prev => prev.filter(msg => msg.id !== selectedMessage.id));
+
+    try {
+      await axios.delete(
+        `http://localhost:3000/api/contact/deleteContact/${selectedMessage._id}`,
+        { withCredentials: true }
+      );
+
+      setMessages((prev) =>
+        prev.filter((msg) => msg._id !== selectedMessage._id)
+      );
+
+      Swal.fire({
+        toast: true,
+        icon: "success",
+        title: "ลบข้อความสำเร็จ",
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+      });
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถลบข้อความได้",
+      });
+    } finally {
       setIsLoading(false);
       setShowDeleteDialog(false);
-      
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages(currentPage, typeFilter);
+  }, [currentPage, typeFilter]);
+
+  const fetchMessages = async (page: number, type = typeFilter) => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.append("page", page.toString());
+      params.append("limit", "7");
+      if (type !== "all") {
+        params.append("type", type); // ✅ ส่ง type เฉพาะประเภท (member/guest)
+      }
+
+      const response = await axios.get(
+        `http://localhost:3000/api/contact/getAllContacts?${params.toString()}`,
+        { withCredentials: true }
+      );
+
+      const data = response.data.data;
+      setMessages(data.contacts);
+      setTotalPages(data.totalPages || 1);
+      setTotalCount(data.total || 0);
+      setTotalUnread(data.totalUnread || 0);
+      setTotalRead(data.totalRead || 0);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
       toast({
-        title: "Message Deleted",
-        description: "The message has been deleted successfully.",
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถโหลดข้อมูลการติดต่อได้",
       });
-    }, 500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="space-y-6">
+      {/* ✅ Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Messages</h1>
-        <Button variant="outline" onClick={() => setMessages(prevMessages => 
-          prevMessages.map(msg => ({ ...msg, read: true }))
-        )}>
+        <h1 className="text-2xl font-bold">📥 Messages</h1>
+        <Button
+          variant="outline"
+          onClick={() =>
+            setMessages((prev) => prev.map((msg) => ({ ...msg, isRead: true })))
+          }
+        >
           Mark All as Read
         </Button>
       </div>
 
+      {/* ✅ Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Messages</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{messages.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Unread Messages</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{unreadCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Read Messages</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {messages.length - unreadCount}
+          <CardHeader className="pb-2 flex justify-between items-center">
+            <div>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <MessageSquare size={16} /> Total Messages
+              </CardTitle>
+              <CardDescription>รวมข้อความทั้งหมด</CardDescription>
             </div>
-          </CardContent>
+            <div className="text-2xl font-bold">{totalCount}</div>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2 flex justify-between items-center">
+            <div>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <MailX size={16} /> Unread Messages
+              </CardTitle>
+              <CardDescription>ยังไม่ได้อ่าน</CardDescription>
+            </div>
+            <div className="text-2xl font-bold text-blue-600">
+              {totalUnread}
+            </div>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2 flex justify-between items-center">
+            <div>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <MailCheck size={16} /> Read Messages
+              </CardTitle>
+              <CardDescription>อ่านแล้ว</CardDescription>
+            </div>
+            <div className="text-2xl font-bold text-green-600">{totalRead}</div>
+          </CardHeader>
         </Card>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 justify-between">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="w-full md:w-64">
-            <Input
-              placeholder="Search messages..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <div className="w-full md:w-48">
-            <Select value={readFilter} onValueChange={setReadFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Messages</SelectItem>
-                <SelectItem value="read">Read</SelectItem>
-                <SelectItem value="unread">Unread</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      {/* ✅ Toolbar */}
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-center border p-4 rounded-lg bg-white shadow-sm">
+        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+          <Input
+            placeholder="🔍 Search messages..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full md:w-64"
+          />
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-full md:w-48">
+              <SelectValue placeholder="Filter by type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">ทั้งหมด</SelectItem>
+              <SelectItem value="member">สมาชิก</SelectItem>
+              <SelectItem value="guest">บุคคลทั่วไป</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={readFilter} onValueChange={setReadFilter}>
+            <SelectTrigger className="w-full md:w-48">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">ทั้งหมด</SelectItem>
+              <SelectItem value="read">อ่านแล้ว</SelectItem>
+              <SelectItem value="unread">ยังไม่อ่าน</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <div className="w-full md:w-auto">
-          <DatePickerWithRange className="w-full md:w-auto" />
-        </div>
+        <DatePickerWithRange className="w-full md:w-auto" />
       </div>
 
-      <div className="border rounded-md">
+      {/* ✅ Table */}
+      <div className="border rounded-md overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px]">Status</TableHead>
-              <TableHead>Sender</TableHead>
-              <TableHead>Subject</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="w-[120px] font-semibold text-center">
+                Status
+              </TableHead>
+              <TableHead className="font-semibold">Sender</TableHead>
+              <TableHead className="font-semibold">Subject</TableHead>
+              <TableHead className="font-semibold">Date</TableHead>
+              <TableHead className="font-semibold text-right">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              Array(5).fill(null).map((_, index) => (
-                <TableRow key={index}>
-                  <TableCell><Skeleton className="h-4 w-4 rounded-full" /></TableCell>
+              [...Array(5)].map((_, idx) => (
+                <TableRow key={idx}>
+                  {[...Array(5)].map((_, i) => (
+                    <TableCell key={i}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : sortedMessages.length > 0 ? (
+              sortedMessages.map((msg) => (
+                <TableRow
+                  key={msg._id}
+                  className={`hover:bg-gray-100 transition ${
+                    !msg.isRead ? "bg-blue-50" : ""
+                  }`}
+                >
+                  <TableCell className="text-center">
+                    {msg.isRead ? (
+                      <Badge className="bg-green-500 hover:bg-green-600 text-white text-xs px-2 py-1 rounded-full">
+                        <MailCheck size={14} className="mr-1" />
+                        Read
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                        <Mail size={14} className="mr-1" />
+                        Unread
+                      </Badge>
+                    )}
+                  </TableCell>
+
                   <TableCell>
                     <div>
-                      <Skeleton className="h-4 w-32 mb-1" />
-                      <Skeleton className="h-3 w-24" />
+                      <div className={msg.isRead ? "font-normal" : "font-bold"}>
+                        {msg.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {msg.email}
+                      </div>
                     </div>
                   </TableCell>
-                  <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                  <TableCell className="text-right"><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
+                  <TableCell>
+                    <div className="max-w-xs truncate">
+                      <span
+                        className={msg.isRead ? "font-normal" : "font-bold"}
+                      >
+                        {msg.subject}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {format(new Date(msg.createdAt), "MMM dd, yyyy")}
+                    <div className="text-xs text-muted-foreground">
+                      {format(new Date(msg.createdAt), "HH:mm")}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => viewMessage(msg)}
+                      >
+                        View
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openDeleteDialog(msg)}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
-              sortedMessages.length > 0 ? (
-                sortedMessages.map((message) => (
-                  <TableRow 
-                    key={message.id} 
-                    className={message.read ? '' : 'bg-rowhighlight'}
-                  >
-                    <TableCell>
-                      {message.read ? 
-                        <CheckCircle size={16} className="text-green-500" /> : 
-                        <Circle size={16} className="text-blue-500" />
-                      }
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className={message.read ? 'font-normal' : 'font-bold'}>
-                          {message.name}
-                        </div>
-                        <div className="text-xs text-muted-foreground">{message.email}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="max-w-xs truncate">
-                        <span className={message.read ? 'font-normal' : 'font-bold'}>
-                          {message.subject}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {format(message.date, 'MMM dd, yyyy')}
-                      <div className="text-xs text-muted-foreground">
-                        {format(message.date, 'HH:mm')}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => viewMessage(message)}
-                        >
-                          View
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => openDeleteDialog(message)}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4">
-                    <div className="flex flex-col items-center py-8">
-                      <MessageSquare size={40} className="text-muted-foreground mb-2" />
-                      <h3 className="text-lg font-medium">No messages found</h3>
-                      <p className="text-muted-foreground">
-                        Try adjusting your search or filter criteria
-                      </p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-6">
+                  <MessageSquare
+                    size={40}
+                    className="text-muted-foreground mb-2 mx-auto"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    No messages found. Try searching or adjusting filters.
+                  </p>
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>
+
+        <div className="flex justify-end mr-4 mt-6 space-x-2 pb-6">
+          {totalPages > 1 && (
+            <>
+              {/* First page */}
+              <Button
+                size="sm"
+                className="rounded-full"
+                variant={currentPage === 1 ? "default" : "outline"}
+                onClick={() => setCurrentPage(1)}
+              >
+                1
+              </Button>
+
+              {/* Show dots if needed */}
+              {currentPage > 3 && totalPages > 5 && (
+                <span className="flex items-center px-2">...</span>
+              )}
+
+              {/* Middle pages */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(
+                  (page) =>
+                    page !== 1 &&
+                    page !== totalPages &&
+                    Math.abs(page - currentPage) <= 1
+                )
+                .map((page) => (
+                  <Button
+                    key={page}
+                    size="sm"
+                    className="rounded-full"
+                    variant={currentPage === page ? "default" : "outline"}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                ))}
+
+              {/* Show dots if needed */}
+              {currentPage < totalPages - 2 && totalPages > 5 && (
+                <span className="flex items-center px-2">...</span>
+              )}
+
+              {/* Last page */}
+              {totalPages > 1 && (
+                <Button
+                  size="sm"
+                  className="rounded-full"
+                  variant={currentPage === totalPages ? "default" : "outline"}
+                  onClick={() => setCurrentPage(totalPages)}
+                >
+                  {totalPages}
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Message Dialog */}
+      {/* ✅ Message Dialog */}
       <Dialog open={showMessageDialog} onOpenChange={setShowMessageDialog}>
         {selectedMessage && (
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>{selectedMessage.subject}</DialogTitle>
-              <DialogDescription>
-                From {selectedMessage.name} ({selectedMessage.email})
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <MessageSquare size={20} className="text-blue-500" />
+                {selectedMessage.subject}
+              </DialogTitle>
+              <DialogDescription className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-sm">
+                  👤 <span className="font-medium">{selectedMessage.name}</span>
+                  (<span>{selectedMessage.email}</span>)
+                  {selectedMessage.userId ? (
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 bg-green-100 text-green-700"
+                    >
+                      สมาชิก
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 bg-yellow-100 text-yellow-700"
+                    >
+                      บุคคลทั่วไป
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  📞 <span>{selectedMessage.phone || "-"}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  🕒{" "}
+                  <span>
+                    {format(
+                      new Date(selectedMessage.createdAt),
+                      "MMMM dd, yyyy HH:mm:ss"
+                    )}
+                  </span>
+                </div>
+                <div>
+                  {selectedMessage.isRead ? (
+                    <Badge className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                      <MailCheck size={14} className="mr-1" /> อ่านแล้ว
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                      <Mail size={14} className="mr-1" /> ยังไม่ได้อ่าน
+                    </Badge>
+                  )}
+                </div>
               </DialogDescription>
             </DialogHeader>
-            
-            <div className="grid gap-6">
-              <div className="bg-muted/30 rounded-md p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <p className="text-sm">
-                      <strong>From:</strong> {selectedMessage.name} ({selectedMessage.email})
-                    </p>
-                    {selectedMessage.phone && (
-                      <p className="text-sm">
-                        <strong>Phone:</strong> {selectedMessage.phone}
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-sm text-right">
-                    <p>{format(selectedMessage.date, 'MMMM dd, yyyy')}</p>
-                    <p>{format(selectedMessage.date, 'HH:mm:ss')}</p>
-                  </div>
-                </div>
-                <div className="whitespace-pre-line">
-                  {selectedMessage.message}
-                </div>
+
+            <div className="grid gap-4">
+              <h4 className="text-lg font-semibold ">
+                เรื่อง : {selectedMessage.subject}
+              </h4>
+              <div className="border rounded-lg bg-gray-50 p-4 max-h-[400px] overflow-y-auto">
+                <blockquote className="whitespace-pre-line text-sm text-gray-700">
+                  รายละเอียด : {selectedMessage.message}
+                </blockquote>
               </div>
             </div>
-            
-            <DialogFooter>
-              <Button 
-                variant="outline" 
+
+            <DialogFooter className="mt-4">
+              <Button
+                variant="outline"
                 onClick={() => setShowMessageDialog(false)}
               >
                 Close
               </Button>
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 onClick={() => {
                   setShowMessageDialog(false);
                   setTimeout(() => openDeleteDialog(selectedMessage), 100);
@@ -399,30 +522,31 @@ const Messages = () => {
         )}
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* ✅ Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         {selectedMessage && (
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="text-red-600">Confirm Delete</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete this message from {selectedMessage.name}? This action cannot be undone.
+                Are you sure you want to delete this message from{" "}
+                {selectedMessage.name}? This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowDeleteDialog(false)}
                 disabled={isLoading}
               >
                 Cancel
               </Button>
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 onClick={handleDeleteMessage}
                 disabled={isLoading}
               >
-                {isLoading ? 'Deleting...' : 'Delete Message'}
+                {isLoading ? "Deleting..." : "Delete Message"}
               </Button>
             </DialogFooter>
           </DialogContent>
