@@ -180,7 +180,7 @@ const Messages = () => {
     <div className="space-y-6">
       {/* ✅ Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">📥 Messages</h1>
+        <h1 className="text-2xl font-bold">Contacts</h1>
         <Button
           variant="outline"
           onClick={() =>
@@ -236,7 +236,7 @@ const Messages = () => {
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center border p-4 rounded-lg bg-white shadow-sm">
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
           <Input
-            placeholder="🔍 Search messages..."
+            placeholder="ค้นหา ..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full md:w-64"
