@@ -65,7 +65,7 @@ export const getWishlist = async (req: Request, res: Response) => {
     const wishlist = await Wishlist.findOne({ userId: userId })
       .populate({
       path: "products.productId",
-      select: "name id_product images price",  // เลือก field ที่ frontend ต้องใช้
+      select: "name id_product images price, availableSizes",  // เลือก field ที่ frontend ต้องใช้
     });
 
     if (!wishlist) {
