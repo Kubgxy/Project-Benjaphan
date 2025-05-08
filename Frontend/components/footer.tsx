@@ -59,6 +59,11 @@ export function Footer() {
                   น้ำหอม
                 </Link>
               </li>
+              <li>
+                <Link href="/product?category=Jakkraphat" className="hover:text-gold-600 transition-colors">
+                  พระบูชา
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
@@ -72,26 +77,6 @@ export function Footer() {
               <li>
                 <Link href="/contact" className="hover:text-gold-600 transition-colors">
                   ติดต่อเรา
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="hover:text-gold-600 transition-colors">
-                  คำถามที่พบบ่อย
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="hover:text-gold-600 transition-colors">
-                  นโยบายความเป็นส่วนตัว
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="hover:text-gold-600 transition-colors">
-                  เงื่อนไขการใช้บริการ
-                </Link>
-              </li>
-              <li>
-                <Link href="/shipping" className="hover:text-gold-600 transition-colors">
-                  การจัดส่งและการคืนสินค้า
                 </Link>
               </li>
             </ul>

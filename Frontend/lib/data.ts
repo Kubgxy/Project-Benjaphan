@@ -3,6 +3,14 @@ import type { Product, Category, Collection, Testimonial, Brand } from "./types"
 // Update the categories to match Thai jewelry categories
 export const categories: Category[] = [
   {
+    id: "cat-jakkraphat",
+    name: "พระบูชา",
+    slug: "Jakkraphat",
+    description: "ต่างหูทองคำแท้ดีไซน์สวยงาม เหมาะกับทุกโอกาส",
+    image: "/product/น้ำหอมรวม.jpg",
+    featured: true,
+  },
+  {
     id: "cat-chaloms",
     name: "ชะลอม",
     slug: "chaloms",
@@ -86,7 +94,7 @@ export const products: Product[] = [
     isNew: true,
     isBestseller: true,
     isOnSale: false,
-    availableSizes: ['หญิง', 'ชาย'],
+    availableSizes: [],
     materials: [""],
     stock: 15,
   },
@@ -272,7 +280,7 @@ export const products: Product[] = [
     ],
     rating: 4.8,
     reviews: 95,
-    isNew: false,
+    isNewA: false,
     isBestseller: true,
     isOnSale: false,
     materials: [""],

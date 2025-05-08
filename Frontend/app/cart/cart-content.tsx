@@ -29,6 +29,8 @@ interface CartResponse {
 export function CartContent() {
   const router = useRouter();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(true); // เพิ่มเหมือนหน้า Wishlist
+  const [isLoading, setIsLoading] = useState(true); // เพิ่มเหมือนหน้า Wishlist
   const [selectedItems, setSelectedItems] = useState<{
     [key: string]: boolean;
   }>({});
@@ -52,11 +54,16 @@ export function CartContent() {
     try {
       const response = await axios.get<CartResponse>(
         "http://localhost:3000/api/cart/getCart",
-        { withCredentials: true } // ✅ ส่ง cookie ไปด้วย
+        { withCredentials: true }
       );
       setCartItems(response.data.cart.items);
+      setIsLoggedIn(true);
     } catch (error) {
       console.error("❌ Failed to fetch cart:", error);
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        // ยังไม่ได้ Login
+        setIsLoggedIn(false);
+      }
     } finally {
       setLoading(false);
     }
@@ -149,127 +156,156 @@ export function CartContent() {
         ตะกร้าสินค้า
       </h1>
 
-      {cartItems.length > 0 ? (
+      {loading ? (
+        <div className="text-center py-16">กำลังโหลด...</div>
+      ) : !isLoggedIn ? (
+        // 🛑 กรณีไม่ได้ Login
+        <div className="text-center py-16 bg-white rounded-lg shadow-sm">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+            <ShoppingBag className="h-10 w-10 text-gray-400" />
+          </div>
+          <h2 className="text-2xl font-display font-medium text-gray-900 mb-2">
+            กรุณาเข้าสู่ระบบ
+          </h2>
+          <p className="text-gray-600 mb-8">
+            คุณต้องเข้าสู่ระบบก่อนเพื่อดูและจัดการตะกร้าสินค้าของคุณ
+          </p>
+          <div className="flex justify-center gap-4">
+            <Link href="/account">
+              <Button className="bg-gold-600 hover:bg-gold-700 px-6 py-3">
+                เข้าสู่ระบบ / สมัครสมาชิก
+              </Button>
+            </Link>
+            <Link href="/product">
+              <Button variant="outline" className="px-6 py-3">
+                กลับไปหน้าสินค้า
+              </Button>
+            </Link>
+          </div>
+        </div>
+      ) : cartItems.length > 0 ? (
         <div className="grid md:grid-cols-3 gap-8">
           <div className="md:col-span-2">
             {/* Mobile View (Card Style) */}
-{/* Mobile View (Card Style) */}
-<div className="md:hidden space-y-4">
-  {/* Select All Checkbox */}
-  <div className="bg-white rounded-lg shadow-sm p-4 flex items-center">
-    <input
-      type="checkbox"
-      checked={
-        cartItems.length > 0 &&
-        cartItems.every(
-          (item) => selectedItems[`${item.productId}-${item.size}`]
-        )
-      }
-      onChange={(e) => {
-        const newSelected: { [key: string]: boolean } = {};
-        if (e.target.checked) {
-          cartItems.forEach((item) => {
-            newSelected[`${item.productId}-${item.size}`] = true;
-          });
-        }
-        setSelectedItems(newSelected);
-      }}
-      className="mr-2"
-    />
-    <span className="font-medium text-brown-800">เลือกสินค้าทั้งหมด</span>
-  </div>
+            <div className="md:hidden space-y-4">
+              {/* Select All Checkbox */}
+              <div className="bg-white rounded-lg shadow-sm p-4 flex items-center">
+                <input
+                  type="checkbox"
+                  checked={
+                    cartItems.length > 0 &&
+                    cartItems.every(
+                      (item) => selectedItems[`${item.productId}-${item.size}`]
+                    )
+                  }
+                  onChange={(e) => {
+                    const newSelected: { [key: string]: boolean } = {};
+                    if (e.target.checked) {
+                      cartItems.forEach((item) => {
+                        newSelected[`${item.productId}-${item.size}`] = true;
+                      });
+                    }
+                    setSelectedItems(newSelected);
+                  }}
+                  className="mr-2"
+                />
+                <span className="font-medium text-brown-800">
+                  เลือกสินค้าทั้งหมด
+                </span>
+              </div>
 
-  {cartItems.map((item) => (
-    <div
-      key={`${item.productId}-${item.size}`}
-      className="bg-white rounded-lg shadow-sm p-4"
-    >
-      <div className="flex items-center mb-3">
-        <input
-          type="checkbox"
-          checked={
-            selectedItems[`${item.productId}-${item.size}`] || false
-          }
-          onChange={(e) =>
-            setSelectedItems({
-              ...selectedItems,
-              [`${item.productId}-${item.size}`]: e.target.checked,
-            })
-          }
-          className="mr-2"
-        />
-        <div className="relative w-20 h-20 bg-gray-50 rounded-md overflow-hidden">
-          <Image
-            src={
-              item.images[0]
-                ? `http://localhost:3000${item.images[0]}`
-                : "/placeholder.svg"
-            }
-            alt={item.name}
-            fill
-            className="object-contain"
-          />
-        </div>
-        <div className="ml-4">
-          <h3 className="font-medium">{item.name}</h3>
-          <p className="text-sm text-gray-600">
-            {formatPrice(item.priceAtAdded)}
-          </p>
-          {item.size && (
-            <p className="text-xs text-gray-500">Size: {item.size}</p>
-          )}
-        </div>
-      </div>
+              {cartItems.map((item) => (
+                <div
+                  key={`${item.productId}-${item.size}`}
+                  className="bg-white rounded-lg shadow-sm p-4"
+                >
+                  <div className="flex items-center mb-3">
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedItems[`${item.productId}-${item.size}`] || false
+                      }
+                      onChange={(e) =>
+                        setSelectedItems({
+                          ...selectedItems,
+                          [`${item.productId}-${item.size}`]: e.target.checked,
+                        })
+                      }
+                      className="mr-2"
+                    />
+                    <div className="relative w-20 h-20 bg-gray-50 rounded-md overflow-hidden">
+                      <Image
+                        src={
+                          item.images[0]
+                            ? `http://localhost:3000${item.images[0]}`
+                            : "/placeholder.svg"
+                        }
+                        alt={item.name}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="font-medium">{item.name}</h3>
+                      <p className="text-sm text-gray-600">
+                        {formatPrice(item.priceAtAdded)}
+                      </p>
+                      {item.size && (
+                        <p className="text-xs text-gray-500">
+                          Size: {item.size}
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center">
-          <button
-            className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-l"
-            onClick={() =>
-              handleUpdateQuantity(
-                item.productId,
-                item.size,
-                item.quantity - 1
-              )
-            }
-            disabled={item.quantity <= 1}
-          >
-            <Minus className="w-4 h-4" />
-          </button>
-          <input
-            type="text"
-            value={item.quantity}
-            className="w-12 h-8 text-center border-t border-b border-gray-300"
-            readOnly
-          />
-          <button
-            className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-r"
-            onClick={() =>
-              handleUpdateQuantity(
-                item.productId,
-                item.size,
-                item.quantity + 1
-              )
-            }
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
-        <span className="font-medium">
-          {formatPrice(item.priceAtAdded * item.quantity)}
-        </span>
-      </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center">
+                      <button
+                        className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-l"
+                        onClick={() =>
+                          handleUpdateQuantity(
+                            item.productId,
+                            item.size,
+                            item.quantity - 1
+                          )
+                        }
+                        disabled={item.quantity <= 1}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <input
+                        type="text"
+                        value={item.quantity}
+                        className="w-12 h-8 text-center border-t border-b border-gray-300"
+                        readOnly
+                      />
+                      <button
+                        className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-r"
+                        onClick={() =>
+                          handleUpdateQuantity(
+                            item.productId,
+                            item.size,
+                            item.quantity + 1
+                          )
+                        }
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <span className="font-medium">
+                      {formatPrice(item.priceAtAdded * item.quantity)}
+                    </span>
+                  </div>
 
-      <button
-        className="w-full text-center text-white rounded-md py-2 bg-red-500 hover:bg-red-600 text-sm"
-        onClick={() => handleRemoveItem(item.productId, item.size)}
-      >
-        ลบออกจากตะกร้า
-      </button>
-    </div>
-  ))}
-</div>
-
+                  <button
+                    className="w-full text-center text-white rounded-md py-2 bg-red-500 hover:bg-red-600 text-sm"
+                    onClick={() => handleRemoveItem(item.productId, item.size)}
+                  >
+                    ลบออกจากตะกร้า
+                  </button>
+                </div>
+              ))}
+            </div>
 
             {/* Desktop & Tablet View (Table Style) */}
             <div className="hidden md:block bg-white rounded-lg shadow-sm overflow-hidden">
