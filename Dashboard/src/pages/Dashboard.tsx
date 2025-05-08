@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   BarChart, 
@@ -18,6 +18,9 @@ import {
 } from 'recharts';
 import { ShoppingBag, Package, Users, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import axios from 'axios';
+
+
 
 function getThemeColors() {
   const styles = getComputedStyle(document.documentElement);
@@ -54,6 +57,9 @@ const COLORS = ['#D4AF37', '#A67C00', '#F5D76E', '#3B82F6'];
 const Dashboard: React.FC = () => {
   const [timeRange, setTimeRange] = useState('weekly');
   const themeColors = getThemeColors();
+  const [productCount, setProductCount] = useState(0);
+  const [customerCount, setCustomerCount] = useState(0);
+
 
   // Stats cards data
   const statsCards = [
@@ -77,8 +83,7 @@ const Dashboard: React.FC = () => {
     },
     {
       title: 'สินค้าทั้งหมด',
-      value: '123',
-      change: '-2.4%',
+      value: productCount.toString(), // 👈 ดึงจาก State
       icon: Package,
       iconColor: 'text-gold',
       bgColor: 'bg-gold/10',
@@ -86,14 +91,37 @@ const Dashboard: React.FC = () => {
     },
     {
       title: 'ลูกค้าทั้งหมด',
-      value: '1,234',
-      change: '+5.7%',
+      value: customerCount.toString(), // 👈 ดึงจาก State
       icon: Users,
       iconColor: 'text-blue-500',
       bgColor: 'bg-blue-500/10',
       changeUp: true,
     },
   ];
+  
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        // ✅ ดึงสินค้าทั้งหมด
+        const productRes = await axios.get('http://localhost:3000/api/product/getAllProducts', {
+          withCredentials: true
+        });
+        setProductCount(productRes.data.products.length);
+  
+        // ✅ ดึงลูกค้าทั้งหมด
+        const customerRes = await axios.get('http://localhost:3000/api/user/getAllCustomers', {
+          withCredentials: true
+        });
+        setCustomerCount(customerRes.data.customers.length);
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+      }
+    };
+  
+    fetchCounts();
+  }, []);
+  
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -128,7 +156,6 @@ const Dashboard: React.FC = () => {
                 "text-xs mt-1",
                 card.changeUp ? "text-emerald" : "text-ruby"
               )}>
-                {card.change} จากเดือนที่แล้ว
               </p>
             </CardContent>
           </Card>

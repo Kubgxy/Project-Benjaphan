@@ -25,8 +25,8 @@ product.get("/getOneProducts/:id", getProductById);
 // 🟢 Add product (admin เท่านั้น + รองรับ upload รูป)
 product.post(
   "/addProducts",
-//   verifyToken,                    // ✅ ต้อง login ก่อน
-//   verifyAdmin,                    // ✅ ต้องเป็น admin
+  verifyToken,                    // ✅ ต้อง login ก่อน
+  verifyAdmin,                    // ✅ ต้องเป็น admin
   productUpload.array("images", 5), // ✅ รองรับอัปโหลดหลายรูป field name = "images"
   addProduct
 );

@@ -8,12 +8,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Filter, SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Product, AvailableSize, AvailableColor } from "@/lib/types";
+import { Product, AvailableSize } from "@/lib/types";
 
 // 🟢 สร้าง Function แปลง Product → ProductCardProps
 const mapProductToCardProduct = (product: Product) => ({
-  id_product: product.id_product, // Include id_product
-  _id: product._id, // Include _id
+  id_product: product.id_product,
+  _id: product._id,
   name: product.name,
   price: product.price,
   description: product.description,
@@ -102,6 +102,22 @@ export default function ProductsPage() {
       );
       break;
     default:
+      // 🟢 ✅ เพิ่ม logic นี้เฉพาะตอน featured ให้ chaloms ขึ้นก่อน และ buddha ต่อมา
+      filteredProducts = [...filteredProducts].sort((a, b) => {
+        const getPriority = (category: Product["category"]) => {
+          if (category === "chaloms") return 1;
+          if (category === "buddha") return 2;
+          return 3;
+        };
+
+        const priorityA = getPriority(a.category);
+        const priorityB = getPriority(b.category);
+
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB;
+        }
+        return 0;
+      });
       break;
   }
 
@@ -224,20 +240,12 @@ export default function ProductsPage() {
           <p className="text-center text-brown-800">กำลังโหลดสินค้า...</p>
         ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredProducts
-              .sort((a, b) => {
-                if (a.category === "chaloms" && b.category !== "chaloms")
-                  return -1;
-                if (a.category !== "chaloms" && b.category === "chaloms")
-                  return 1;
-                return 0;
-              })
-              .map((product) => (
-                <ProductCard
-                  key={product.id_product}
-                  product={mapProductToCardProduct(product)}
-                />
-              ))}
+            {filteredProducts.map((product) => (
+              <ProductCard
+                key={product.id_product}
+                product={mapProductToCardProduct(product)}
+              />
+            ))}
           </div>
         ) : (
           <div className="text-center py-12 bg-white rounded-lg shadow-sm">

@@ -98,6 +98,9 @@ export const getProductById = async (req: Request, res: Response, _next: NextFun
 export const addProduct = async (req: Request, res: Response): Promise<void> => {
   const { id_product, name, category, price, description, details, availableSizes } = req.body;
 
+  console.log("req.body", req.body);
+  console.log("req.files", req.files);
+
   if (!id_product || !name || !category || !price || !description || !details || !availableSizes) {
     res.status(400).json({ message: "Missing required fields" });
     return;

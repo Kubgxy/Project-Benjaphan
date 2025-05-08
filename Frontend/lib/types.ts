@@ -10,6 +10,7 @@ export interface AvailableColor {
 }
 
 export interface Product {
+  id: string
   _id: string
   id_product: string
   name: string

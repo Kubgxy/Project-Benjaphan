@@ -17,9 +17,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [bestsellers, setBestsellers] = useState<Product[]>([]);
   const [loadingBestsellers, setLoadingBestsellers] = useState(true);
-  const featuredCategories = categories
-    .filter((cat) => cat.featured)
-    .slice(0, 4);
+  const featuredCategories = categories.filter(
+    (cat) =>
+      ["chaloms", "bracelets", "bencharm"].includes(cat.slug) && cat.featured
+  );
+
   const featuredTestimonials = testimonials.slice(0, 3);
 
   const fetchNewProducts = async () => {
@@ -272,7 +274,7 @@ export default function Home() {
       <section className="py-20 bg-cream-50 thai-pattern">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="relative h-[600px] rounded-lg overflow-hidden shadow-lg">
+            <div className="relative h-64 md:h-[600px] rounded-lg overflow-hidden shadow-lg">
               <Image
                 src="/production1.jpg"
                 alt="เครื่องประดับมงคล"
@@ -281,14 +283,10 @@ export default function Home() {
               />
             </div>
             <div className="max-w-lg">
-              <span className="text-sm text-gold-600 uppercase tracking-wider font-medium">
-                คอลเลคชั่นพิเศษ
-              </span>
               <h2 className="mt-4 text-3xl md:text-4xl font-heading font-medium text-brown-800 mb-6">
-                เครื่องประดับมงคล <br />
-                เสริมดวงชะตา
+                เครื่องประดับมงคลเสริมดวงชะตา
               </h2>
-              <p className="text-brown-600 mb-8">
+              <p className="text-brown-600 mb-8 indent-paragraph">
                 เครื่องประดับทองคำแท้ที่ออกแบบตามหลักโหราศาสตร์ไทย
                 ช่วยเสริมดวงชะตา เสริมพลังมงคล และปกป้องคุ้มครองผู้สวมใส่
                 เหมาะสำหรับเป็นของขวัญในโอกาสพิเศษ
@@ -299,7 +297,7 @@ export default function Home() {
                 className="bg-gold-600 hover:bg-gold-700"
                 asChild
               >
-                <Link href="/auspicious">ดูคอลเลคชั่น</Link>
+                <Link href="/auspicious">รายละเอียดเพิ่มเติม</Link>
               </Button>
             </div>
           </div>
