@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
+import Head from "next/head";
 import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
@@ -19,8 +20,8 @@ import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { mapProductToCardProduct } from "@/lib/product";
 import { useToast } from "@/components/ui/use-toast";
-import ReactImageMagnify from "react-image-magnify";
 import { useRouter } from "next/navigation";
+import ShareProductButton from "@/components/ShareProductButton";
 
 interface ProductDetailProps {
   product: Product;
@@ -268,6 +269,15 @@ export function ProductDetail({
       fetchProductReviews();
     } catch (error: any) {
       console.error("❌ Error submitting review:", error);
+      if (axios.isAxiosError(error)) {
+        if (
+          error.response?.status === 401 ||
+          error.response?.data?.message === "No token provided"
+        ) {
+          setShowLoginModal(true);
+          return;
+        }
+      }
       toast({
         title: "❌ ไม่สามารถส่งรีวิวได้",
         description:
@@ -299,6 +309,34 @@ export function ProductDetail({
   }, [product._id]);
 
   return (
+    <Fragment>
+    <Head>
+  <title>{product.name} | ร้านเบญจภัณฑ์๕</title>
+  <meta name="description" content={product.description} />
+
+  {/* Open Graph / Facebook */}
+  <meta property="og:title" content={product.name} />
+  <meta property="og:description" content={product.description} />
+  <meta
+    property="og:image"
+    content={`http://localhost:3000${product.images[0]}`} // ✅ เปลี่ยน domain เป็นของจริงตอน deploy
+  />
+  <meta
+    property="og:url"
+    content={`http://localhost:3000/product/${product.id_product}`} // ✅ เปลี่ยน domain เป็นของจริงตอน deploy
+  />
+  <meta property="og:type" content="product" />
+
+  {/* Twitter */}
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={product.name} />
+  <meta name="twitter:description" content={product.description} />
+  <meta
+    name="twitter:image"
+    content={`http://localhost:3000${product.images[0]}`} // ✅ เปลี่ยน domain เป็นของจริงตอน deploy
+  />
+</Head>
+
     <div className="container mx-auto px-4 py-12">
       {showLoginModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -543,9 +581,7 @@ export function ProductDetail({
               />
             </Button>
 
-            <Button variant="luxuryOutline" size="lg" className="sm:w-auto">
-              <Share2 className="h-5 w-5" />
-            </Button>
+            <ShareProductButton product={product} />
           </div>
           {/* ⭐⭐⭐⭐⭐ ให้คะแนน + คอมเมนต์ */}
           <div className="mb-4">
@@ -712,5 +748,6 @@ export function ProductDetail({
         )}
       </div>
     </div>
+    </Fragment>
   );
 }

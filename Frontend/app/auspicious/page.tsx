@@ -30,7 +30,7 @@ export default function AuspiciousPage() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-charm font-semibold font-medium text-brown-800 mb-6">
+              <h2 className="text-3xl font-charm font-semibold text-brown-800 mb-6">
                 เครื่องประดับมงคลเสริมดวงชะตา
               </h2>
               <p className="text-brown-600 mb-4 indent-paragraph">
@@ -101,7 +101,7 @@ export default function AuspiciousPage() {
       {/* naga Section */}
       <section className="py-16 bg-white">
         <div className="max-w-screen-xl mx-auto px-4">
-          <h2 className="text-3xl font-charm font-semibold font-medium text-brown-800 text-center mb-4">
+          <h2 className="text-3xl font-charm font-semibold text-brown-800 text-center mb-4">
             ความหมายของพญานาค 4 ตระกูล
           </h2>
           <p className="text-brown-600 text-center max-w-4xl mx-auto mb-12">
@@ -123,7 +123,7 @@ export default function AuspiciousPage() {
             },
             {
               title: "ตระกูลฉัพพยาปุตตะ",
-              desc: "พญานาคตระกูลที่มีผิวกายหรือเกล็ดเป็นสีรุ้ง ส่วนใหญ่ถือกำเนิดแบบชลาพุชะ คือกำเนิดจากครรภ์ อาศัยอยู่ในนครบาดาลหรือป่าลึก เป็นพญานาคที่มีความงดงามมากเพราะมักจะมีเกล็ดเหลื่อมหลากสี สวยเหมือนสีรุ้ง มีอิทธิฤทธิ์มาก แต่มักพบได้ยาก เพราะมักอาศัยอยู่นที่ลึกลับ",
+              desc: "พญานาคตระกูลที่มีผิวกายหรือเกล็ดเป็นสีรุ้ง ส่วนใหญ่ถือกำเนิดแบบชลาพุชะ คือกำเนิดจากครรภ์ มีขนาดใหญ่โตใกล้เคียงกับพญานาคตระกูลสีทอง อาศัยอยู่ในนครบาดาลหรือป่าลึก เป็นพญานาคที่มีความงดงามมากเพราะมักจะมีเกล็ดเหลื่อมหลากสี สวยเหมือนสีรุ้ง พญานาคในตระกูลนี้มีอิทธิฤทธิ์มาก แต่มักพบได้ยาก เพราะมักอาศัยอยู่ในที่ลึกลับ",
               img: "/naga3.png",
             },
             {
@@ -134,7 +134,7 @@ export default function AuspiciousPage() {
           ].map((item, idx) => (
             <div
               key={idx}
-              className="flex flex-col md:flex-row items-center px-4 py-8 border-b-2 border-brown-200 last:border-b-0"
+              className="flex flex-col md:flex-row items-center px-4 py-8 border-b-2 border-brown-400 last:border-b-0 max-w-6xl mx-auto"
             >
               <div
                 className={`w-full md:w-auto max-w-[350px] mb-6 ${
@@ -150,12 +150,12 @@ export default function AuspiciousPage() {
               <div
                 className={`flex-1 ${
                   idx % 2 === 1 ? "md:pr-12 order-2 md:order-1" : "md:pl-12"
-                }`}
+                } text-justify`}
               >
                 <h3 className="text-2xl font-charm font-semibold text-brown-800 mb-4">
                   {item.title}
                 </h3>
-                <p className="text-brown-600 leading-relaxed indent-paragraph">
+                <p className="text-brown-600 leading-relaxed indent-paragraph ">
                   {item.desc}
                 </p>
               </div>
