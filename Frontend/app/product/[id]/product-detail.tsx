@@ -63,7 +63,7 @@ export function ProductDetail({
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewComment, setReviewComment] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const reviewsPerPage = 5; // จำนวนรีวิวต่อหน้า
+  const reviewsPerPage = 5; // จำนวนรีวิวต่อหน้า 
 
   const handleAddToCart = async () => {
     if (!selectedSize) {
