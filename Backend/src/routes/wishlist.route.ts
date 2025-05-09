@@ -6,6 +6,6 @@ const wishlist = express.Router();
 
 wishlist.post("/addToWishlist", verifyToken, addToWishlist);
 wishlist.post("/removeFromWishlist", verifyToken, removeFromWishlist);
-wishlist.get("/getWishlist", verifyToken, getWishlist);
+wishlist.get("/getWishlist", getWishlist);
 
 export default wishlist;
