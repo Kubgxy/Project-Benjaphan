@@ -7,7 +7,14 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { createOrder } from "@/actions/order-actions";
 import { formatPrice } from "@/lib/utils";
-import { ShoppingCart, MapPinHouse, Package, Banknote, X } from "lucide-react";
+import {
+  ShoppingCart,
+  MapPinHouse,
+  Package,
+  Banknote,
+  X,
+  QrCode,
+} from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
 export function CheckoutForm() {
@@ -19,19 +26,20 @@ export function CheckoutForm() {
   const [shipping, setShipping] = useState(50);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [showShippingModal, setShowShippingModal] = useState(false);
   const modalRef = useRef<HTMLDialogElement>(null);
-  const [paymentMethod] = useState("bank_transfer");
   const [addressList, setAddressList] = useState<any[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
     null
   );
 
+  const [slipFile, setSlipFile] = useState<File | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"online" | "qr">("online");
+  // ✅ แก้ชื่อ field ให้ตรง backend 100%
   const [shippingInfo, setShippingInfo] = useState({
     label: "",
-    address: "",
+    addressLine: "",
     city: "",
-    state: "",
+    province: "",
     postalCode: "",
     country: "Thailand",
   });
@@ -68,9 +76,9 @@ export function CheckoutForm() {
           setSelectedAddressId(defaultAddr._id);
           setShippingInfo({
             label: defaultAddr.label,
-            address: defaultAddr.addressLine,
+            addressLine: defaultAddr.addressLine,
             city: defaultAddr.city,
-            state: defaultAddr.province,
+            province: defaultAddr.province,
             postalCode: defaultAddr.postalCode,
             country: defaultAddr.country,
           });
@@ -88,9 +96,9 @@ export function CheckoutForm() {
           `http://localhost:3000/api/user/updateAddress/${selectedAddressId}`,
           {
             label: shippingInfo.label,
-            addressLine: shippingInfo.address,
+            addressLine: shippingInfo.addressLine,
             city: shippingInfo.city,
-            province: shippingInfo.state,
+            province: shippingInfo.province,
             postalCode: shippingInfo.postalCode,
             country: shippingInfo.country,
           },
@@ -117,9 +125,9 @@ export function CheckoutForm() {
           "http://localhost:3000/api/user/addAddress",
           {
             label: shippingInfo.label,
-            addressLine: shippingInfo.address,
+            addressLine: shippingInfo.addressLine,
             city: shippingInfo.city,
-            province: shippingInfo.state,
+            province: shippingInfo.province,
             postalCode: shippingInfo.postalCode,
             country: shippingInfo.country,
           },
@@ -143,12 +151,27 @@ export function CheckoutForm() {
     setError(null);
 
     try {
+      const formattedItems = checkoutItems.map((item) => ({
+        productId: item.productId || item._id || item.id_product,
+        name: item.name,
+        size: item.size,
+        quantity: item.quantity,
+        priceAtPurchase: item.priceAtAdded, // mapping ตรงนี้สำคัญ!
+        images: item.images || [],
+      }));
+
       const orderData = {
-        items: checkoutItems,
+        items: formattedItems,
         subtotal,
         shipping,
         total,
-        shippingInfo,
+        shippingInfo: {
+          addressLine: shippingInfo.addressLine, // ✅
+          city: shippingInfo.city,
+          province: shippingInfo.province, // ✅
+          postalCode: shippingInfo.postalCode, // ✅
+          country: shippingInfo.country,
+        },
         paymentMethod,
       };
 
@@ -163,6 +186,87 @@ export function CheckoutForm() {
     } catch (err) {
       console.error("Error placing order:", err);
       setError("เกิดข้อผิดพลาด กรุณาลองใหม่");
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    if (paymentMethod === "online" && !slipFile) {
+      toast({
+        title: "❌ กรุณาแนบสลิปก่อนยืนยันการชำระเงิน",
+        duration: 3000,
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const formattedItems = checkoutItems.map((item) => ({
+        productId: item.productId || item._id || item.id_product,
+        name: item.name,
+        size: item.size,
+        quantity: item.quantity,
+        priceAtPurchase: item.priceAtAdded,
+        images: item.images || [],
+      }));
+
+      // 👉 1️⃣ สร้าง Order ก่อน
+      const orderRes = await createOrder({
+        items: formattedItems,
+        subtotal,
+        shipping,
+        total,
+        shippingInfo: {
+          label: shippingInfo.label,
+          addressLine: shippingInfo.addressLine,
+          city: shippingInfo.city,
+          province: shippingInfo.province,
+          postalCode: shippingInfo.postalCode,
+          country: shippingInfo.country,
+        },
+        paymentMethod,
+      });
+
+      if (!orderRes.success) {
+        toast({
+          title: "❌ สร้างคำสั่งซื้อไม่สำเร็จ",
+          description: orderRes.error || "เกิดข้อผิดพลาด กรุณาลองใหม่",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const orderId = orderRes.orderId;
+
+      // 👉 2️⃣ อัปโหลดสลิปถ้าเป็นการโอน
+      if (paymentMethod === "online" && slipFile) {
+        const formData = new FormData();
+        formData.append("slip", slipFile);
+
+        await axios.post(
+          `http://localhost:3000/api/order/uploadSlip/${orderId}`,
+          formData,
+          {
+            withCredentials: true,
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
+      }
+
+      toast({
+        title: "✅ สั่งซื้อสําเร็จ!",
+        description: "ระบบได้รับคำสั่งซื้อและอยู่ระหว่างดําเนินการ",
+        duration: 3000,
+      });
+
+      router.push(`/order-confirmation?orderId=${orderId}`);
+    } catch (err) {
+      console.error("Error confirming payment:", err);
+      toast({
+        title: "❌ เกิดข้อผิดพลาด กรุณาลองใหม่",
+      });
       setIsSubmitting(false);
     }
   };
@@ -198,22 +302,25 @@ export function CheckoutForm() {
           {selectedAddressId ? "แก้ไขที่อยู่" : "เพิ่มที่อยู่ใหม่"}
         </h2>
 
-        <div className="space-y-3">
+        <div className="space-y-3 mb-4">
           <input
             type="text"
-            placeholder="ป้ายกำกับ (บ้าน / ออฟฟิศ)"
+            placeholder="สถานที่ บ้าน / บริษัท / โรงงาน "
             value={shippingInfo.label}
             onChange={(e) =>
               setShippingInfo({ ...shippingInfo, label: e.target.value })
             }
             className="w-full border rounded px-3 py-2"
           />
+        </div>
+
+        <div className="space-y-3">
           <input
             type="text"
             placeholder="ที่อยู่"
-            value={shippingInfo.address}
+            value={shippingInfo.addressLine}
             onChange={(e) =>
-              setShippingInfo({ ...shippingInfo, address: e.target.value })
+              setShippingInfo({ ...shippingInfo, addressLine: e.target.value })
             }
             className="w-full border rounded px-3 py-2"
           />
@@ -229,9 +336,9 @@ export function CheckoutForm() {
           <input
             type="text"
             placeholder="จังหวัด"
-            value={shippingInfo.state}
+            value={shippingInfo.province}
             onChange={(e) =>
-              setShippingInfo({ ...shippingInfo, state: e.target.value })
+              setShippingInfo({ ...shippingInfo, province: e.target.value })
             }
             className="w-full border rounded px-3 py-2"
           />
@@ -267,9 +374,9 @@ export function CheckoutForm() {
               setSelectedAddressId(null);
               setShippingInfo({
                 label: "",
-                address: "",
+                addressLine: "",
                 city: "",
-                state: "",
+                province: "",
                 postalCode: "",
                 country: "Thailand",
               });
@@ -290,9 +397,9 @@ export function CheckoutForm() {
                   setSelectedAddressId(addr._id);
                   setShippingInfo({
                     label: addr.label,
-                    address: addr.addressLine,
+                    addressLine: addr.addressLine,
                     city: addr.city,
-                    state: addr.province,
+                    province: addr.province,
                     postalCode: addr.postalCode,
                     country: addr.country,
                   });
@@ -302,8 +409,8 @@ export function CheckoutForm() {
             >
               {addressList.map((addr) => (
                 <option key={addr._id} value={addr._id}>
-                  จัดส่งที่ : {addr.label} {addr.addressLine}, {addr.city},{" "}
-                  {addr.province} {addr.postalCode}
+                  {addr.addressLine}, {addr.city}, {addr.province}{" "}
+                  {addr.postalCode}
                 </option>
               ))}
             </select>
@@ -328,37 +435,35 @@ export function CheckoutForm() {
           สินค้าที่สั่งซื้อแล้ว
         </h2>
         {checkoutItems.map((item, index) => (
-  <div
-    key={item._id?.toString() || item.id_product || index}
-    className="flex items-center justify-between py-2 border-b"
-  >
-    <div className="flex items-center">
-      <Image
-        src={
-          item.images?.[0]
-            ? `http://localhost:3000${item.images[0]}`
-            : "/placeholder.svg"
-        }
-        alt={item.name}
-        width={24}
-        height={24}
-        className="object-cover mr-4 w-[80px] h-[80px]"
-        priority
-      />
-
-      <div>
-        <p className="font-medium text-brown-800">{item.name}</p>
-        <p className="text-sm text-gray-500">
-          ขนาด: {item.size} | จำนวน: {item.quantity}
-        </p>
-      </div>
-    </div>
-    <p className="font-medium">
-      {formatPrice(item.priceAtAdded * item.quantity)}
-    </p>
-  </div>
-))}
-
+          <div
+            key={item._id?.toString() || item.id_product || index}
+            className="flex items-center justify-between py-2 border-b"
+          >
+            <div className="flex items-center">
+              <Image
+                src={
+                  item.images?.[0]
+                    ? `http://localhost:3000${item.images[0]}`
+                    : "/placeholder.svg"
+                }
+                alt={item.name}
+                width={24}
+                height={24}
+                className="object-cover mr-4 w-[80px] h-[80px]"
+                priority
+              />
+              <div>
+                <p className="font-medium text-brown-800">{item.name}</p>
+                <p className="text-sm text-gray-500">
+                  ขนาด: {item.size} | จำนวน: {item.quantity}
+                </p>
+              </div>
+            </div>
+            <p className="font-medium">
+              {formatPrice(item.priceAtAdded * item.quantity)}
+            </p>
+          </div>
+        ))}
       </div>
 
       {/* สรุปยอดสั่งซื้อ */}
@@ -379,11 +484,83 @@ export function CheckoutForm() {
           <span className="text-red-500">{formatPrice(total)}</span>
         </div>
       </div>
+      {/* วิธีการชำระเงิน */}
+      <div className="bg-white p-4 rounded shadow mb-4">
+        <h2 className="text-lg font-semibold text-brown-800 mb-4 flex items-center gap-2">
+          <QrCode className="w-5 h-5 text-yellow-500" />
+          เลือกวิธีการชำระเงิน
+        </h2>
 
-      {/* ปุ่มยืนยัน */}
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
-      )}
+        <div className="flex gap-4 mb-4">
+          <button
+            className={`flex-1 px-4 py-2 rounded-lg transition ${
+              paymentMethod === "online"
+                ? "bg-yellow-500 text-white shadow"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+            onClick={() => setPaymentMethod("online")}
+          >
+            โอนผ่านบัญชีธนาคาร
+          </button>
+          <button
+            className={`flex-1 px-4 py-2 rounded-lg transition ${
+              paymentMethod === "qr"
+                ? "bg-yellow-500 text-white shadow"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+            onClick={() => setPaymentMethod("qr")}
+          >
+            สแกน QR Code
+          </button>
+        </div>
+
+        {paymentMethod === "online" ? (
+          <div className="space-y-3 text-sm text-gray-700">
+            <div>
+              <p className="font-medium">ธนาคารไทยพาณิชย์</p>
+              <p>
+                เลขบัญชี: <span className="font-medium">123-456-7890</span>
+              </p>
+              <p>
+                ชื่อบัญชี:{" "}
+                <span className="font-medium">บริษัท เบญจภัณฑ์๕ จำกัด</span>
+              </p>
+              <p className="text-gray-500 text-xs">
+                หลังโอนเสร็จ กรุณาแนบสลิปแล้วกด “ยืนยันการชำระเงิน”
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                แนบสลิปการโอนเงิน
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    setSlipFile(e.target.files[0]);
+                  }
+                }}
+                className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer focus:outline-none"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2 text-center">
+            <Image
+              src="/qrcode-sample.png"
+              alt="QR Code"
+              width={160}
+              height={160}
+              className="mx-auto"
+            />
+            <p className="text-gray-500 text-xs">
+              หลังสแกนเสร็จ กรุณากด “ยืนยันการชำระเงิน”
+            </p>
+          </div>
+        )}
+      </div>
       <div className="flex gap-4">
         <Button
           onClick={() => router.push("/cart")}
@@ -393,11 +570,11 @@ export function CheckoutForm() {
           ยกเลิก
         </Button>
         <Button
-          onClick={handlePlaceOrder}
+          onClick={handleConfirmPayment}
           className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded text-lg font-semibold"
           disabled={isSubmitting || !selectedAddressId}
         >
-          {isSubmitting ? "กำลังประมวลผล..." : "ยืนยันคำสั่งซื้อ"}
+          {isSubmitting ? "กำลังประมวลผล..." : "ยืนยันการชำระเงิน"}
         </Button>
       </div>
     </div>

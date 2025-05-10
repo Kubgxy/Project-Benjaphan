@@ -9,7 +9,7 @@ export async function createOrder(orderData: any) {
       },
     });
     return response.data;
-  } catch (error) {
+  } catch (error) { 
     console.error("❌ API createOrder error:", error);
     return { success: false, error: "Failed to create order." };
   }
@@ -20,7 +20,7 @@ export async function getOrderById(orderId: string) {
     const response = await axios.get(`http://localhost:3000/api/order/getOrderById/${orderId}`, {
       withCredentials: true,
     });
-    return response.data;
+    return response.data;  // ✅ RETURN ทั้งก้อน { success, order }
   } catch (error) {
     console.error("❌ API getOrderById error:", error);
     return { success: false, error: "Failed to fetch order." };
