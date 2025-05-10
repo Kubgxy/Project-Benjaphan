@@ -298,54 +298,6 @@ export const getAllOrders: RequestHandler = async (_req, res) => {
   }
 };
 
-// // ✅ PATCH /api/order/updatePaymentStatus/:orderId
-// export const updatePaymentStatus = async (req: Request, res: Response) => {
-//   const { orderId } = req.params;
-//   const { status } = req.body; // 'paid' หรือ 'failed'
-
-//   if (!["paid", "failed"].includes(status)) {
-//     res.status(400).json({ success: false, message: "Invalid status" });
-//     return;
-//   }
-
-//   try {
-//     const order = await Order.findById(orderId);
-
-//     if (!order) {
-//       res.status(404).json({ success: false, message: "Order not found" });
-//       return;
-//     }
-
-//     // ✅ อัปเดตการชำระเงิน
-//     if (!order.payment) {
-//       order.payment = {
-//         method: "online",
-//         status: "pending",
-//       };
-//     }
-
-//     // ✅ อัปเดตการชำระเงิน
-//     order.payment.status = status;
-
-//     if (status === "paid") {
-//       order.orderStatus = "confirmed";
-//       order.payment.paidAt = new Date();
-//     } else if (status === "failed") {
-//       // payment failed → orderStatus อาจยังคงเดิม
-//     }
-
-//     await order.save();
-
-//     res.status(200).json({
-//       success: true,
-//       message: `Payment status updated to ${status}`,
-//       order,
-//     });
-//   } catch (error) {
-//     console.error("Error updating payment status:", error);
-//     res.status(500).json({ success: false, message: "Server error", error });
-//   }
-// };
 
 // ✅ PATCH /api/order/updateStatus/:orderId
 export const updateOrderStatus = async (req: Request, res : Response) => {
