@@ -86,6 +86,24 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterDate, setFilterDate] = useState<string>("all"); // all / YYYY-MM-DD
+  const [sortBy, setSortBy] = useState<string>("price-desc"); // price-asc / price-desc
+
+  const filteredOrders = orders
+    .filter((order) => {
+      if (filterStatus !== "all" && order.orderStatus !== filterStatus)
+        return false;
+      if (filterDate !== "all") {
+        const orderDate = new Date(order.createdAt).toISOString().split("T")[0];
+        return orderDate === filterDate;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "price-asc") return a.total - b.total;
+      if (sortBy === "price-desc") return b.total - a.total;
+      return 0;
+    });
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -175,11 +193,6 @@ const Orders = () => {
     setShowOrderDetails(true);
   };
 
-  const filteredOrders =
-    filterStatus === "all"
-      ? orders
-      : orders.filter((o) => o.orderStatus === filterStatus);
-
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Orders</h1>
@@ -203,6 +216,27 @@ const Orders = () => {
             <SelectItem value="cancelled">Cancelled</SelectItem>
           </SelectContent>
         </Select>
+
+        <div className="flex gap-4 items-center flex-wrap">
+          <Input
+            type="date"
+            className="w-[200px]"
+            value={filterDate === "all" ? "" : filterDate}
+            onChange={(e) =>
+              setFilterDate(e.target.value ? e.target.value : "all")
+            }
+          />
+
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="เรียงตามราคา" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="price-desc">ราคาสูง - ต่ำ</SelectItem>
+              <SelectItem value="price-asc">ราคาต่ำ - สูง</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="border rounded-md">

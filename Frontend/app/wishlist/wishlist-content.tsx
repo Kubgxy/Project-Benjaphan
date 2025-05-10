@@ -149,7 +149,11 @@ export function WishlistContent() {
                   </thead>
                   <tbody>
                     {wishlistItems.map((item) => {
-                      const product = item.productId;
+                      const product =
+                        typeof item.productId === "object"
+                          ? item.productId
+                          : null;
+                      if (!product) return null;
                       const imageUrl = product?.images?.[0]
                         ? `http://localhost:3000${product.images[0]}`
                         : "/placeholder.jpg";
