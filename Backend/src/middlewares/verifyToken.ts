@@ -1,5 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 interface JwtPayload {
   userId: string;
@@ -13,9 +16,13 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
     res.status(401).json({ message: '❌ No token provided' });
     return
   }
-
+  
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
+    req.user = decoded;
+console.log("🟢 current user from cookie:", req.user); // <- ต้องเห็นบรรทัดนี้
+console.log("🧪 VERIFYING TOKEN:", token);
+console.log("🧪 JWT_SECRET used for verifying:", process.env.JWT_SECRET);
     req.user = decoded; // 🟢 เพิ่ม user เข้า req (userId + role)
     next();
   } catch (error) {

@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
-import { LoginForm } from "./login-form";
+import { LoginForm } from "../../components/login-form";
 import { RegisterForm } from "./register-form";
 import { ProfileForm } from "./profile-form";
 import Swal from "sweetalert2";
@@ -289,15 +289,16 @@ export function AccountContent() {
             onClick={() => fileInputRef.current?.click()}
           >
             <Image
-            src={
-              user?.avatar
-              ? `http://localhost:3000${user.avatar}`
-              : "https://ui-avatars.com/api/?name=" +
-                (user?.firstName || "User")
-            }
-            alt={user?.firstName || "User"}
-            fill
-            className="object-cover w-full h-full"
+              src={
+                user?.avatar
+                  ? user.avatar.startsWith("http") // ถ้าเป็น full URL แล้ว
+                    ? user.avatar
+                    : `http://localhost:3000/${user.avatar.replace(/^\/+/, "")}` // ลบ / ซ้ำออก
+                  : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.firstName || "User")}`
+              }
+              alt={user?.firstName || "User"}
+              fill
+              className="object-cover w-full h-full"
             />
             <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs">
             เปลี่ยนรูป

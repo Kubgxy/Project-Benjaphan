@@ -111,6 +111,7 @@ export const loginUser = async (
       return;
     }
 
+    
     // ✅ สร้าง token
     const token = jwt.sign(
       { userId: user._id, role: user.role },
@@ -118,7 +119,10 @@ export const loginUser = async (
       { expiresIn: "1d" }
     );
     console.log("JWT_SECRET:", process.env.JWT_SECRET);
-
+    
+    console.log("🔐 SIGNING PAYLOAD:", { userId: user._id.toString(), role: user.role });
+    console.log("🔐 JWT_SECRET used for signing:", process.env.JWT_SECRET);
+    console.log("🔐 TOKEN after sign:", token);
     // ✅ ส่ง token ผ่าน cookie
     res
       .cookie("token", token, {
