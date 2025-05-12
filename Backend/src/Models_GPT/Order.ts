@@ -9,8 +9,7 @@ const orderItemSchema = new mongoose.Schema({
   name: { type: String },                  // ชื่อ snapshot ตอนสั่ง
   size: { type: String },
   quantity: { type: Number, default: 1 },
-  priceAtPurchase: { type: Number },      // ราคาตอนซื้อ
-  images: [{ type: String }]
+  priceAtPurchase: { type: Number }        // ราคาตอนซื้อ
 }, { _id: false });
 
 const shippingInfoSchema = new mongoose.Schema({
@@ -37,12 +36,11 @@ const orderSchema = new mongoose.Schema({
     method: { type: String, enum: ['COD', 'credit', 'online'], default: 'COD' },
     status: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
     transactionId: { type: String },
-    paidAt: { type: Date },
-    slipImage: { type: String }
-  }, default: {},
+    paidAt: { type: Date }
+  },
 
   orderStatus: {                           // สถานะออเดอร์
-    type: String, 
+    type: String,
     enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'],
     default: 'pending'
   },
