@@ -51,7 +51,7 @@ export const registerUser = async (
     }
 
     const existingWishlist = await Wishlist.findOne({ userId: newUser._id });
-    const wishlist = existingWishlist || new Wishlist({ userId: newUser._id });
+    const wishlist = existingWishlist || new Wishlist({ userId: newUser._id }); 
     if (!existingWishlist) {
       await wishlist.save();
     }

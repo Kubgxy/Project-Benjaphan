@@ -5,6 +5,7 @@ import { Request, Response } from "express";
 
 import Wishlist from "../Models_GPT/Wishlist";
 import Product from "../Models_GPT/Product";
+import User from "../Models_GPT/User";
 
 export const addToWishlist = async (req: Request, res: Response) => {
   const userId = req.user?.userId;
@@ -22,18 +23,36 @@ export const addToWishlist = async (req: Request, res: Response) => {
       return;
     }
 
-    const wishlist = await Wishlist.findOneAndUpdate(
-      { userId: userId },
-      {
-        $addToSet: {
-          products: {
-            productId: productId,
-            dateAdded: new Date()
-          }
-        }
-      },
-      { upsert: true, new: true }
-    ).populate("products.productId");
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: "❌ User not found" });
+      return;
+    }
+
+    let wishlist = await Wishlist.findById(user.wishlistId);
+
+    if (!wishlist) {
+      // ✅ สร้าง wishlist ใหม่โดยใช้ _id ที่กำหนดไว้แล้ว
+      wishlist = await Wishlist.create({
+        _id: user.wishlistId,
+        userId: user._id,
+        products: [{ productId, dateAdded: new Date() }],
+      });
+    } else {
+      // ✅ ถ้ามีอยู่แล้ว อัปเดตเฉย ๆ
+      await Wishlist.findByIdAndUpdate(
+        user.wishlistId,
+        {
+          $addToSet: {
+            products: {
+              productId,
+              dateAdded: new Date(),
+            },
+          },
+        },
+        { new: true }
+      );
+    }
 
     res.status(200).json({ message: "✅ Added to wishlist", wishlist });
   } catch (error) {
@@ -50,7 +69,7 @@ export const removeFromWishlist = async (req: Request, res: Response) => {
     const wishlist = await Wishlist.findOneAndUpdate(
       { userId: userId },
       {
-        $pull: { products: { productId: productId } }
+        $pull: { products: { productId: productId } },
       },
       { new: true }
     ).populate("products.productId");
@@ -69,9 +88,11 @@ export const getWishlist = async (req: Request, res: Response) => {
   try {
     const wishlist = await Wishlist.findOne({ userId: userId })
       .populate({
-      path: "products.productId",
-      select: "name id_product images price availableSizes",  // เลือก field ที่ frontend ต้องใช้
-    });
+        path: "products.productId",
+        select: "name id_product images price availableSizes", // เลือก field ที่ frontend ต้องใช้
+      })
+      .lean()
+      .exec();
 
     if (!wishlist) {
       res.status(200).json({ wishlist: { products: [] } });
@@ -84,4 +105,3 @@ export const getWishlist = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
-
