@@ -9,12 +9,14 @@ const orderItemSchema = new mongoose.Schema({
   name: { type: String },                  // ชื่อ snapshot ตอนสั่ง
   size: { type: String },
   quantity: { type: Number, default: 1 },
-  priceAtPurchase: { type: Number }        // ราคาตอนซื้อ
+  priceAtPurchase: { type: Number },      // ราคาตอนซื้อ
+  images: [{ type: String }]
 }, { _id: false });
 
 const shippingInfoSchema = new mongoose.Schema({
-  fullName: { type: String },             // ชื่อผู้รับ
+  Name: { type: String },             // ชื่อผู้รับ
   phone: { type: String },
+  label: { type: String },            // เช่น "บ้าน", "ออฟฟิศ"
   addressLine: { type: String },
   city: { type: String },
   province: { type: String },
@@ -36,11 +38,12 @@ const orderSchema = new mongoose.Schema({
     method: { type: String, enum: ['COD', 'credit', 'online'], default: 'COD' },
     status: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
     transactionId: { type: String },
-    paidAt: { type: Date }
-  },
+    paidAt: { type: Date },
+    slipImage: { type: String }
+  }, default: {},
 
   orderStatus: {                           // สถานะออเดอร์
-    type: String,
+    type: String, 
     enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'],
     default: 'pending'
   },
