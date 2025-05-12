@@ -1,241 +1,282 @@
-"use client";
 
-import { useEffect, useState } from "react";
-import { format } from "date-fns";
-import { useToast } from "@/hooks/use-toast";
-import axios from "axios";
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useState } from 'react';
+import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
+import { Download, ArrowUp, ArrowDown, Eye, Check, X } from 'lucide-react';
+import { 
+  Table, 
+  TableHeader, 
+  TableRow, 
+  TableHead, 
+  TableBody, 
+  TableCell 
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Eye, ImageIcon } from "lucide-react";
+} from '@/components/ui/dialog';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { DatePickerWithRange } from '@/components/ui/date-range-picker';
+import { Skeleton } from '@/components/ui/skeleton';
 
-type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "shipped"
-  | "delivered"
-  | "cancelled";
+// Mock orders data
+const mockOrders = [
+  {
+    id: 'ORD-001',
+    customer: 'John Doe',
+    date: new Date('2023-04-15'),
+    total: 1290,
+    status: 'completed',
+    items: [
+      { id: 'P1', name: 'Lucky Dragon Pendant', price: 590, quantity: 1 },
+      { id: 'P2', name: 'Jade Bracelet', price: 700, quantity: 1 },
+    ],
+    paymentMethod: 'Credit Card',
+    shippingAddress: '123 Main St, Bangkok, Thailand',
+  },
+  {
+    id: 'ORD-002',
+    customer: 'Jane Smith',
+    date: new Date('2023-04-16'),
+    total: 890,
+    status: 'processing',
+    items: [
+      { id: 'P3', name: 'Gold Fortune Cat', price: 890, quantity: 1 },
+    ],
+    paymentMethod: 'Bank Transfer',
+    shippingAddress: '456 Park Ave, Chiang Mai, Thailand',
+  },
+  {
+    id: 'ORD-003',
+    customer: 'Bob Johnson',
+    date: new Date('2023-04-17'),
+    total: 1500,
+    status: 'shipped',
+    items: [
+      { id: 'P4', name: 'Prosperity Bowl', price: 750, quantity: 2 },
+    ],
+    paymentMethod: 'PayPal',
+    shippingAddress: '789 River Rd, Phuket, Thailand',
+  },
+  {
+    id: 'ORD-004',
+    customer: 'Sarah Lee',
+    date: new Date('2023-04-18'),
+    total: 2100,
+    status: 'pending',
+    items: [
+      { id: 'P5', name: 'Wealth Frog', price: 420, quantity: 1 },
+      { id: 'P6', name: 'Lucky Bamboo Set', price: 840, quantity: 2 },
+    ],
+    paymentMethod: 'Cash on Delivery',
+    shippingAddress: '101 Ocean View, Pattaya, Thailand',
+  },
+  {
+    id: 'ORD-005',
+    customer: 'Mike Wilson',
+    date: new Date('2023-04-19'),
+    total: 3600,
+    status: 'cancelled',
+    items: [
+      { id: 'P7', name: 'Crystal Pagoda', price: 1200, quantity: 3 },
+    ],
+    paymentMethod: 'Credit Card',
+    shippingAddress: '202 Mountain Road, Chiang Rai, Thailand',
+  }
+];
+
+type OrderStatus = 'pending' | 'processing' | 'shipped' | 'completed' | 'cancelled';
 
 const statusColors: Record<OrderStatus, string> = {
-  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-  shipped: "bg-purple-100 text-purple-800 border-purple-200",
-  delivered: "bg-green-100 text-green-800 border-green-200",
-  cancelled: "bg-red-100 text-red-800 border-red-200",
-};
-
-type Order = {
-  _id: string;
-  userId: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-  }; // ✅ เพิ่มแบบนี้แทน any
-  createdAt: string;
-  total: number;
-  orderStatus: OrderStatus;
-  items: {
-    name: string;
-    size: string;
-    quantity: number;
-    priceAtPurchase: number;
-    images: string[];
-  }[];
-  payment: {
-    method: string;
-    status: string;
-    slipImage?: string;
-  };
-  shippingInfo: {
-    addressLine: string;
-    city: string;
-    province: string;
-    postalCode: string;
-    country: string;
-  };
+  pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  processing: 'bg-blue-100 text-blue-800 border-blue-200',
+  shipped: 'bg-purple-100 text-purple-800 border-purple-200',
+  completed: 'bg-green-100 text-green-800 border-green-200',
+  cancelled: 'bg-red-100 text-red-800 border-red-200'
 };
 
 const Orders = () => {
   const { toast } = useToast();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [orders, setOrders] = useState(mockOrders);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<'date' | 'total'>('date');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState<(typeof orders)[0] | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterDate, setFilterDate] = useState<string>("all"); // all / YYYY-MM-DD
-  const [sortBy, setSortBy] = useState<string>("price-desc"); // price-asc / price-desc
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Filter orders based on status and search query
+  const filteredOrders = orders.filter(order => 
+    (filterStatus === 'all' || order.status === filterStatus) &&
+    (
+      order.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      order.customer.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
 
-  const filteredOrders = orders
-    .filter((order) => {
-      if (filterStatus !== "all" && order.orderStatus !== filterStatus)
-        return false;
-      if (filterDate !== "all") {
-        const orderDate = new Date(order.createdAt).toISOString().split("T")[0];
-        return orderDate === filterDate;
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === "price-asc") return a.total - b.total;
-      if (sortBy === "price-desc") return b.total - a.total;
-      return 0;
-    });
+  // Sort orders based on sortBy and sortDirection
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    if (sortBy === 'date') {
+      return sortDirection === 'asc' 
+        ? a.date.getTime() - b.date.getTime() 
+        : b.date.getTime() - a.date.getTime();
+    } else {
+      return sortDirection === 'asc' 
+        ? a.total - b.total 
+        : b.total - a.total;
+    }
+  });
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const res = await axios.get(
-          "http://localhost:3000/api/order/getAllOrders",
-          {
-            withCredentials: true,
-          }
-        );
-        if (res.data.success) {
-          setOrders(res.data.orders);
-        } else {
-          toast({
-            title: "Error",
-            description: "Failed to fetch orders",
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch orders",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchOrders();
-  }, [toast]);
-
-  const refreshOrderData = async (orderId: string) => {
-    try {
-      const res = await axios.get(
-        `http://localhost:3000/api/order/getOrderById/${orderId}`,
-        {
-          withCredentials: true,
-        }
-      );
-      if (res.data.success) {
-        setSelectedOrder(res.data.order); // ✅ set ตัวล่าสุดที่ได้จาก backend
-      }
-    } catch (err) {
-      console.error("❌ Failed to refresh order:", err);
+  // Handle sort
+  const handleSort = (column: 'date' | 'total') => {
+    if (sortBy === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortDirection('desc');
     }
   };
 
-  // ✅ handle เปลี่ยนสถานะ orderStatus
-  const handleStatusChange = async (
-    orderId: string,
-    newStatus: OrderStatus
-  ) => {
+  // Handle status change
+  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
     setIsLoading(true);
-    try {
-      const res = await axios.patch(
-        `http://localhost:3000/api/order/updateStatus/${orderId}`,
-        { status: newStatus },
-        { withCredentials: true }
+    // Simulate API call
+    setTimeout(() => {
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId ? { ...order, status: newStatus } : order
+        )
       );
-      if (res.data.success) {
-        toast({
-          title: "Order Updated",
-          description: `Order ${orderId} status updated to ${newStatus}`,
-        });
-        // ✅ Update state ทันที
-        setSelectedOrder(res.data.order);
-      } else {
-        toast({
-          title: "Error",
-          description: res.data.message || "Failed to update order",
-        });
-      }
-    } catch (error) {
-      console.error("Error updating status:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update order status",
-      });
-    } finally {
       setIsLoading(false);
-    }
+      setSelectedOrder(null);
+      setShowOrderDetails(false);
+      toast({
+        title: "Order Updated",
+        description: `Order ${orderId} status changed to ${newStatus}`,
+      });
+    }, 500);
   };
 
-  const viewOrderDetails = (order: Order) => {
+  // Mock export to CSV function
+  const exportToCSV = () => {
+    toast({
+      title: "Export Started",
+      description: "Your CSV file is being generated. It will be available for download shortly.",
+    });
+    // In a real app, this would call a backend API to generate the CSV
+    setTimeout(() => {
+      toast({
+        title: "Export Complete",
+        description: "Your CSV file is ready for download",
+      });
+    }, 1500);
+  };
+
+  // Show order details in dialog
+  const viewOrderDetails = (order: (typeof orders)[0]) => {
     setSelectedOrder(order);
     setShowOrderDetails(true);
   };
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Orders</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Orders</h1>
+        <Button onClick={exportToCSV} variant="outline" className="flex items-center gap-2">
+          <Download size={16} />
+          Export CSV
+        </Button>
+      </div>
 
-      <div className="flex gap-4 items-center">
-        <Input
-          placeholder="ค้นหาด้วย Order ID..."
-          className="max-w-sm"
-          // เพิ่มค้นหาในอนาคตถ้าต้องการ
-        />
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="shipped">Shipped</SelectItem>
-            <SelectItem value="delivered">Delivered</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{orders.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Completed Orders</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {orders.filter(o => o.status === 'completed').length}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Processing Orders</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {orders.filter(o => o.status === 'processing' || o.status === 'shipped').length}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ฿{orders.reduce((acc, order) => acc + order.total, 0).toLocaleString()}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        <div className="flex gap-4 items-center flex-wrap">
-          <Input
-            type="date"
-            className="w-[200px]"
-            value={filterDate === "all" ? "" : filterDate}
-            onChange={(e) =>
-              setFilterDate(e.target.value ? e.target.value : "all")
-            }
-          />
-
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="เรียงตามราคา" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="price-desc">ราคาสูง - ต่ำ</SelectItem>
-              <SelectItem value="price-asc">ราคาต่ำ - สูง</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="flex flex-col md:flex-row gap-4 justify-between">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="w-full md:w-64">
+            <Input
+              placeholder="Search orders..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <div className="w-full md:w-48">
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="processing">Processing</SelectItem>
+                <SelectItem value="shipped">Shipped</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="w-full md:w-auto">
+          <DatePickerWithRange className="w-full md:w-auto" />
         </div>
       </div>
 
@@ -244,69 +285,70 @@ const Orders = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Order ID</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Total</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('date')}>
+                Date
+                {sortBy === 'date' && (
+                  sortDirection === 'asc' ? 
+                  <ArrowUp className="inline ml-1 h-4 w-4" /> : 
+                  <ArrowDown className="inline ml-1 h-4 w-4" />
+                )}
+              </TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('total')}>
+                Total
+                {sortBy === 'total' && (
+                  sortDirection === 'asc' ? 
+                  <ArrowUp className="inline ml-1 h-4 w-4" /> : 
+                  <ArrowDown className="inline ml-1 h-4 w-4" />
+                )}
+              </TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              Array(5)
-                .fill(null)
-                .map((_, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <Skeleton className="h-4 w-24" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-24" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-16" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-6 w-20" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-8 w-16" />
-                    </TableCell>
-                  </TableRow>
-                ))
-            ) : filteredOrders.length > 0 ? (
-              filteredOrders.map((order) => (
-                <TableRow key={order._id}>
-                  <TableCell>{order._id}</TableCell>
-                  <TableCell>
-                    {format(new Date(order.createdAt), "dd MMM yyyy")}
-                  </TableCell>
-                  <TableCell>฿{order.total.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <Badge
-                      className={
-                        statusColors[order.orderStatus as OrderStatus] || ""
-                      }
-                    >
-                      {order.orderStatus}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => viewOrderDetails(order)}
-                    >
-                      <Eye size={16} />
-                    </Button>
-                  </TableCell>
+              Array(5).fill(null).map((_, index) => (
+                <TableRow key={index}>
+                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-8 w-16 float-right" /></TableCell>
                 </TableRow>
               ))
             ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-4">
-                  No orders found
-                </TableCell>
-              </TableRow>
+              sortedOrders.length > 0 ? (
+                sortedOrders.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell>{order.id}</TableCell>
+                    <TableCell>{order.customer}</TableCell>
+                    <TableCell>{format(order.date, 'dd MMM yyyy')}</TableCell>
+                    <TableCell>฿{order.total.toLocaleString()}</TableCell>
+                    <TableCell>
+                      <Badge className={statusColors[order.status as OrderStatus]}>
+                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => viewOrderDetails(order)}
+                      >
+                        <Eye size={16} />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-4">
+                    No orders found
+                  </TableCell>
+                </TableRow>
+              )
             )}
           </TableBody>
         </Table>
@@ -314,207 +356,95 @@ const Orders = () => {
 
       <Dialog open={showOrderDetails} onOpenChange={setShowOrderDetails}>
         {selectedOrder && (
-          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto p-6">
-            <DialogHeader className="mb-4 border-b pb-3">
-              <DialogTitle className="text-xl font-bold">
-                เลขคำสั่งซื้อ:{" "}
-                <span className="break-all text-blue-600">
-                  {selectedOrder._id}
-                </span>
-              </DialogTitle>
-              <DialogDescription className="text-sm text-gray-500">
-                สั่งซื้อวันที่:{" "}
-                {format(new Date(selectedOrder.createdAt), "dd MMM yyyy")}
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Order Details: {selectedOrder.id}</DialogTitle>
+              <DialogDescription>
+                Placed on {format(selectedOrder.date, 'dd MMMM yyyy')}
               </DialogDescription>
             </DialogHeader>
-
-            <div className="space-y-6">
-              {/* ✅ สถานะ */}
-              <div className="flex flex-wrap items-center gap-4">
-                <span className="font-semibold text-lg">สถานะ:</span>
-                <Badge
-                  className={
-                    statusColors[selectedOrder.orderStatus as OrderStatus]
-                  }
-                >
-                  {selectedOrder.orderStatus}
-                </Badge>
-
-                {/* ปุ่มดำเนินการต่อ */}
-                {(() => {
-                  let nextAction: OrderStatus | null = null;
-                  if (selectedOrder.orderStatus === "pending")
-                    nextAction = "confirmed";
-                  else if (selectedOrder.orderStatus === "confirmed")
-                    nextAction = "shipped";
-                  else if (selectedOrder.orderStatus === "shipped")
-                    nextAction = "delivered";
-
-                  const isPaymentPaid =
-                    selectedOrder.payment?.status === "paid";
-                  const requirePaid =
-                    (nextAction === "shipped" || nextAction === "delivered") &&
-                    !isPaymentPaid;
-
-                  if (nextAction && !requirePaid) {
-                    return (
-                      <Button
-                        onClick={() =>
-                          handleStatusChange(
-                            selectedOrder._id,
-                            nextAction as OrderStatus
-                          )
-                        }
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        {nextAction === "confirmed" && "ยืนยันคำสั่งซื้อ"}
-                        {nextAction === "shipped" && "กำลังจัดส่ง"}
-                        {nextAction === "delivered" && "จัดส่งสำเร็จ"}
-                      </Button>
-                    );
-                  }
-
-                  if (requirePaid) {
-                    return (
-                      <Button
-                        disabled
-                        className="bg-gray-400 text-white cursor-not-allowed"
-                      >
-                        ต้องยืนยันการชำระเงินก่อน
-                      </Button>
-                    );
-                  }
-
-                  return null;
-                })()}
-
-                {/* ปุ่มยกเลิก */}
-                {(selectedOrder.orderStatus === "pending" ||
-                  selectedOrder.orderStatus === "confirmed") && (
-                  <Button
-                    variant="destructive"
-                    onClick={() =>
-                      handleStatusChange(selectedOrder._id, "cancelled")
-                    }
-                  >
-                    ยกเลิกคำสั่งซื้อ
-                  </Button>
-                )}
-              </div>
-
-              {/* ✅ ข้อมูลลูกค้า */}
-              <div className="bg-gray-50 p-4 rounded shadow-sm">
-                <h3 className="font-semibold mb-2 text-lg">ข้อมูลลูกค้า</h3>
-                <p>
-                  👤 ผู้สั่งซื้อ: {selectedOrder.userId.firstName}{" "}
-                  {selectedOrder.userId.lastName}
-                </p>
-                <p>📞 เบอร์โทรศัพท์: {selectedOrder.userId.phoneNumber}</p>
-              </div>
-
-              {/* ✅ ที่อยู่จัดส่ง */}
-              <div className="bg-gray-50 p-4 rounded shadow-sm">
-                <h3 className="font-semibold mb-2 text-lg">ที่อยู่การจัดส่ง</h3>
-                <p>
-                  {selectedOrder.shippingInfo.addressLine},{" "}
-                  {selectedOrder.shippingInfo.city},{" "}
-                  {selectedOrder.shippingInfo.province},{" "}
-                  {selectedOrder.shippingInfo.postalCode}{" "}
-                  {selectedOrder.shippingInfo.country}
-                </p>
-              </div>
-
-              {/* ✅ รายละเอียดสินค้า */}
-              <div>
-                <h3 className="font-semibold mb-2 text-lg">รายละเอียดสินค้า</h3>
-                <Table className="border rounded shadow-sm">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ชื่อสินค้า</TableHead>
-                      <TableHead className="text-center">ขนาด</TableHead>
-                      <TableHead className="text-center">จำนวน</TableHead>
-                      <TableHead className="text-right">ราคา</TableHead>
-                      <TableHead className="text-right">
-                        ราคารวมทั้งหมด
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selectedOrder.items.map((item, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell className="text-center">
-                          {item.size || "-"}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {item.quantity}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          ฿{item.priceAtPurchase.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          ฿
-                          {(
-                            item.priceAtPurchase * item.quantity
-                          ).toLocaleString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-
-                {/* ✅ รวมราคาสินค้า + ค่าส่ง */}
-                <div className="flex justify-end mt-4 pr-2">
-                  <div className="text-right space-y-1">
-                    <p className="text-sm">
-                      รวมราคาสินค้า:{" "}
-                      <span className="font-semibold">
-                        ฿
-                        {selectedOrder.items
-                          .reduce(
-                            (acc, item) =>
-                              acc + item.priceAtPurchase * item.quantity,
-                            0
-                          )
-                          .toLocaleString()}
-                      </span>
-                    </p>
-                    <p className="text-sm">
-                      ค่าจัดส่ง: <span className="font-semibold">฿50</span>
-                    </p>
-                    <hr className="my-2" />
-                    <p className="font-bold text-xl text-green-600">
-                      ราคารวมทั้งหมด: ฿
-                      {(
-                        selectedOrder.items.reduce(
-                          (acc, item) =>
-                            acc + item.priceAtPurchase * item.quantity,
-                          0
-                        ) + 50
-                      ).toLocaleString()}
-                    </p>
+            <div className="grid gap-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold mb-1">Customer</h3>
+                  <p>{selectedOrder.customer}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">Status</h3>
+                  <div className="flex items-center gap-3">
+                    <Badge className={statusColors[selectedOrder.status as OrderStatus]}>
+                      {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                    </Badge>
+                    <Select 
+                      defaultValue={selectedOrder.status}
+                      onValueChange={(value) => handleStatusChange(selectedOrder.id, value as OrderStatus)}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Change status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="processing">Processing</SelectItem>
+                        <SelectItem value="shipped">Shipped</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
 
-              {/* ✅ สลิปการชำระเงิน */}
-              {selectedOrder.payment.slipImage && (
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h3 className="font-semibold mb-2 text-lg">Payment Slip</h3>
-                  <a
-                    href={`http://localhost:3000${selectedOrder.payment.slipImage}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block w-fit"
-                  >
-                    <img
-                      src={`http://localhost:3000${selectedOrder.payment.slipImage}`}
-                      alt="Payment Slip"
-                      className="max-w-xs rounded shadow hover:opacity-90 transition"
-                    />
-                  </a>
+                  <h3 className="font-semibold mb-1">Payment Method</h3>
+                  <p>{selectedOrder.paymentMethod}</p>
                 </div>
-              )}
+                <div>
+                  <h3 className="font-semibold mb-1">Shipping Address</h3>
+                  <p>{selectedOrder.shippingAddress}</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-2">Order Items</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead className="text-right">Price</TableHead>
+                      <TableHead className="text-right">Quantity</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedOrder.items.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell className="text-right">฿{item.price.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell className="text-right">฿{(item.price * item.quantity).toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-right font-semibold">
+                        Total
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        ฿{selectedOrder.total.toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowOrderDetails(false)}
+                >
+                  Close
+                </Button>
+              </div>
             </div>
           </DialogContent>
         )}

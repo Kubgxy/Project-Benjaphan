@@ -35,6 +35,7 @@ app.use(bodyParser.json({
   });
 
   // Import routes
+  import auth from './routes/auth.route';
   import user from './routes/user.route';
   import product from './routes/product.route';
   import article from './routes/article.route';
@@ -45,6 +46,7 @@ app.use(bodyParser.json({
   import contact from './routes/contact.route';
 
   // Use routes
+  app.use('/api/auth', auth);
   app.use('/api/user', user);
   app.use('/api/product', product);
   app.use('/api/article', article);
