@@ -9,7 +9,11 @@ import Product from "../Models_GPT/Product";
 export const addToWishlist = async (req: Request, res: Response) => {
   const userId = req.user?.userId;
   const { productId } = req.body;
-  console.log("รับมาเพิ่ม wishlist:", productId);
+
+  if (!req.user?.userId) {
+    res.status(401).json({ message: "Unauthorized: userId missing" });
+    return;
+  }
 
   try {
     const productExists = await Product.findById(productId);
@@ -60,7 +64,8 @@ export const removeFromWishlist = async (req: Request, res: Response) => {
 
 export const getWishlist = async (req: Request, res: Response) => {
   const userId = req.user?.userId;
-
+  console.log("🔍 current user from cookie:", req.user);
+  
   try {
     const wishlist = await Wishlist.findOne({ userId: userId })
       .populate({

@@ -665,7 +665,13 @@ export function ProductDetail({
                 {r.userId?.avatar ? (
                   // ใช้ avatar ถ้ามี
                   <Image
-                    src={`http://localhost:3000${r.userId.avatar}`}
+                    src={
+                      r.userId?.avatar
+                        ? r.userId.avatar.startsWith("http") // ถ้าเป็น full URL แล้ว
+                          ? r.userId.avatar
+                          : `http://localhost:3000/${r.userId.avatar.replace(/^\/+/, "")}` // ลบ / ซ้ำออก
+                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(r.userId?.firstName || "User")}`
+                    }
                     alt="User Avatar"
                     width={100}
                     height={100}
