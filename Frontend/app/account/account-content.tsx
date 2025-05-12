@@ -31,21 +31,27 @@ type AccountTab =
   | "settings";
 
 interface OrderItem {
-  productId: string; // 👉 กลายเป็น string
+  productId: string;
   name: string;
   images: string[];
-  price: number;
+  priceAtPurchase: number; // ✅ แก้ตรงนี้
   quantity: number;
   size: string;
 }
 
+interface PaymentInfo {
+  method: string;
+  status: string;
+  transactionId?: string;
+  paidAt?: string;
+  slipImage?: string;
+}
+
 interface Order {
-  orderId: string;
+  _id: string; // ✅ แก้ตรงนี้
   createdAt: string;
   orderStatus: string;
-  paymentStatus: string;
-  subtotal: number;
-  shippingFee: number;
+  payment?: PaymentInfo; // ✅ เพิ่ม payment object
   total: number;
   items: OrderItem[];
 }
@@ -223,6 +229,54 @@ export function AccountContent() {
     fetchAddresses();
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    const result = await Swal.fire({
+      title: "ยืนยันการยกเลิก",
+      text: "คุณแน่ใจหรือไม่ว่าต้องการยกเลิกคำสั่งซื้อนี้?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "ตกลง",
+      cancelButtonText: "ยกเลิก",
+    });
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:3000/api/order/cancelOrder/${orderId}`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        }
+      );
+      const data = await res.json();
+      if (data.success) {
+        toast({
+          title: "ยกเลิกคำสั่งซื้อแล้ว",
+          description: "คำสั่งซื้อถูกยกเลิกสำเร็จ",
+          duration: 3000,
+        });
+        fetchOrders(); // 🔄 รีโหลด orders อีกครั้ง
+      } else {
+        toast({
+          title: "เกิดข้อผิดพลาด",
+          description: data.message || "ไม่สามารถยกเลิกได้",
+          duration: 3000,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถยกเลิกได้ กรุณาลองใหม่",
+        duration: 3000,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
@@ -275,7 +329,7 @@ export function AccountContent() {
   return (
     <div className="container mx-auto max-w-6xl px-4 py-12">
       <h1 className="text-2xl sm:text-3xl font-display font-semibold text-brown-800 mb-6 text-center sm:text-left">
-      ข้อมูลบัญชีผู้ใช้
+        ข้อมูลบัญชีผู้ใช้
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-[280px]">
@@ -320,343 +374,359 @@ export function AccountContent() {
           </div>
         </div>
 
-        <div className="p-4">
-          <nav className="space-y-1">
-          {[
-            { tab: "profile", icon: <User />, label: "Profile" },
-            { tab: "orders", icon: <Package />, label: "Orders" },
-            { tab: "wishlist", icon: <Heart />, label: "Wishlist" },
-            {
-            tab: "addresses",
-            icon: <MapPinHouse />,
-            label: "Addresses",
-            },
-            {
-            tab: "payment",
-            icon: <CreditCard />,
-            label: "Payment Methods",
-            },
-            { tab: "settings", icon: <Settings />, label: "Settings" },
-          ].map(({ tab, icon, label }) => (
-            <button
-            key={tab}
-            className={`w-full flex items-center px-3 py-2 text-sm rounded-md ${
-              activeTab === tab
-              ? "bg-gold-50 text-gold-600"
-              : "text-brown-800 hover:text-brown-900 hover:bg-gray-50"
-            }`}
-            onClick={() =>
-              tab === "wishlist"
-              ? router.push("/wishlist")
-              : setActiveTab(tab as AccountTab)
-            }
-            >
-            {icon}
-            <span className="ml-3">{label}</span>
-            </button>
-          ))}
-          <button
-            type="button"
-            className="w-full flex items-center px-3 py-2 gap-4 text-sm rounded-md text-brown-800 hover:text-brown-900 hover:bg-gray-50"
-            onClick={handleLogout}
-          >
-            <LogIn />
-            Logout
-          </button>
-          </nav>
-        </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="lg:col-span-3">
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="p-6">
-          {activeTab === "profile" && (
-          <div>
-            <h2 className="text-xl font-medium mb-6">ข้อมูลส่วนตัว</h2>
-            <ProfileForm />
-          </div>
-          )}
-
-          {activeTab === "orders" && (
-          <div>
-            <h2 className="text-xl font-medium mb-6">
-            ประวัติการสั่งซื้อ
-            </h2>
-            {orders.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-              <ShoppingBag className="h-8 w-8 text-gray-400" />
-              </div>
-              <p className="text-gray-600 mb-4">
-              คุณยังไม่มีคำสั่งซื้อ
-              </p>
-              <Button variant="luxury" asChild>
-              <a href="/product">ซื้อสินค้าเลย</a>
-              </Button>
+            <div className="p-4">
+              <nav className="space-y-1">
+                {[
+                  { tab: "profile", icon: <User />, label: "Profile" },
+                  { tab: "orders", icon: <Package />, label: "Orders" },
+                  { tab: "wishlist", icon: <Heart />, label: "Wishlist" },
+                  {
+                    tab: "addresses",
+                    icon: <MapPinHouse />,
+                    label: "Addresses",
+                  },
+                  {
+                    tab: "payment",
+                    icon: <CreditCard />,
+                    label: "Payment Methods",
+                  },
+                  { tab: "settings", icon: <Settings />, label: "Settings" },
+                ].map(({ tab, icon, label }) => (
+                  <button
+                    key={tab}
+                    className={`w-full flex items-center px-3 py-2 text-sm rounded-md ${
+                      activeTab === tab
+                        ? "bg-gold-50 text-gold-600"
+                        : "text-brown-800 hover:text-brown-900 hover:bg-gray-50"
+                    }`}
+                    onClick={() =>
+                      tab === "wishlist"
+                        ? router.push("/wishlist")
+                        : setActiveTab(tab as AccountTab)
+                    }
+                  >
+                    {icon}
+                    <span className="ml-3">{label}</span>
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="w-full flex items-center px-3 py-2 gap-4 text-sm rounded-md text-brown-800 hover:text-brown-900 hover:bg-gray-50"
+                  onClick={handleLogout}
+                >
+                  <LogIn />
+                  Logout
+                </button>
+              </nav>
             </div>
-            ) : (
-            <div className="space-y-4">
-              {orders.map((order) => (
-              <div
-                key={order.orderId}
-                className="border rounded p-4 shadow-sm"
-              >
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="lg:col-span-3">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="p-6">
+              {activeTab === "profile" && (
                 <div>
-                  <p className="font-medium">
-                  เลขการสั่งซื้อ : {order.orderId}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                  วันที่สั่งซื้อ :{" "}
-                  {new Date(order.createdAt).toLocaleDateString()}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                  สถานะ : {order.orderStatus} | Payment:{" "}
-                  {order.paymentStatus}
-                  </p>
+                  <h2 className="text-xl font-medium mb-6">ข้อมูลส่วนตัว</h2>
+                  <ProfileForm />
                 </div>
-                <Button
-                  variant="outline"
-                  className="mt-4 lg:mt-0"
-                  onClick={() =>
-                  router.push(`/payment?orderId=${order.orderId}`)
-                  }
-                >
-                  ดูรายละเอียด
-                </Button>
+              )}
+
+              {activeTab === "orders" && (
+                <div>
+                  <h2 className="text-xl font-medium mb-6">
+                    ประวัติการสั่งซื้อ
+                  </h2>
+                  {orders.length === 0 ? (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                        <ShoppingBag className="h-8 w-8 text-gray-400" />
+                      </div>
+                      <p className="text-gray-600 mb-4">
+                        คุณยังไม่มีคำสั่งซื้อ
+                      </p>
+                      <Button variant="luxury" asChild>
+                        <a href="/product">ซื้อสินค้าเลย</a>
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {orders.map((order) => (
+                        <div
+                          key={order._id}
+                          className="border rounded p-4 shadow-sm"
+                        >
+                          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
+                            <div>
+                              <p className="font-medium">
+                                เลขการสั่งซื้อ : {order._id}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                วันที่สั่งซื้อ :{" "}
+                                {new Date(order.createdAt).toLocaleDateString()}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                สถานะ : {order.orderStatus} | Payment:{" "}
+                                {order.payment?.status}
+                              </p>
+                            </div>
+
+                            <div className="flex flex-col gap-2 mt-4 lg:mt-0">
+                              <Button
+                                variant="outline"
+                                onClick={() =>
+                                  router.push(
+                                    `/order-tracking?orderId=${order._id}`
+                                  )
+                                }
+                              >
+                                ดูรายละเอียด
+                              </Button>
+
+                              {/* ✅ ปุ่มยกเลิก (เฉพาะ pending) */}
+                              {order.orderStatus === "pending" && (
+                                <Button
+                                  variant="destructive"
+                                  onClick={() => handleCancelOrder(order._id)}
+                                >
+                                  ยกเลิกคำสั่งซื้อ
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* รายการสินค้า */}
+                          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {order.items.map((item) => (
+                              <div
+                                key={`${order._id}-${item.productId}`}
+                                className="flex items-center"
+                              >
+                                <Image
+                                  src={`http://localhost:3000${item.images[0]}`}
+                                  alt={item.name}
+                                  width={48}
+                                  height={48}
+                                  className="rounded mr-2 object-cover"
+                                />
+                                <div className="text-sm">
+                                  <p>{item.name}</p>
+                                  <p className="text-gray-500">
+                                    {item.quantity} ชิ้น | ราคา{" "}
+                                    {item.priceAtPurchase} บาท
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <p className="mt-2 font-bold text-right">
+                            รวม {order.total.toLocaleString()} บาท
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
+              )}
+              {activeTab === "addresses" && (
+                <div>
+                  {showForm ? (
+                    <div className="space-y-2">
+                      <h3 className="flex items-center gap-2 text-lg font-medium mb-2 text-brown-800">
+                        <MapPinCheck />
+                        {newAddress._id ? "แก้ไขที่อยู่" : "เพิ่มที่อยู่ใหม่"}
+                      </h3>
 
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2">
-                {order.items.map((item) => (
-                  <div
-                  key={`${order.orderId}-${item.productId}`}
-                  className="flex items-center"
-                  >
-                  <Image
-                    src={`http://localhost:3000${item.images[0]}`}
-                    alt={item.name}
-                    width={48}
-                    height={48}
-                    className="rounded mr-2 object-cover"
-                  />
-                  <div className="text-sm">
-                    <p>{item.name}</p>
-                    <p className="text-gray-500">
-                    {item.quantity} ชิ้น | ราคา {item.price} บาท
-                    </p>
-                  </div>
-                  </div>
-                ))}
+                      <input
+                        type="text"
+                        placeholder="สถานที่ (บ้าน, ออฟฟิศ)"
+                        value={newAddress.label}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            label: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded px-3 py-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="ที่อยู่ (เลขที่, ถนน)"
+                        value={newAddress.addressLine}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            addressLine: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded px-3 py-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="อำเภอ / เขต / ตำบล"
+                        value={newAddress.city}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            city: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded px-3 py-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="จังหวัด"
+                        value={newAddress.province}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            province: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded px-3 py-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="รหัสไปรษณีย์"
+                        value={newAddress.postalCode}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            postalCode: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded px-3 py-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="ประเทศ"
+                        value={newAddress.country}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            country: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded px-3 py-2"
+                      />
+
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="luxury"
+                          onClick={() => {
+                            if (newAddress._id) {
+                              handleUpdate(newAddress._id);
+                            } else {
+                              handleAdd();
+                            }
+                            setShowForm(false);
+                          }}
+                        >
+                          {newAddress._id
+                            ? "บันทึกการแก้ไข"
+                            : "เพิ่มที่อยู่ใหม่"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowForm(false)}
+                        >
+                          ยกเลิก
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <h2 className="flex items-center gap-2 text-xl font-medium mb-6 text-brown-800">
+                        <MapPinHouse />
+                        ที่อยู่ของคุณ
+                      </h2>
+
+                      {addresses.length === 0 ? (
+                        <div className="text-center">
+                          <p className="text-gray-600 mb-4">
+                            คุณยังไม่มีที่อยู่
+                          </p>
+                          <Button
+                            variant="luxury"
+                            onClick={() => {
+                              setNewAddress({
+                                _id: "",
+                                label: "",
+                                addressLine: "",
+                                city: "",
+                                province: "",
+                                postalCode: "",
+                                country: "Thailand",
+                              });
+                              setShowForm(true);
+                            }}
+                          >
+                            เพิ่มที่อยู่ใหม่
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          {addresses.map((addr, index) => (
+                            <div
+                              key={index}
+                              className="border rounded p-4 shadow-sm mb-4 flex flex-col lg:flex-row justify-between items-start lg:items-center"
+                            >
+                              <div>
+                                <p className="font-medium">{addr.label}</p>
+                                <p className="text-sm text-gray-500">
+                                  {addr.addressLine}, {addr.city},{" "}
+                                  {addr.province}, {addr.postalCode},{" "}
+                                  {addr.country}
+                                </p>
+                              </div>
+                              <div className="space-x-2 mt-4 lg:mt-0">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    setNewAddress(addr);
+                                    setShowForm(true);
+                                  }}
+                                >
+                                  แก้ไข
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  onClick={() => handleDelete(addr._id)}
+                                >
+                                  ลบ
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                          <Button
+                            className="mt-4"
+                            variant="luxury"
+                            onClick={() => {
+                              setNewAddress({
+                                _id: "",
+                                label: "",
+                                addressLine: "",
+                                city: "",
+                                province: "",
+                                postalCode: "",
+                                country: "Thailand",
+                              });
+                              setShowForm(true);
+                            }}
+                          >
+                            เพิ่มที่อยู่ใหม่
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
-
-                <p className="mt-2 font-bold text-right">
-                รวม {order.total.toLocaleString()} บาท
-                </p>
-              </div>
-              ))}
-            </div>
-            )}
-          </div>
-          )}
-          {activeTab === "addresses" && (
-          <div>
-            {showForm ? (
-            <div className="space-y-2">
-              <h3 className="flex items-center gap-2 text-lg font-medium mb-2 text-brown-800">
-              <MapPinCheck />
-              {newAddress._id ? "แก้ไขที่อยู่" : "เพิ่มที่อยู่ใหม่"}
-              </h3>
-
-              <input
-              type="text"
-              placeholder="สถานที่ (บ้าน, ออฟฟิศ)"
-              value={newAddress.label}
-              onChange={(e) =>
-                setNewAddress({
-                ...newAddress,
-                label: e.target.value,
-                })
-              }
-              className="w-full border rounded px-3 py-2"
-              />
-              <input
-              type="text"
-              placeholder="ที่อยู่ (เลขที่, ถนน)"
-              value={newAddress.addressLine}
-              onChange={(e) =>
-                setNewAddress({
-                ...newAddress,
-                addressLine: e.target.value,
-                })
-              }
-              className="w-full border rounded px-3 py-2"
-              />
-              <input
-              type="text"
-              placeholder="อำเภอ / เขต / ตำบล"
-              value={newAddress.city}
-              onChange={(e) =>
-                setNewAddress({
-                ...newAddress,
-                city: e.target.value,
-                })
-              }
-              className="w-full border rounded px-3 py-2"
-              />
-              <input
-              type="text"
-              placeholder="จังหวัด"
-              value={newAddress.province}
-              onChange={(e) =>
-                setNewAddress({
-                ...newAddress,
-                province: e.target.value,
-                })
-              }
-              className="w-full border rounded px-3 py-2"
-              />
-              <input
-              type="text"
-              placeholder="รหัสไปรษณีย์"
-              value={newAddress.postalCode}
-              onChange={(e) =>
-                setNewAddress({
-                ...newAddress,
-                postalCode: e.target.value,
-                })
-              }
-              className="w-full border rounded px-3 py-2"
-              />
-              <input
-              type="text"
-              placeholder="ประเทศ"
-              value={newAddress.country}
-              onChange={(e) =>
-                setNewAddress({
-                ...newAddress,
-                country: e.target.value,
-                })
-              }
-              className="w-full border rounded px-3 py-2"
-              />
-
-              <div className="flex space-x-2">
-              <Button
-                variant="luxury"
-                onClick={() => {
-                if (newAddress._id) {
-                  handleUpdate(newAddress._id);
-                } else {
-                  handleAdd();
-                }
-                setShowForm(false);
-                }}
-              >
-                {newAddress._id
-                ? "บันทึกการแก้ไข"
-                : "เพิ่มที่อยู่ใหม่"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowForm(false)}
-              >
-                ยกเลิก
-              </Button>
-              </div>
-            </div>
-            ) : (
-            <div>
-              <h2 className="flex items-center gap-2 text-xl font-medium mb-6 text-brown-800">
-              <MapPinHouse />
-              ที่อยู่ของคุณ
-              </h2>
-
-              {addresses.length === 0 ? (
-              <div className="text-center">
-                <p className="text-gray-600 mb-4">
-                คุณยังไม่มีที่อยู่
-                </p>
-                <Button
-                variant="luxury"
-                onClick={() => {
-                  setNewAddress({
-                  _id: "",
-                  label: "",
-                  addressLine: "",
-                  city: "",
-                  province: "",
-                  postalCode: "",
-                  country: "Thailand",
-                  });
-                  setShowForm(true);
-                }}
-                >
-                เพิ่มที่อยู่ใหม่
-                </Button>
-              </div>
-              ) : (
-              <>
-                {addresses.map((addr, index) => (
-                <div
-                  key={index}
-                  className="border rounded p-4 shadow-sm mb-4 flex flex-col lg:flex-row justify-between items-start lg:items-center"
-                >
-                  <div>
-                  <p className="font-medium">{addr.label}</p>
-                  <p className="text-sm text-gray-500">
-                    {addr.addressLine}, {addr.city},{" "}
-                    {addr.province}, {addr.postalCode},{" "}
-                    {addr.country}
-                  </p>
-                  </div>
-                  <div className="space-x-2 mt-4 lg:mt-0">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                    setNewAddress(addr);
-                    setShowForm(true);
-                    }}
-                  >
-                    แก้ไข
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleDelete(addr._id)}
-                  >
-                    ลบ
-                  </Button>
-                  </div>
-                </div>
-                ))}
-                <Button
-                className="mt-4"
-                variant="luxury"
-                onClick={() => {
-                  setNewAddress({
-                  _id: "",
-                  label: "",
-                  addressLine: "",
-                  city: "",
-                  province: "",
-                  postalCode: "",
-                  country: "Thailand",
-                  });
-                  setShowForm(true);
-                }}
-                >
-                เพิ่มที่อยู่ใหม่
-                </Button>
-              </>
               )}
             </div>
-            )}
           </div>
-          )}
         </div>
-        </div>
-      </div>
       </div>
     </div>
   );

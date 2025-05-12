@@ -122,7 +122,7 @@ export function WishlistContent() {
           </p>
           <div className="flex justify-center gap-4">
             <Link href="/account">
-              <Button className="bg-gold-600 hover:bg-gold-700 px-6 py-3">
+              <Button className="bg-gold-600 text-white hover:bg-gold-700 px-6 py-3">
                 เข้าสู่ระบบ / สมัครสมาชิก
               </Button>
             </Link>
@@ -149,7 +149,11 @@ export function WishlistContent() {
                   </thead>
                   <tbody>
                     {wishlistItems.map((item) => {
-                      const product = item.productId;
+                      const product =
+                        typeof item.productId === "object"
+                          ? item.productId
+                          : null;
+                      if (!product) return null;
                       const imageUrl = product?.images?.[0]
                         ? `http://localhost:3000${product.images[0]}`
                         : "/placeholder.jpg";
