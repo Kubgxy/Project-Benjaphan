@@ -106,7 +106,7 @@ export default function ProductsPage() {
       filteredProducts = [...filteredProducts].sort((a, b) => {
         const getPriority = (category: Product["category"]) => {
           if (category === "chaloms") return 1;
-          if (category === "buddha") return 2;
+          if (category === "jakkraphat") return 2;
           return 3;
         };
 

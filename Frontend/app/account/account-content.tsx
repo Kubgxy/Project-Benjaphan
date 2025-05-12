@@ -58,12 +58,14 @@ interface Order {
 
 interface Address {
   _id: string;
+  Name: string;
   label: string;
   addressLine: string;
   city: string;
   province: string;
   postalCode: string;
   country: string;
+  phone: string;
 }
 
 export function AccountContent() {
@@ -75,13 +77,16 @@ export function AccountContent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [newAddress, setNewAddress] = useState({
+
     _id: "",
+    Name: "",
     label: "",
     addressLine: "",
     city: "",
     province: "",
     postalCode: "",
     country: "Thailand",
+    phone: "",
   });
   const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
@@ -184,12 +189,14 @@ export function AccountContent() {
     });
     setNewAddress({
       _id: "",
+      Name: "",
       label: "",
       addressLine: "",
       city: "",
       province: "",
       postalCode: "",
       country: "Thailand",
+      phone: "",
     });
     toast({
       title: "เพิ่มที่อยู่เรียบร้อย",
@@ -538,7 +545,30 @@ export function AccountContent() {
                         <MapPinCheck />
                         {newAddress._id ? "แก้ไขที่อยู่" : "เพิ่มที่อยู่ใหม่"}
                       </h3>
-
+                      <input
+                        type="text"
+                        placeholder="ชื่อผู้รับ"
+                        value={newAddress.Name}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            Name: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded px-3 py-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="เบอร์โทรศัพท์"
+                        value={newAddress.phone}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            phone: e.target.value,
+                          })
+                        }
+                        className="w-full border rounded px-3 py-2"
+                      />
                       <input
                         type="text"
                         placeholder="สถานที่ (บ้าน, ออฟฟิศ)"
@@ -551,6 +581,7 @@ export function AccountContent() {
                         }
                         className="w-full border rounded px-3 py-2"
                       />
+                      
                       <input
                         type="text"
                         placeholder="ที่อยู่ (เลขที่, ถนน)"
@@ -654,11 +685,13 @@ export function AccountContent() {
                               setNewAddress({
                                 _id: "",
                                 label: "",
+                                Name: "",
                                 addressLine: "",
                                 city: "",
                                 province: "",
                                 postalCode: "",
                                 country: "Thailand",
+                                phone: "",
                               });
                               setShowForm(true);
                             }}
@@ -706,12 +739,14 @@ export function AccountContent() {
                             onClick={() => {
                               setNewAddress({
                                 _id: "",
+                                Name: "",
                                 label: "",
                                 addressLine: "",
                                 city: "",
                                 province: "",
                                 postalCode: "",
                                 country: "Thailand",
+                                phone: "",
                               });
                               setShowForm(true);
                             }}
