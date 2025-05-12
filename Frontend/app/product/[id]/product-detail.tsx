@@ -684,35 +684,41 @@ export function ProductDetail({
           </div>
         </div>
 
-        {/* รีวิวทั้งหมด */}
-        <div className="mt-16">
-          <h3 className="text-lg font-medium mb-4">
-            รีวิวทั้งหมด ({reviews.length})
-          </h3>
-          <div className="space-y-4">
-            {reviews.map((r, index) => (
-              <div
-                key={index}
-                className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg shadow"
-              >
-                {/* Avatar ตัวอักษรแรกของชื่อ */}
-                <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gold-500 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
-                  {r.userId?.avatar ? (
-                    // ใช้ avatar ถ้ามี
-                    <Image
-                      src={`http://localhost:3000${r.userId.avatar}`}
-                      alt="User Avatar"
-                      width={100}
-                      height={100}
-                      className="rounded-full"
-                    />
-                  ) : (
-                    // ถ้าไม่มี avatar ให้ใช้ตัวอักษรแรกของชื่อ
-                    <span className="text-white font-bold">
-                      {r.userId?.firstName.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
+      {/* รีวิวทั้งหมด */}
+      <div className="mt-16">
+        <h3 className="text-lg font-medium mb-4">
+          รีวิวทั้งหมด ({reviews.length})
+        </h3>
+        <div className="space-y-4">
+          {reviews.map((r, index) => (
+            <div
+              key={index}
+              className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg shadow"
+            >
+              {/* Avatar ตัวอักษรแรกของชื่อ */}
+              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gold-500 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
+                {r.userId?.avatar ? (
+                  // ใช้ avatar ถ้ามี
+                  <Image
+                    src={
+                      r.userId?.avatar
+                        ? r.userId.avatar.startsWith("http") // ถ้าเป็น full URL แล้ว
+                          ? r.userId.avatar
+                          : `http://localhost:3000/${r.userId.avatar.replace(/^\/+/, "")}` // ลบ / ซ้ำออก
+                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(r.userId?.firstName || "User")}`
+                    }
+                    alt="User Avatar"
+                    width={100}
+                    height={100}
+                    className="rounded-full"
+                  />
+                ) : (
+                  // ถ้าไม่มี avatar ให้ใช้ตัวอักษรแรกของชื่อ
+                  <span className="text-white font-bold">
+                    {r.userId?.firstName.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
 
                 {/* ข้อมูลรีวิว */}
                 <div className="flex-1">

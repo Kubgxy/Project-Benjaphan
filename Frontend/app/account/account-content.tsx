@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
-import { LoginForm } from "./login-form";
+import { LoginForm } from "../../components/login-form";
 import { RegisterForm } from "./register-form";
 import { ProfileForm } from "./profile-form";
 import Swal from "sweetalert2";
@@ -333,45 +333,46 @@ export function AccountContent() {
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-[280px]">
-        {/* Sidebar */}
-        <div className="lg:col-span-1 lg:w-[330px]">
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex flex-col items-center lg:flex-row lg:items-start">
-                <div
-                  className="relative w-16 h-16 rounded-full overflow-hidden mb-4 lg:mb-0 lg:mr-4 group cursor-pointer"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Image
-                    src={
-                      user?.avatar
-                        ? `http://localhost:3000${user.avatar}`
-                        : "https://ui-avatars.com/api/?name=" +
-                          (user?.firstName || "User")
-                    }
-                    alt={user?.firstName || "User"}
-                    fill
-                    className="object-cover w-full h-full"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs">
-                    เปลี่ยนรูป
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    onChange={handleImageChange}
-                    className="hidden"
-                  />
-                </div>
-                <div className="text-center lg:text-left">
-                  <h2 className="font-medium text-lg text-brown-800">
-                    {user?.firstName} {user?.lastName}
-                  </h2>
-                  <p className="text-sm text-brown-900">{user?.email}</p>
-                </div>
-              </div>
+      {/* Sidebar */}
+      <div className="lg:col-span-1 lg:w-[330px]">
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex flex-col items-center lg:flex-row lg:items-start">
+          <div
+            className="relative w-16 h-16 rounded-full overflow-hidden mb-4 lg:mb-0 lg:mr-4 group cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Image
+              src={
+                user?.avatar
+                  ? user.avatar.startsWith("http") // ถ้าเป็น full URL แล้ว
+                    ? user.avatar
+                    : `http://localhost:3000/${user.avatar.replace(/^\/+/, "")}` // ลบ / ซ้ำออก
+                  : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.firstName || "User")}`
+              }
+              alt={user?.firstName || "User"}
+              fill
+              className="object-cover w-full h-full"
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs">
+            เปลี่ยนรูป
             </div>
+            <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            onChange={handleImageChange}
+            className="hidden"
+            />
+          </div>
+          <div className="text-center lg:text-left">
+            <h2 className="font-medium text-lg text-brown-800">
+            {user?.firstName} {user?.lastName}
+            </h2>
+            <p className="text-sm text-brown-900">{user?.email}</p>
+          </div>
+          </div>
+        </div>
 
             <div className="p-4">
               <nav className="space-y-1">

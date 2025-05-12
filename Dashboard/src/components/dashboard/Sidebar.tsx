@@ -1,10 +1,8 @@
-import React from "react";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
   Package,
@@ -16,8 +14,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  LogOut,
-} from "lucide-react";
+  LogOut
+} from 'lucide-react';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -31,92 +29,74 @@ interface NavItem {
   badge?: number;
 }
 
+// Group navItems by section
+const navSections = [
+  {
+    label: 'MAIN',
+    items: [
+      {
+        label: 'แดชบอร์ด',
+        icon: LayoutDashboard,
+        href: '/dashboard',
+      },
+      {
+        label: 'สินค้า',
+        icon: Package,
+        href: '/dashboard/products',
+      },
+      {
+        label: 'ออเดอร์',
+        icon: ShoppingBag,
+        href: '/dashboard/orders',
+        badge: 5,
+      },
+      {
+        label: 'ลูกค้า',
+        icon: Users,
+        href: '/dashboard/customers',
+      },
+    ],
+  },
+  {
+    label: 'LISTS',
+    items: [
+      {
+        label: 'บทความ',
+        icon: BookText,
+        href: '/dashboard/articles',
+      },
+      {
+        label: 'ติดต่อเรา',
+        icon: MessageSquare,
+        href: '/dashboard/messages',
+        badge: 3,
+      },
+      {
+        label: 'การแจ้งเตือน',
+        icon: Bell,
+        href: '/dashboard/notifications',
+        badge: 8,
+      },
+    ],
+  },
+  {
+    label: 'SETTINGS',
+    items: [
+      {
+        label: 'ตั้งค่า',
+        icon: Settings,
+        href: '/dashboard/settings',
+      },
+    ],
+  },
+];
+
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, toggleCollapse }) => {
   const location = useLocation();
   const { logout } = useAuth();
-  const [pendingOrderCount, setPendingOrderCount] = useState<number>(0);
 
-  // Group navItems by section
-  const navSections = [
-    {
-      label: "MAIN",
-      items: [
-        {
-          label: "แดชบอร์ด",
-          icon: LayoutDashboard,
-          href: "/dashboard",
-        },
-        {
-          label: "สินค้า",
-          icon: Package,
-          href: "/dashboard/products",
-        },
-        {
-          label: "ออเดอร์",
-          icon: ShoppingBag,
-          href: "/dashboard/orders",
-          badge: pendingOrderCount,
-        },
-        {
-          label: "ลูกค้า",
-          icon: Users,
-          href: "/dashboard/customers",
-        },
-      ],
-    },
-    {
-      label: "LISTS",
-      items: [
-        {
-          label: "บทความ",
-          icon: BookText,
-          href: "/dashboard/articles",
-        },
-        {
-          label: "ติดต่อเรา",
-          icon: MessageSquare,
-          href: "/dashboard/messages",
-          badge: 3,
-        },
-        {
-          label: "การแจ้งเตือน",
-          icon: Bell,
-          href: "/dashboard/notifications",
-          badge: 8,
-        },
-      ],
-    },
-    {
-      label: "SETTINGS",
-      items: [
-        {
-          label: "ตั้งค่า",
-          icon: Settings,
-          href: "/dashboard/settings",
-        },
-      ],
-    },
-  ];
-
-  useEffect(() => {
-    axios
-      .get("http://localhost:3000/api/order/getAllOrders", {
-        withCredentials: true,
-      })
-      .then((res) => {
-        const pendingOrders = res.data.orders.filter(
-          (order: any) => order.orderStatus === "pending"
-        );
-        setPendingOrderCount(pendingOrders.length);
-      })
-      .catch((err) => {
-        console.error("❌ Failed to fetch orders:", err);
-      });
-  }, []);
   const isActive = (href: string) => {
-    return (
-      location.pathname === href || location.pathname.startsWith(`${href}/`)
-    );
+    return location.pathname === href || location.pathname.startsWith(`${href}/`);
   };
 
   return (
@@ -160,16 +140,16 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, toggleCollapse }) => {
                   to={item.href}
                   className={cn(
                     "flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition-all sidebar-item group",
-                    isActive(item.href) &&
-                      "bg-primary/20 text-primary sidebar-item-active",
-                    !isActive(item.href) &&
-                      "hover:bg-sidebar-accent/40 hover:text-primary",
+                    isActive(item.href) && "bg-primary/20 text-primary sidebar-item-active",
+                    !isActive(item.href) && "hover:bg-sidebar-accent/40 hover:text-primary",
                     collapsed && "justify-center p-3"
                   )}
                 >
                   <item.icon size={20} />
-                  {!collapsed && <span className="flex-1">{item.label}</span>}
-                  {!collapsed && item.badge > 0 && (
+                  {!collapsed && (
+                    <span className="flex-1">{item.label}</span>
+                  )}
+                  {!collapsed && item.badge && (
                     <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs">
                       {item.badge}
                     </span>
