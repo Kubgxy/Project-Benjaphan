@@ -98,8 +98,9 @@ export const createOrder = async (req: Request, res: Response) => {
       userId: new mongoose.Types.ObjectId(userId),
       items: formattedItems,
       shippingInfo: {
-        fullName: shippingInfo.fullName,
+        Name: shippingInfo.Name,
         phone: shippingInfo.phone,
+        label: shippingInfo.label,
         addressLine: shippingInfo.addressLine,
         city: shippingInfo.city,
         province: shippingInfo.province,

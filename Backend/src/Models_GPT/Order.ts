@@ -14,8 +14,9 @@ const orderItemSchema = new mongoose.Schema({
 }, { _id: false });
 
 const shippingInfoSchema = new mongoose.Schema({
-  fullName: { type: String },             // ชื่อผู้รับ
+  Name: { type: String },             // ชื่อผู้รับ
   phone: { type: String },
+  label: { type: String },            // เช่น "บ้าน", "ออฟฟิศ"
   addressLine: { type: String },
   city: { type: String },
   province: { type: String },

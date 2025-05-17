@@ -1,12 +1,14 @@
 import mongoose from 'mongoose';
 
 const addressSchema = new mongoose.Schema({
+  Name: { type: String },
   label: { type: String },                      // เช่น "บ้าน", "ออฟฟิศ"
   addressLine: { type: String },               // ที่อยู่เต็มบรรทัด
   city: { type: String },
   province: { type: String },
   postalCode: { type: String },
-  country: { type: String, default: "Thailand" }
+  country: { type: String, default: "Thailand" },
+  phone: { type: String },
 }, { _id: true });
 
 const userSchema = new mongoose.Schema({

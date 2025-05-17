@@ -5,7 +5,7 @@ export const categories: Category[] = [
   {
     id: "cat-jakkraphat",
     name: "พระบูชา",
-    slug: "Jakkraphat",
+    slug: "jakkraphat",
     description: "ต่างหูทองคำแท้ดีไซน์สวยงาม เหมาะกับทุกโอกาส",
     image: "/product/น้ำหอมรวม.jpg",
     featured: true,
