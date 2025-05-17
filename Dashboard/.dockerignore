@@ -1,0 +1,22 @@
+# Node modules และ build output
+node_modules
+dist
+
+# ไฟล์ระบบ / editor
+.dockerignore
+Dockerfile
+.vscode
+.idea
+*.log
+
+# Git files
+.git
+.gitignore
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*

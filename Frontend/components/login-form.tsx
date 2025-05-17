@@ -96,9 +96,7 @@ export function LoginForm() {
           <label htmlFor="password" className="block text-sm font-medium text-gray-700">
             Password
           </label>
-          <a href="#" className="text-sm text-gold-600 hover:text-gold-700">
-            Forgot password?
-          </a>
+          
         </div>
         <input
           id="password"
@@ -122,18 +120,23 @@ export function LoginForm() {
           <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
             Remember me
           </label>
+          <a href="#" className="ml-auto text-sm text-gold-600 hover:text-gold-700">
+            Forgot password?
+          </a>
         </div>
       </div>
 
-      <hr className="my-4"></hr>
       <div>
         <Button type="submit" variant="luxury" className="w-full" disabled={isLoading}>
           {isLoading ? "Signing in..." : "Sign in"}
         </Button>
       </div>
 
+      <hr className="my-4"></hr>
+
       <div className="mt-6 space-y-3">
         <button
+          type="button"
           onClick={() => {
             window.location.href = 'http://localhost:3000/api/auth/start-google-login';
           }}
@@ -144,6 +147,7 @@ export function LoginForm() {
         </button>
 
         <button
+          type="button"
           onClick={() => {
             window.location.href = "http://localhost:3000/api/auth/start-facebook-login";
           }}

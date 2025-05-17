@@ -20,13 +20,17 @@ interface Article {
   views: number;
   thumbnail: string;
   slug: string;
+  author: {
+    firstName: string;
+    lastName: string;
+  };
 }
 
 const POSTS_PER_PAGE = 6;
 
 export default function BlogPage() {
   const searchParams = useSearchParams();
-  const pageQuery = parseInt(searchParams.get("page") || "1");
+  const pageQuery = parseInt(searchParams?.get("page") || "1");
   const [currentPage, setCurrentPage] = useState(pageQuery);
   const [search, setSearch] = useState("");
   const [articles, setArticles] = useState<Article[]>([]);
@@ -133,9 +137,18 @@ export default function BlogPage() {
                     <p className="text-brown-600 text-sm line-clamp-3 mb-2">
                       {post.excerpt}
                     </p>
-                    <p className="text-xs text-brown-400 mb-2">
-                      👁️ {post.views.toLocaleString()} ครั้ง
-                    </p>
+                  <div className="flex items-center justify-between mb-2 text-sm">
+                    {/* 👁️ View count ด้านซ้าย */}
+                    <div className="flex items-center gap-1 text-brown-400 text-xs">
+                      <span>👁️</span>
+                      <span>{post.views.toLocaleString()} ครั้ง</span>
+                    </div>
+                    {/* ✍️ Author name ด้านขวา */}
+                    <div className="flex items-center gap-1 text-brown-500 font-medium text-xs">
+                      <span>🖊️</span>
+                      <span>{post.author.firstName} {post.author.lastName}</span>
+                    </div>
+                  </div>
                     <Link
                       href={`/blog/${post.slug}?page=${currentPage}`}
                       className="inline-flex items-center text-gold-600 hover:text-gold-800 transition text-sm"

@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import bodyParser from 'body-parser';
+import { IncomingMessage } from 'http';
 
 // โหลดค่า .env
 dotenv.config();
@@ -21,7 +22,8 @@ app.use(cors({
 }));
 app.use(cookieParser());
 app.use(bodyParser.json({
-  type: (req) => req.headers['content-type']?.includes('application/json') || false
+  type: (req: IncomingMessage) =>
+    req.headers['content-type']?.includes('application/json') || false
 }));
 
   // Connect MongoDB
