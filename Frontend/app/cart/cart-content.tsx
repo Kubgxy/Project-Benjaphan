@@ -172,7 +172,7 @@ export function CartContent() {
           </p>
           <div className="flex justify-center gap-4">
             <Link href="/account">
-              <Button className="bg-gold-600 text-white hover:bg-gold-700 px-6 py-3">
+              <Button className="bg-gold-600 hover:bg-gold-700 px-6 py-3">
                 เข้าสู่ระบบ / สมัครสมาชิก
               </Button>
             </Link>

@@ -71,11 +71,14 @@ type Order = {
     slipImage?: string;
   };
   shippingInfo: {
+    Name: string;
+    label: string;
     addressLine: string;
     city: string;
     province: string;
     postalCode: string;
     country: string;
+    phone: string;
   };
 };
 
@@ -87,7 +90,8 @@ const Orders = () => {
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("all"); // all / YYYY-MM-DD
-  const [sortBy, setSortBy] = useState<string>("price-desc"); // price-asc / price-desc
+  const [sortByDate, setSortByDate] = useState<string>("none");
+  const [sortByPrice, setSortByPrice] = useState<string>("none");
 
   const filteredOrders = orders
     .filter((order) => {
@@ -100,8 +104,22 @@ const Orders = () => {
       return true;
     })
     .sort((a, b) => {
-      if (sortBy === "price-asc") return a.total - b.total;
-      if (sortBy === "price-desc") return b.total - a.total;
+      // ถ้ามีการเรียงวัน
+      if (sortByDate === "date-asc") {
+        return (
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+      }
+      if (sortByDate === "date-desc") {
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+
+      // ถ้ามีการเรียงราคา
+      if (sortByPrice === "price-asc") return a.total - b.total;
+      if (sortByPrice === "price-desc") return b.total - a.total;
+
       return 0;
     });
 
@@ -217,21 +235,26 @@ const Orders = () => {
           </SelectContent>
         </Select>
 
-        <div className="flex gap-4 items-center flex-wrap">
-          <Input
-            type="date"
-            className="w-[200px]"
-            value={filterDate === "all" ? "" : filterDate}
-            onChange={(e) =>
-              setFilterDate(e.target.value ? e.target.value : "all")
-            }
-          />
+        <div className="flex gap-4 flex-wrap">
+          {/* เรียงตามวัน */}
+          <Select value={sortByDate} onValueChange={setSortByDate}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="เรียงตามวัน" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">ไม่เรียงตามวัน</SelectItem>
+              <SelectItem value="date-desc">วันที่ล่าสุด</SelectItem>
+              <SelectItem value="date-asc">วันที่เก่าสุด</SelectItem>
+            </SelectContent>
+          </Select>
 
-          <Select value={sortBy} onValueChange={setSortBy}>
+          {/* เรียงตามราคา */}
+          <Select value={sortByPrice} onValueChange={setSortByPrice}>
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="เรียงตามราคา" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="none">ไม่เรียงราคา</SelectItem>
               <SelectItem value="price-desc">ราคาสูง - ต่ำ</SelectItem>
               <SelectItem value="price-asc">ราคาต่ำ - สูง</SelectItem>
             </SelectContent>
@@ -406,16 +429,17 @@ const Orders = () => {
               <div className="bg-gray-50 p-4 rounded shadow-sm">
                 <h3 className="font-semibold mb-2 text-lg">ข้อมูลลูกค้า</h3>
                 <p>
-                  👤 ผู้สั่งซื้อ: {selectedOrder.userId.firstName}{" "}
+                  👤 ผู้สั่งซื้อ: {selectedOrder.shippingInfo.Name}{" "}
                   {selectedOrder.userId.lastName}
                 </p>
-                <p>📞 เบอร์โทรศัพท์: {selectedOrder.userId.phoneNumber}</p>
+                <p>📞 เบอร์โทรศัพท์: {selectedOrder.shippingInfo.phone}</p>
               </div>
 
               {/* ✅ ที่อยู่จัดส่ง */}
               <div className="bg-gray-50 p-4 rounded shadow-sm">
                 <h3 className="font-semibold mb-2 text-lg">ที่อยู่การจัดส่ง</h3>
                 <p>
+                  {selectedOrder.shippingInfo.label},{" "}
                   {selectedOrder.shippingInfo.addressLine},{" "}
                   {selectedOrder.shippingInfo.city},{" "}
                   {selectedOrder.shippingInfo.province},{" "}

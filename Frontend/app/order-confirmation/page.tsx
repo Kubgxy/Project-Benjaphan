@@ -11,7 +11,7 @@ import { getOrderById } from "@/actions/order-actions";
 
 export default function OrderConfirmationPage() {
   const searchParams = useSearchParams();
-  const orderId = searchParams.get("orderId");
+  const orderId = searchParams?.get("orderId");
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

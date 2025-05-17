@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 
 // Model
 // import User from "../Models/User";
-import User from "../Models_GPT/User"; 
+import User from "../Models_GPT/User";
 import Cart from "../Models_GPT/Cart";
 import Wishlist from "../Models_GPT/Wishlist";
 
@@ -14,7 +14,8 @@ export const registerUser = async (
   res: Response,
   _next: NextFunction
 ): Promise<void> => {
-  const { firstName, lastName, email, password, phoneNumber, addresses } = req.body;
+  const { firstName, lastName, email, password, phoneNumber, addresses } =
+    req.body;
 
   if (!firstName || !lastName || !email || !password) {
     res
@@ -24,7 +25,9 @@ export const registerUser = async (
   }
 
   try {
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    const existingUser = await User.findOne({
+      email: email.toLowerCase().trim(),
+    });
     if (existingUser) {
       res.status(400).json({ message: "❌ Email already exists" });
       return;
@@ -51,7 +54,7 @@ export const registerUser = async (
     }
 
     const existingWishlist = await Wishlist.findOne({ userId: newUser._id });
-    const wishlist = existingWishlist || new Wishlist({ userId: newUser._id }); 
+    const wishlist = existingWishlist || new Wishlist({ userId: newUser._id });
     if (!existingWishlist) {
       await wishlist.save();
     }
@@ -105,13 +108,15 @@ export const loginUser = async (
       return;
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password as string);
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      user.password as string
+    );
     if (!isPasswordValid) {
       res.status(401).json({ message: "❌ Invalid password" });
       return;
     }
 
-    
     // ✅ สร้าง token
     const token = jwt.sign(
       { userId: user._id, role: user.role },
@@ -119,8 +124,11 @@ export const loginUser = async (
       { expiresIn: "1d" }
     );
     console.log("JWT_SECRET:", process.env.JWT_SECRET);
-    
-    console.log("🔐 SIGNING PAYLOAD:", { userId: user._id.toString(), role: user.role });
+
+    console.log("🔐 SIGNING PAYLOAD:", {
+      userId: user._id.toString(),
+      role: user.role,
+    });
     console.log("🔐 JWT_SECRET used for signing:", process.env.JWT_SECRET);
     console.log("🔐 TOKEN after sign:", token);
     // ✅ ส่ง token ผ่าน cookie
@@ -169,15 +177,19 @@ export const logoutUser = async (
 };
 
 // Get user profile
-export const getUserProfile = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+export const getUserProfile = async (
+  req: Request,
+  res: Response,
+  _next: NextFunction
+): Promise<void> => {
   try {
-    const user = await User.findById(req.user?.userId).select('-password');
+    const user = await User.findById(req.user?.userId).select("-password");
     if (!user) {
-       res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: "User not found" });
     }
     res.status(200).json({ user });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 };
 
@@ -217,86 +229,135 @@ export const updateMe = async (
 };
 
 //Get Address
-export const getAddress = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+export const getAddress = async (
+  req: Request,
+  res: Response,
+  _next: NextFunction
+): Promise<void> => {
   try {
-    const user = await User.findById(req.user?.userId).select('addresses');
+    const user = await User.findById(req.user?.userId).select("addresses");
     if (!user) {
-      res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: "User not found" });
       return;
     }
     res.status(200).json({ addresses: user.addresses });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 };
 
-export const addAddress = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+export const addAddress = async (
+  req: Request,
+  res: Response,
+  _next: NextFunction
+): Promise<void> => {
   try {
-    const { label, addressLine, city, province, postalCode, country } = req.body;
+    const { Name, label, addressLine, city, province, postalCode, country, phone } =
+      req.body;
     const userId = req.user?.userId;
 
-    if (!label || !addressLine || !city || !province || !postalCode || !country) {
-      res.status(400).json({ message: '❌ Please provide all address fields' });
+    if (
+      !Name ||
+      !label ||
+      !addressLine ||
+      !city ||
+      !province ||
+      !postalCode ||
+      !country ||
+      !phone
+    ) {
+      res.status(400).json({ message: "❌ Please provide all address fields" });
       return;
     }
 
     const newAddress = {
+      Name,
       label,
       addressLine,
       city,
       province,
       postalCode,
-      country
+      country,
+      phone,
     };
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $push: { addresses: newAddress } },
       { new: true, runValidators: true }
-    ).select('addresses');
+    ).select("addresses");
 
     if (!updatedUser) {
-      res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: "User not found" });
       return;
     }
 
-    res.status(200).json({ message: '✅ Address added successfully', addresses: updatedUser.addresses });
-  }
-  catch (error) {
-    res.status(500).json({ message: '❌ Server error', error });
+    res
+      .status(200)
+      .json({
+        message: "✅ Address added successfully",
+        addresses: updatedUser.addresses,
+      });
+  } catch (error) {
+    res.status(500).json({ message: "❌ Server error", error });
   }
 };
 
 // Update Address
 export const updateAddress = async (req: Request, res: Response) => {
   try {
-    const { addressLine, city, province, postalCode, country, label } = req.body;
+    const { Name, addressLine, city, province, postalCode, country, label, phone } =
+      req.body;
     const userId = req.user?.userId;
     const addressId = req.params.addressId;
 
-    if (!label || !addressLine || !city || !province || !postalCode || !country) {
-      res.status(400).json({ message: '❌ Please provide all address fields' });
+    if (
+      !Name ||
+      !label ||
+      !addressLine ||
+      !city ||
+      !province ||
+      !postalCode ||
+      !country ||
+      !phone
+    ) {
+      res.status(400).json({ message: "❌ Please provide all address fields" });
       return;
     }
 
     const updatedUser = await User.findOneAndUpdate(
-      { _id: userId, 'addresses._id': addressId },
+      { _id: userId, "addresses._id": addressId },
       {
         $set: {
-          'addresses.$': { _id: addressId, label, addressLine, city, province, postalCode, country }
-        }
+          "addresses.$": {
+            _id: addressId,
+            Name,
+            label,
+            addressLine,
+            city,
+            province,
+            postalCode,
+            country,
+            phone,
+          },
+        },
       },
       { new: true }
-    ).select('addresses');
+    ).select("addresses");
 
     if (!updatedUser) {
-      res.status(404).json({ message: 'User or address not found' });
+      res.status(404).json({ message: "User or address not found" });
       return;
     }
 
-    res.status(200).json({ message: '✅ Address updated successfully', addresses: updatedUser.addresses });
+    res
+      .status(200)
+      .json({
+        message: "✅ Address updated successfully",
+        addresses: updatedUser.addresses,
+      });
   } catch (error) {
-    res.status(500).json({ message: '❌ Server error', error });
+    res.status(500).json({ message: "❌ Server error", error });
   }
 };
 
@@ -310,25 +371,34 @@ export const deleteAddress = async (req: Request, res: Response) => {
       userId,
       { $pull: { addresses: { _id: addressId } } },
       { new: true }
-    ).select('addresses');
+    ).select("addresses");
 
     if (!updatedUser) {
-      res.status(404).json({ message: 'User or address not found' });
+      res.status(404).json({ message: "User or address not found" });
       return;
     }
 
-    res.status(200).json({ message: '✅ Address deleted successfully', addresses: updatedUser.addresses });
+    res
+      .status(200)
+      .json({
+        message: "✅ Address deleted successfully",
+        addresses: updatedUser.addresses,
+      });
   } catch (error) {
-    res.status(500).json({ message: '❌ Server error', error });
+    res.status(500).json({ message: "❌ Server error", error });
   }
 };
 
 // Get all customers (Admin only)
-export const getAllCustomers = async (_req: Request, res: Response, _next: NextFunction): Promise<void> => {
+export const getAllCustomers = async (
+  _req: Request,
+  res: Response,
+  _next: NextFunction
+): Promise<void> => {
   try {
-    const customers = await User.find({ role: 'customer' }).select('-password');
+    const customers = await User.find({ role: "customer" }).select("-password");
     res.status(200).json({ customers });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 };

@@ -36,12 +36,14 @@ export function CheckoutForm() {
   const [paymentMethod, setPaymentMethod] = useState<"online" | "qr">("online");
   // ✅ แก้ชื่อ field ให้ตรง backend 100%
   const [shippingInfo, setShippingInfo] = useState({
+    Name: "",
     label: "",
     addressLine: "",
     city: "",
     province: "",
     postalCode: "",
     country: "Thailand",
+    phone: "",
   });
 
   // โหลด checkout summary
@@ -75,12 +77,14 @@ export function CheckoutForm() {
           const defaultAddr = res.data.addresses[0];
           setSelectedAddressId(defaultAddr._id);
           setShippingInfo({
+            Name: defaultAddr.Name,
             label: defaultAddr.label,
             addressLine: defaultAddr.addressLine,
             city: defaultAddr.city,
             province: defaultAddr.province,
             postalCode: defaultAddr.postalCode,
             country: defaultAddr.country,
+            phone: defaultAddr.phone,
           });
         }
       })
@@ -146,49 +150,52 @@ export function CheckoutForm() {
     modalRef.current?.close();
   };
 
-  const handlePlaceOrder = async () => {
-    setIsSubmitting(true);
-    setError(null);
+  // const handlePlaceOrder = async () => {
+  //   setIsSubmitting(true);
+  //   setError(null);
 
-    try {
-      const formattedItems = checkoutItems.map((item) => ({
-        productId: item.productId || item._id || item.id_product,
-        name: item.name,
-        size: item.size,
-        quantity: item.quantity,
-        priceAtPurchase: item.priceAtAdded, // mapping ตรงนี้สำคัญ!
-        images: item.images || [],
-      }));
+  //   try {
+  //     const formattedItems = checkoutItems.map((item) => ({
+  //       productId: item.productId || item._id || item.id_product,
+  //       name: item.name,
+  //       size: item.size,
+  //       quantity: item.quantity,
+  //       priceAtPurchase: item.priceAtAdded, // mapping ตรงนี้สำคัญ!
+  //       images: item.images || [],
+  //     }));
 
-      const orderData = {
-        items: formattedItems,
-        subtotal,
-        shipping,
-        total,
-        shippingInfo: {
-          addressLine: shippingInfo.addressLine, // ✅
-          city: shippingInfo.city,
-          province: shippingInfo.province, // ✅
-          postalCode: shippingInfo.postalCode, // ✅
-          country: shippingInfo.country,
-        },
-        paymentMethod,
-      };
+  //     const orderData = {
+  //       items: formattedItems,
+  //       subtotal,
+  //       shipping,
+  //       total,
+  //       shippingInfo: {
+  //         Name: shippingInfo.Name, // ✅
+  //         label: shippingInfo.label,
+  //         addressLine: shippingInfo.addressLine, // ✅
+  //         city: shippingInfo.city,
+  //         province: shippingInfo.province, // ✅
+  //         postalCode: shippingInfo.postalCode, // ✅
+  //         country: shippingInfo.country,
+  //         phone: shippingInfo.phone,
+  //       },
+  //       paymentMethod,
+  //     };
 
-      const result = await createOrder(orderData);
+  //     const result = await createOrder(orderData);
 
-      if (result.success) {
-        router.push(`/payment?orderId=${result.orderId}`);
-      } else {
-        setError(result.error || "เกิดข้อผิดพลาด กรุณาลองใหม่");
-        setIsSubmitting(false);
-      }
-    } catch (err) {
-      console.error("Error placing order:", err);
-      setError("เกิดข้อผิดพลาด กรุณาลองใหม่");
-      setIsSubmitting(false);
-    }
-  };
+  //     if (result.success) {
+  //       router.push(`/payment?orderId=${result.orderId}`);
+  //     } else {
+  //       setError(result.error || "เกิดข้อผิดพลาด กรุณาลองใหม่");
+  //       setIsSubmitting(false);
+  //     }
+  //   } catch (err) {
+  //     console.error("Error placing order:", err);
+  //     setError("เกิดข้อผิดพลาด กรุณาลองใหม่");
+  //     setIsSubmitting(false);
+  //   }
+  // };
 
   const handleConfirmPayment = async () => {
     if (paymentMethod === "online" && !slipFile) {
@@ -219,12 +226,14 @@ export function CheckoutForm() {
         shipping,
         total,
         shippingInfo: {
+          Name: shippingInfo.Name,
           label: shippingInfo.label,
           addressLine: shippingInfo.addressLine,
           city: shippingInfo.city,
           province: shippingInfo.province,
           postalCode: shippingInfo.postalCode,
           country: shippingInfo.country,
+          phone: shippingInfo.phone,
         },
         paymentMethod,
       });
@@ -302,7 +311,25 @@ export function CheckoutForm() {
           {selectedAddressId ? "แก้ไขที่อยู่" : "เพิ่มที่อยู่ใหม่"}
         </h2>
 
-        <div className="space-y-3 mb-4">
+        <div className="space-y-3">
+          <input
+            type="text"
+            placeholder="ชือผู้รับ"
+            value={shippingInfo.Name}
+            onChange={(e) =>
+              setShippingInfo({ ...shippingInfo, Name: e.target.value })
+            }
+            className="w-full border rounded px-3 py-2"
+          />
+          <input
+            type="text"
+            placeholder="เบอร์ติดต่อ"
+            value={shippingInfo.phone}
+            onChange={(e) =>
+              setShippingInfo({ ...shippingInfo, phone: e.target.value })
+            }
+            className="w-full border rounded px-3 py-2"
+          />
           <input
             type="text"
             placeholder="สถานที่ บ้าน / บริษัท / โรงงาน "
@@ -312,9 +339,6 @@ export function CheckoutForm() {
             }
             className="w-full border rounded px-3 py-2"
           />
-        </div>
-
-        <div className="space-y-3">
           <input
             type="text"
             placeholder="ที่อยู่"
@@ -373,12 +397,14 @@ export function CheckoutForm() {
             onClick={() => {
               setSelectedAddressId(null);
               setShippingInfo({
+                Name: "",
                 label: "",
                 addressLine: "",
                 city: "",
                 province: "",
                 postalCode: "",
                 country: "Thailand",
+                phone: "",
               });
               modalRef.current?.showModal();
             }}
@@ -396,12 +422,14 @@ export function CheckoutForm() {
                 if (addr) {
                   setSelectedAddressId(addr._id);
                   setShippingInfo({
+                    Name: addr.Name,
                     label: addr.label,
                     addressLine: addr.addressLine,
                     city: addr.city,
                     province: addr.province,
                     postalCode: addr.postalCode,
                     country: addr.country,
+                    phone: addr.phone,
                   });
                 }
               }}
@@ -409,7 +437,7 @@ export function CheckoutForm() {
             >
               {addressList.map((addr) => (
                 <option key={addr._id} value={addr._id}>
-                  {addr.addressLine}, {addr.city}, {addr.province}{" "}
+                 ชื่อผู้รับ : {addr.Name}{" "} บ้านเลขที่ : {addr.addressLine}{" "}, {addr.city}{" "}, {addr.province}{" "}
                   {addr.postalCode}
                 </option>
               ))}
