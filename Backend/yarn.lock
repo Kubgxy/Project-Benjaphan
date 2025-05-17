@@ -155,7 +155,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/body-parser@npm:*":
+"@types/body-parser@npm:*, @types/body-parser@npm:^1.19.5":
   version: 1.19.5
   resolution: "@types/body-parser@npm:1.19.5"
   dependencies:
@@ -467,6 +467,7 @@ __metadata:
   resolution: "backend@workspace:."
   dependencies:
     "@types/bcrypt": "npm:^5.0.2"
+    "@types/body-parser": "npm:^1.19.5"
     "@types/cookie-parser": "npm:^1"
     "@types/cors": "npm:^2.8.17"
     "@types/express": "npm:^5.0.1"

@@ -22,10 +22,11 @@ interface Article {
 }
 
 export default function BlogDetailPage() {
-  const { slug } = useParams();
+  const params = useParams() as Record<string, string | string[]>;
+  const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
   const hasIncreased = useRef(false);
   const searchParams = useSearchParams();
-  const page = searchParams.get("page") || "1";
+  const page = searchParams?.get("page") || "1";
   const router = useRouter();
 
   const [post, setPost] = useState<Article | null>(null);
