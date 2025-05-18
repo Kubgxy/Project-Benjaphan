@@ -11,7 +11,7 @@ import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { SearchPopover } from "@/components/search-popover";
 import { Product, SearchItem } from "@/lib/types"; // Import the correct type for Product
-import { Html, Head, Main, NextScript } from 'next/document';
+import { getBaseUrl } from "@/lib/api";
 
 export function Header() {
   const { itemCount } = useCart();
@@ -29,7 +29,7 @@ export function Header() {
     async function fetchProducts() {
       try {
         const res = await axios.get(
-          "http://localhost:3000/api/product/getAllProducts"
+          `${getBaseUrl()}/api/product/getAllProducts`
         ); // ← ดึงข้อมูลจริง
         setProducts(res.data.products);
         console.log("Fetched products:", res.data);
@@ -60,7 +60,7 @@ export function Header() {
     }
   }
 
-  const BACKEND_URL = "http://localhost:3000"; // URL ของ backend
+  const BACKEND_URL = `${getBaseUrl()}`; // URL ของ backend
   // const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL; // ถ้าใช้ env variable
 
   // แปลงเป็น SearchItem (ถ้า SearchPopover ใช้ type นี้)

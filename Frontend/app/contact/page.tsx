@@ -7,6 +7,7 @@ import { Phone, Mail, MapPin, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { getBaseUrl } from "@/lib/api";
 
 export default function ContactPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -23,7 +24,7 @@ export default function ContactPage() {
     const fetchUserData = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:3000/api/user/getUserProfile",
+          `${getBaseUrl()}/api/user/getUserProfile`,
           { withCredentials: true }
         );
         if (res.data?.user) {
@@ -65,7 +66,7 @@ export default function ContactPage() {
       if (isLoggedIn) {
         // 🔥 สมาชิก ยิง API ของสมาชิก (ส่งแค่ subject, message)
         response = await axios.post(
-          "http://localhost:3000/api/contact/createContactByMember",
+          `${getBaseUrl()}/api/contact/createContactByMember`,
           {
             subject: formData.subject,
             message: formData.message,
@@ -76,7 +77,7 @@ export default function ContactPage() {
         // 👤 ผู้เยี่ยมชม ยิง API เดิม
         const { name, email, phone, subject, message } = formData;
         response = await axios.post(
-          "http://localhost:3000/api/contact/createContact",
+          `${getBaseUrl()}/api/contact/createContact`,
           { name, email, phone, subject, message },
           { withCredentials: true }
         );

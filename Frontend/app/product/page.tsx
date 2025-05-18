@@ -9,6 +9,7 @@ import { Filter, SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Product, AvailableSize } from "@/lib/types";
+import { getBaseUrl } from "@/lib/api";
 
 // 🟢 สร้าง Function แปลง Product → ProductCardProps
 const mapProductToCardProduct = (product: Product) => ({
@@ -41,8 +42,8 @@ const mapProductToCardProduct = (product: Product) => ({
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
-  const categoryFilter = searchParams.get("category");
-  const sortOption = searchParams.get("sort") || "featured";
+  const categoryFilter = searchParams?.get("category");
+  const sortOption = searchParams?.get("sort") || "featured";
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +53,7 @@ export default function ProductsPage() {
     const fetchProducts = async () => {
       try {
         const response = await fetch(
-          "http://localhost:3000/api/product/getAllProducts",
+          `${getBaseUrl()}/api/product/getAllProducts`,
           {
             credentials: "include",
           }

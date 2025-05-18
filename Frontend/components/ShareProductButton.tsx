@@ -14,6 +14,7 @@ import {
 import { FaLine, FaWhatsapp, FaFacebookMessenger } from "react-icons/fa";
 import { useToast } from "@/components/ui/use-toast";
 import { Product } from "@/lib/types";
+import { getBaseUrl } from "@/lib/api";
 
 export default function ShareProductButton({ product }: { product: Product }) {
   const [showShareModal, setShowShareModal] = useState(false);
@@ -22,7 +23,7 @@ export default function ShareProductButton({ product }: { product: Product }) {
   const currentUrl =
     typeof window !== "undefined"
       ? window.location.href
-      : `http://localhost:3000/product/${product.id_product}`;
+      : `${getBaseUrl()}/product/${product.id_product}`;
 
       const handleNativeShare = () => {
         // ❗ ไม่ต้องเช็กแล้วว่า navigator.share

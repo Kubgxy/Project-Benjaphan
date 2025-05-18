@@ -1,8 +1,9 @@
 import axios from "axios";
+import { getBaseUrl } from "@/lib/api";
 
 export async function createOrder(orderData: any) {
   try {
-    const response = await axios.post("http://localhost:3000/api/order/createOrder", orderData, {
+    const response = await axios.post(`${getBaseUrl()}/api/order/createOrder`, orderData, {
       withCredentials: true,
       headers: {
         "Content-Type": "application/json",
@@ -17,7 +18,7 @@ export async function createOrder(orderData: any) {
 
 export async function getOrderById(orderId: string) {
   try {
-    const response = await axios.get(`http://localhost:3000/api/order/getOrderById/${orderId}`, {
+    const response = await axios.get(`${getBaseUrl()}/api/order/getOrderById/${orderId}`, {
       withCredentials: true,
     });
     return response.data;

@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import FacebookProvider from 'next-auth/providers/facebook';
 import type { NextAuthOptions } from 'next-auth';
+import { getBaseUrl } from "@/lib/api";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -31,7 +32,7 @@ export const authOptions: NextAuthOptions = {
       };
 
       try {
-        const res = await fetch('http://localhost:3000/api/auth/social-login', {
+        const res = await fetch(`${getBaseUrl()}/api/auth/social-login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),

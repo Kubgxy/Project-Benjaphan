@@ -22,6 +22,7 @@ import { mapProductToCardProduct } from "@/lib/product";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import ShareProductButton from "@/components/ShareProductButton";
+import { getBaseUrl } from "@/lib/api";
 
 interface ProductDetailProps {
   product: Product;
@@ -69,7 +70,7 @@ export function ProductDetail({
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await axios.get("http://localhost:3000/api/user/me", {
+        await axios.get(`${getBaseUrl()}/api/user/me`, {
           withCredentials: true,
         });
         setIsLoggedIn(true);
@@ -91,7 +92,7 @@ export function ProductDetail({
 
     try {
       await axios.post(
-        "http://localhost:3000/api/cart/addToCart",
+        `${getBaseUrl()}/api/cart/addToCart`,
         {
           productId: product.id_product,
           quantity: quantity, // ✅ ส่ง quantity ที่เลือก
@@ -177,7 +178,7 @@ export function ProductDetail({
   const checkWishlistStatus = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:3000/api/wishlist/getWishlist",
+        `${getBaseUrl()}/api/wishlist/getWishlist`,
         { withCredentials: true }
       );
       const wishlistItems = response.data.wishlist?.products || [];
@@ -200,14 +201,14 @@ export function ProductDetail({
     try {
       if (isInWishlist) {
         await axios.post(
-          "http://localhost:3000/api/wishlist/removeFromWishlist",
+          `${getBaseUrl()}/api/wishlist/removeFromWishlist`,
           { productId: product._id },
           { withCredentials: true }
         );
         toast({ title: "💔 ลบออกจากรายการโปรดแล้ว" });
       } else {
         await axios.post(
-          "http://localhost:3000/api/wishlist/addToWishlist",
+          `${getBaseUrl()}/api/wishlist/addToWishlist`,
           { productId: product._id },
           { withCredentials: true }
         );
@@ -232,7 +233,7 @@ export function ProductDetail({
   const fetchProductReviews = async (page = 1) => {
     try {
       const res = await axios.get(
-        `http://localhost:3000/api/review/getReviews/${product._id}?page=${page}&limit=${reviewsPerPage}`
+        `${getBaseUrl()}/api/review/getReviews/${product._id}?page=${page}&limit=${reviewsPerPage}`
       );
       setReviews(res.data.reviews);
       setTotalReviews(res.data.totalReviews);
@@ -249,7 +250,7 @@ export function ProductDetail({
   const fetchAverageRating = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:3000/api/review/average/${product._id}`
+        `${getBaseUrl()}/api/review/average/${product._id}`
       );
       setAverageRating(res.data.averageRating);
       setTotalReviews(res.data.totalReviews);
@@ -266,7 +267,7 @@ export function ProductDetail({
       if (comment.trim() === "" && rating > 0) {
         // ส่งแค่ดาว
         await axios.post(
-          "http://localhost:3000/api/review/addReview",
+          `${getBaseUrl()}/api/review/addReview`,
           { productId: product._id, rating },
           { withCredentials: true }
         );
@@ -274,7 +275,7 @@ export function ProductDetail({
       } else if (comment.trim() !== "" && rating > 0) {
         // ส่งคอมเมนต์ + ดาว
         await axios.post(
-          "http://localhost:3000/api/review/addReview",
+          `${getBaseUrl()}/api/review/addReview`,
           { productId: product._id, rating, comment },
           { withCredentials: true }
         );
@@ -311,7 +312,7 @@ export function ProductDetail({
     if (!isLoggedIn) return;
     try {
       const res = await axios.get(
-        `http://localhost:3000/api/review/user-rating/${product._id}`,
+        `${getBaseUrl()}/api/review/user-rating/${product._id}`,
         { withCredentials: true }
       );
       setSelectedRating(res.data.rating); // ⭐ preload คะแนนที่ user เคยให้
@@ -340,11 +341,11 @@ export function ProductDetail({
         <meta property="og:description" content={product.description} />
         <meta
           property="og:image"
-          content={`http://localhost:3000${product.images[0]}`} // ✅ เปลี่ยน domain เป็นของจริงตอน deploy
+          content={`${getBaseUrl()}${product.images[0]}`} // ✅ เปลี่ยน domain เป็นของจริงตอน deploy
         />
         <meta
           property="og:url"
-          content={`http://localhost:3000/product/${product.id_product}`} // ✅ เปลี่ยน domain เป็นของจริงตอน deploy
+          content={`${getBaseUrl()}/product/${product.id_product}`} // ✅ เปลี่ยน domain เป็นของจริงตอน deploy
         />
         <meta property="og:type" content="product" />
 
@@ -354,7 +355,7 @@ export function ProductDetail({
         <meta name="twitter:description" content={product.description} />
         <meta
           name="twitter:image"
-          content={`http://localhost:3000${product.images[0]}`} // ✅ เปลี่ยน domain เป็นของจริงตอน deploy
+          content={`${getBaseUrl()}${product.images[0]}`} // ✅ เปลี่ยน domain เป็นของจริงตอน deploy
         />
       </Head>
 
@@ -378,7 +379,7 @@ export function ProductDetail({
                   e.preventDefault();
                   try {
                     const res = await axios.post(
-                      "http://localhost:3000/api/user/loginUser",
+                      `${getBaseUrl()}/api/user/loginUser`,
                       {
                         email: loginEmail,
                         password: loginPassword,
@@ -462,7 +463,7 @@ export function ProductDetail({
               <Image
                 src={
                   product.images && product.images.length > 0
-                    ? `http://localhost:3000${product.images[selectedImage]}`
+                    ? `${getBaseUrl()}${product.images[selectedImage]}`
                     : "/placeholder.svg"
                 }
                 alt={product.name || "Product Image"}
@@ -486,7 +487,7 @@ export function ProductDetail({
                   <Image
                     src={
                       image
-                        ? `http://localhost:3000${image}`
+                        ? `${getBaseUrl()}${image}`
                         : "/placeholder.svg"
                     }
                     alt={`${product.name} view ${index + 1}`}
@@ -704,7 +705,7 @@ export function ProductDetail({
                       r.userId?.avatar
                         ? r.userId.avatar.startsWith("http") // ถ้าเป็น full URL แล้ว
                           ? r.userId.avatar
-                          : `http://localhost:3000/${r.userId.avatar.replace(/^\/+/, "")}` // ลบ / ซ้ำออก
+                          : `${getBaseUrl()}/${r.userId.avatar.replace(/^\/+/, "")}` // ลบ / ซ้ำออก
                         : `https://ui-avatars.com/api/?name=${encodeURIComponent(r.userId?.firstName || "User")}`
                     }
                     alt="User Avatar"

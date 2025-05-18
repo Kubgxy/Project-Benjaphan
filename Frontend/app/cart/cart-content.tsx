@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 import { ShoppingBasket, Banknote } from "lucide-react";
+import { getBaseUrl } from "@/lib/api";
 
 interface CartItem {
   productId: string;
@@ -53,7 +54,7 @@ export function CartContent() {
   const fetchCart = async () => {
     try {
       const response = await axios.get<CartResponse>(
-        "http://localhost:3000/api/cart/getCart",
+        `${getBaseUrl()}/api/cart/getCart`,
         { withCredentials: true }
       );
       setCartItems(response.data.cart.items);
@@ -76,7 +77,7 @@ export function CartContent() {
   const handleRemoveItem = async (productId: string, size: string) => {
     try {
       await axios.post(
-        "http://localhost:3000/api/cart/removeCartItem",
+        `${getBaseUrl()}/api/cart/removeCartItem`,
         { productId, size },
         { withCredentials: true }
       );
@@ -101,7 +102,7 @@ export function CartContent() {
 
     try {
       await axios.post(
-        "http://localhost:3000/api/cart/updateCartItem",
+        `${getBaseUrl()}/api/cart/updateCartItem`,
         {
           productId,
           size,
@@ -133,7 +134,7 @@ export function CartContent() {
       }));
 
       const response = await axios.post(
-        "http://localhost:3000/api/order/selectItems",
+        `${getBaseUrl()}/api/order/selectItems`,
         { items },
         { withCredentials: true }
       );
@@ -237,7 +238,7 @@ export function CartContent() {
                       <Image
                         src={
                           item.images[0]
-                            ? `http://localhost:3000${item.images[0]}`
+                            ? `${getBaseUrl()}${item.images[0]}`
                             : "/placeholder.svg"
                         }
                         alt={item.name}
@@ -369,7 +370,7 @@ export function CartContent() {
                               <Image
                                 src={
                                   item.images[0]
-                                    ? `http://localhost:3000${item.images[0]}`
+                                    ? `${getBaseUrl()}${item.images[0]}`
                                     : "/placeholder.svg"
                                 }
                                 alt={item.name}

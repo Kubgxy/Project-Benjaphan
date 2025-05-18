@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { getBaseUrl } from "@/lib/api";
 
 export interface AvailableSize {
   _id: string;
@@ -64,7 +65,7 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
 
     try {
       await axios.post(
-        "http://localhost:3000/api/cart/addToCart",
+        `${getBaseUrl()}/api/cart/addToCart`,
         {
           productId: product.id_product, // ✅ ใช้ id_product ตรงนี้!
           quantity: 1, // ✅ ใส่ default 1 ชิ้น
@@ -98,7 +99,7 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
   const checkWishlistStatus = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:3000/api/wishlist/getWishlist",
+        `${getBaseUrl()}/api/wishlist/getWishlist`,
         { withCredentials: true }
       );
       const wishlistItems = response.data.wishlist?.products || [];
@@ -121,7 +122,7 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
     try {
       if (isInWishlist) {
         await axios.post(
-          "http://localhost:3000/api/wishlist/removeFromWishlist",
+          `${getBaseUrl()}/api/wishlist/removeFromWishlist`,
           { productId: product._id },
           { withCredentials: true }
         );
@@ -129,7 +130,7 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
         toast({ title: "💔 ลบออกจากรายการโปรดแล้ว" });
       } else {
         await axios.post(
-          "http://localhost:3000/api/wishlist/addToWishlist",
+          `${getBaseUrl()}/api/wishlist/addToWishlist`,
           { productId: product._id },
           { withCredentials: true }
         );
@@ -167,7 +168,7 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
         <Image
           src={
             product.images && product.images.length > 0 && product.images[0]
-              ? `http://localhost:3000${product.images[0]}`
+              ? `${getBaseUrl()}${product.images[0]}`
               : "/placeholder.svg"
           }
           alt={product.name}
@@ -261,7 +262,7 @@ export function ProductCard({ product, featured = false }: ProductCardProps) {
                 e.preventDefault();
                 try {
                   const res = await axios.post(
-                    "http://localhost:3000/api/user/loginUser",
+                    `${getBaseUrl()}/api/user/loginUser`,
                     {
                       email: loginEmail,
                       password: loginPassword,
