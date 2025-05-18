@@ -13,6 +13,7 @@ import {
   MapPinHouse,
   MapPinCheck,
   LogIn,
+  Trash,
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { ProfileForm } from "./profile-form";
 import Swal from "sweetalert2";
 import { useToast } from "@/components/ui/use-toast";
 import { getBaseUrl } from "@/lib/api";
+import axios from "axios";
 
 type AccountTab =
   | "profile"
@@ -69,6 +71,20 @@ interface Address {
   phone: string;
 }
 
+interface WishlistItem {
+  _id: string;
+  id_product: string;
+  name: string;
+  price: number;
+  images: string[];
+  availableSizes: {
+    size: string;
+    quantity: number;
+  }[];
+  size: string;
+  quantity: number;
+}
+
 export function AccountContent() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, logout, setUser } = useAuth();
@@ -76,9 +92,13 @@ export function AccountContent() {
   const [showLoginForm, setShowLoginForm] = useState(true);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>(
+    {}
+  );
+  const [addedToCart, setAddedToCart] = useState<string | null>(null);
   const [newAddress, setNewAddress] = useState({
-
     _id: "",
     Name: "",
     label: "",
@@ -152,14 +172,109 @@ export function AccountContent() {
     }
   }, [activeTab]);
 
+  const fetchWishlist = async () => {
+    try {
+      const res = await fetch(`${getBaseUrl()}/api/wishlist/getWishlist`, {
+        credentials: "include",
+      });
+      const data = await res.json();
+      console.log("✅ wishlist response", data);
+
+      if (data.success || data.wishlist) {
+        const flatWishlist =
+          data.wishlist?.products
+            ?.filter((item: any) => item.productId !== null) // 🛠 กรอง null
+            .map((item: any) => ({
+              ...item.productId,
+               // ✅ populate result
+              id_product: item.productId?.id_product,
+              size: item.size,
+              quantity: item.quantity,
+            })) || [];
+
+        console.log("✅ cleaned wishlist:", flatWishlist);
+        setWishlist(flatWishlist);
+      }
+    } catch (error) {
+      console.error("Failed to fetch wishlist:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "wishlist") {
+      fetchWishlist();
+    }
+  }, [activeTab]);
+
+  const handleSelectSize = (productId: string, size: string) => {
+    setSelectedSizes((prev) => ({
+      ...prev,
+      [productId]: size,
+    }));
+  };
+
+  const handleAddToCart = async (product: any) => {
+    const size = selectedSizes[product.id_product];
+    if (!size) {
+      toast({
+        title: "⚠️ กรุณาเลือกขนาด",
+        description: "ต้องเลือกขนาดสินค้าก่อนเพิ่มลงตะกร้า",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await axios.post(
+        `${getBaseUrl()}/api/cart/addToCart`,
+        {
+          productId: product.id_product,
+          quantity: 1,
+          size,
+        },
+        { withCredentials: true }
+      );
+
+      setAddedToCart(product.id_product);
+      toast({
+        title: "✅ เพิ่มสินค้าลงตะกร้าแล้ว",
+        description: `${product.name} ไซส์ ${size} ถูกเพิ่มลงตะกร้า`,
+      });
+    } catch (error) {
+      console.error("❌ Error adding to cart:", error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถเพิ่มสินค้าลงตะกร้าได้",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRemoveWishlist = async (productId: string) => {
+    try {
+      await axios.post(
+        `${getBaseUrl()}/api/wishlist/removeFromWishlist`,
+        { productId },
+        { withCredentials: true }
+      );
+      toast({ title: "💔 ลบออกจากรายการโปรดแล้ว", duration: 3000 });
+      fetchWishlist();
+    } catch (error) {
+      console.error("❌ Error removing wishlist item:", error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถลบออกจากรายการโปรดได้",
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
+  };
+
   const fetchOrders = async () => {
     try {
-      const res = await fetch(
-        `${getBaseUrl()}/api/order/getOrdersByUser`,
-        {
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`${getBaseUrl()}/api/order/getOrdersByUser`, {
+        credentials: "include",
+      });
       const data = await res.json();
       if (data.success) {
         setOrders(data.orders);
@@ -341,46 +456,48 @@ export function AccountContent() {
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-[280px]">
-      {/* Sidebar */}
-      <div className="lg:col-span-1 lg:w-[330px]">
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex flex-col items-center lg:flex-row lg:items-start">
-          <div
-            className="relative w-16 h-16 rounded-full overflow-hidden mb-4 lg:mb-0 lg:mr-4 group cursor-pointer"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Image
-              src={
-                user?.avatar
-                  ? user.avatar.startsWith("http") // ถ้าเป็น full URL แล้ว
-                    ? user.avatar
-                    : `${getBaseUrl()}/${user.avatar.replace(/^\/+/, "")}` // ลบ / ซ้ำออก
-                  : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.firstName || "User")}`
-              }
-              alt={user?.firstName || "User"}
-              fill
-              className="object-cover w-full h-full"
-            />
-            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs">
-            เปลี่ยนรูป
+        {/* Sidebar */}
+        <div className="lg:col-span-1 lg:w-[330px]">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex flex-col items-center lg:flex-row lg:items-start">
+                <div
+                  className="relative w-16 h-16 rounded-full overflow-hidden mb-4 lg:mb-0 lg:mr-4 group cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Image
+                    src={
+                      user?.avatar
+                        ? user.avatar.startsWith("http") // ถ้าเป็น full URL แล้ว
+                          ? user.avatar
+                          : `${getBaseUrl()}/${user.avatar.replace(/^\/+/, "")}` // ลบ / ซ้ำออก
+                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                            user?.firstName || "User"
+                          )}`
+                    }
+                    alt={user?.firstName || "User"}
+                    fill
+                    className="object-cover w-full h-full"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs">
+                    เปลี่ยนรูป
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </div>
+                <div className="text-center lg:text-left">
+                  <h2 className="font-medium text-lg text-brown-800">
+                    {user?.firstName} {user?.lastName}
+                  </h2>
+                  <p className="text-sm text-brown-900">{user?.email}</p>
+                </div>
+              </div>
             </div>
-            <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={handleImageChange}
-            className="hidden"
-            />
-          </div>
-          <div className="text-center lg:text-left">
-            <h2 className="font-medium text-lg text-brown-800">
-            {user?.firstName} {user?.lastName}
-            </h2>
-            <p className="text-sm text-brown-900">{user?.email}</p>
-          </div>
-          </div>
-        </div>
 
             <div className="p-4">
               <nav className="space-y-1">
@@ -393,12 +510,6 @@ export function AccountContent() {
                     icon: <MapPinHouse />,
                     label: "Addresses",
                   },
-                  {
-                    tab: "payment",
-                    icon: <CreditCard />,
-                    label: "Payment Methods",
-                  },
-                  { tab: "settings", icon: <Settings />, label: "Settings" },
                 ].map(({ tab, icon, label }) => (
                   <button
                     key={tab}
@@ -407,11 +518,7 @@ export function AccountContent() {
                         ? "bg-gold-50 text-gold-600"
                         : "text-brown-800 hover:text-brown-900 hover:bg-gray-50"
                     }`}
-                    onClick={() =>
-                      tab === "wishlist"
-                        ? router.push("/wishlist")
-                        : setActiveTab(tab as AccountTab)
-                    }
+                    onClick={() => setActiveTab(tab as AccountTab)}
                   >
                     {icon}
                     <span className="ml-3">{label}</span>
@@ -440,7 +547,6 @@ export function AccountContent() {
                   <ProfileForm />
                 </div>
               )}
-
               {activeTab === "orders" && (
                 <div>
                   <h2 className="text-xl font-medium mb-6">
@@ -582,7 +688,7 @@ export function AccountContent() {
                         }
                         className="w-full border rounded px-3 py-2"
                       />
-                      
+
                       <input
                         type="text"
                         placeholder="ที่อยู่ (เลขที่, ถนน)"
@@ -756,6 +862,94 @@ export function AccountContent() {
                           </Button>
                         </>
                       )}
+                    </div>
+                  )}
+                </div>
+              )}
+              {activeTab === "wishlist" && (
+                <div>
+                  <h2 className="text-xl font-medium mb-6">รายการโปรด</h2>
+
+                  {wishlist.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-600 mb-4">
+                        คุณยังไม่มีรายการโปรด
+                      </p>
+                      <Button variant="luxury" asChild>
+                        <a href="/product">เลือกสินค้าเลย</a>
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {wishlist
+                        .filter((item) => item && item.name && item.images) // ✅ กรอง null / ไม่สมบูรณ์
+                        .map((item, index) => (
+                          <div
+                            key={item._id || index}
+                            className="border rounded p-4 shadow-sm flex items-center justify-between"
+                          >
+                            <div className="flex items-center">
+                              <Image
+                                src={
+                                  item?.images?.length > 0
+                                    ? `${getBaseUrl()}${item.images[0]}`
+                                    : "/placeholder.jpg"
+                                }
+                                alt={item.name}
+                                width={64}
+                                height={64}
+                                className="rounded mr-4 object-cover"
+                              />
+                              <div>
+                                <p className="font-medium">{item.name}</p>
+                                {item.availableSizes?.length > 0 && (
+                                  <div className="text-sm text-gray-500 flex gap-2 mt-1">
+                                    {item.availableSizes.map((s) => (
+                                      <button
+                                        key={s.size}
+                                        onClick={() =>
+                                          handleSelectSize(
+                                            item.id_product,
+                                            s.size
+                                          )
+                                        }
+                                        className={`px-2 py-1 rounded border text-xs transition-all ${
+                                          selectedSizes[item.id_product] ===
+                                          s.size
+                                            ? "bg-gold-500 text-white"
+                                            : "bg-white text-gray-700 border-gray-300"
+                                        }`}
+                                      >
+                                        {s.size}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                                <p className="text-gray-700 font-semibold mt-1">
+                                  ฿{item.price}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                              <Button
+                                variant="luxury"
+                                onClick={() => handleAddToCart(item)}
+                              >
+                                เพิ่มลงตะกร้า
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="icon"
+                                onClick={() =>
+                                  handleRemoveWishlist(item._id)
+                                }
+                              >
+                                <Trash className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                     </div>
                   )}
                 </div>

@@ -79,8 +79,7 @@ export function Header() {
       <div className="bg-gold-600 text-white py-2  text-center text-sm font-medium">
         <div className="container mx-auto px-4">
           <p>
-            โปรโมชั่นพิเศษ: ซื้อกำไลครบ 6,999 บาท รับฟรี! จี้น้ำหอม
-            (เลือกกลิ่นได้) มูลค่า 659 บาท
+            สวัสดีลูกค้าทุกท่าน ยินดีต้อนรับสู่เว็บไซต์เบญจภัณฑ์ ๕ 
           </p>
         </div>
       </div>
@@ -216,6 +215,13 @@ export function Header() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   เครื่องประดับมงคล
+                </Link>
+                <Link
+                  href="/blog"
+                  className="mobile-link"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  บทความ
                 </Link>
                 <Link
                   href="/about"

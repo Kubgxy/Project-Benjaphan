@@ -48,7 +48,7 @@ export interface WishlistItem {
     name: string;
     price: number;
     images: string[];
-    size?: string[];
+    availableSizes: { size: string; quantity: number }[];
   };
   dateAdded: string;
 }
