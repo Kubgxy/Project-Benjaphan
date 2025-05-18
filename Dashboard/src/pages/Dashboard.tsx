@@ -18,6 +18,7 @@ import {
 import { ShoppingBag, Package, Users, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import axios from "axios";
+import { getBaseUrl } from "@/lib/api";
 
 function getThemeColors() {
   const styles = getComputedStyle(document.documentElement);
@@ -103,7 +104,7 @@ const Dashboard: React.FC = () => {
       try {
         // ✅ ดึงสินค้าทั้งหมด
         const productRes = await axios.get(
-          "http://localhost:3000/api/product/getAllProducts",
+          `${getBaseUrl()}/api/product/getAllProducts`,
           {
             withCredentials: true,
           }
@@ -112,7 +113,7 @@ const Dashboard: React.FC = () => {
 
         // ✅ ดึงลูกค้าทั้งหมด
         const customerRes = await axios.get(
-          "http://localhost:3000/api/user/getAllCustomers",
+          `${getBaseUrl()}/api/user/getAllCustomers`,
           {
             withCredentials: true,
           }
@@ -122,7 +123,7 @@ const Dashboard: React.FC = () => {
         console.error("Error fetching counts:", error);
       }
       const ordersRes = await axios.get(
-        "http://localhost:3000/api/order/getAllOrders",
+        `${getBaseUrl()}/api/order/getAllOrders`,
         {
           withCredentials: true,
         }

@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
+import { getBaseUrl } from "@/lib/api";
 
 type CustomerStatus = "active" | "unverified";
 
@@ -56,7 +57,7 @@ const Customers = () => {
       setIsLoading(true);
       try {
         const res = await axios.get(
-          "http://localhost:3000/api/user/getAllCustomers",
+          `${getBaseUrl()}/api/user/getAllCustomers`,
           { withCredentials: true }
         );
         if (res.status !== 200) {
@@ -70,7 +71,7 @@ const Customers = () => {
         const formatted = res.data.customers.map((c: any) => ({
           ...c,
           fullName: `${c.firstName} ${c.lastName}`,
-          avatar: c.avatar ? `http://localhost:3000${c.avatar}` : null,
+          avatar: c.avatar ? `${getBaseUrl()}${c.avatar}` : null,
           registeredDate: c.createdAt ? new Date(c.createdAt) : null,
           ordersCount: c.orders ? c.orders.length : 0,
           status: c.isVerified ? "active" : "unverified",

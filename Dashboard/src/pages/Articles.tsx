@@ -55,6 +55,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 import axios from 'axios';
+import { getBaseUrl } from '@/lib/api';
 
 type Article = {
   _id: string;
@@ -153,7 +154,7 @@ const Articles = () => {
   const fetchArticles = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get("http://localhost:3000/api/article/getAllArticle", { withCredentials: true });
+      const response = await axios.get(`${getBaseUrl()}/api/article/getAllArticle`, { withCredentials: true });
       setArticles(response.data.articles);
       console.log("Articles:", response.data.articles);
     } catch (error) {
@@ -288,7 +289,7 @@ const Articles = () => {
   
     try {
       if (dialogMode === 'create') {
-        await axios.post('http://localhost:3000/api/article/createArticle', formData, {
+        await axios.post(`${getBaseUrl()}/api/article/createArticle`, formData, {
           withCredentials: true,
           headers: { 'Content-Type': 'multipart/form-data' }
         });
@@ -296,7 +297,7 @@ const Articles = () => {
       } else if (dialogMode === 'edit' && selectedArticle._id) {
         console.log("📌 ID ที่จะส่งไปอัปเดต:", selectedArticle._id)
         console.log("🧠 selectedArticle:", selectedArticle);
-        await axios.patch(`http://localhost:3000/api/article/updateArticle/${selectedArticle._id}`, formData, {
+        await axios.patch(`${getBaseUrl()}/api/article/updateArticle/${selectedArticle._id}`, formData, {
           withCredentials: true,
           headers: { 'Content-Type': 'multipart/form-data' }
         });
@@ -319,7 +320,7 @@ const Articles = () => {
     setIsLoading(true);
   
     try {
-      await axios.delete(`http://localhost:3000/api/article/deleteArticle/${selectedArticle._id}`, { withCredentials: true });
+      await axios.delete(`${getBaseUrl()}/api/article/deleteArticle/${selectedArticle._id}`, { withCredentials: true });
       toast({ title: "Article Deleted", description: "The article has been deleted successfully." });
       fetchArticles();
       resetArticleForm();
@@ -454,7 +455,7 @@ const Articles = () => {
                 <div className="h-48 bg-muted relative">
                   {article.thumbnail ? (
                     <img
-                      src={`http://localhost:3000/${article.thumbnail}`} 
+                      src={`${getBaseUrl()}/${article.thumbnail}`} 
                       alt="Thumbnail"
                       className="object-cover w-full h-full"
                     />

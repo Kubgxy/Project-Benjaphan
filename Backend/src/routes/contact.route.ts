@@ -5,6 +5,7 @@ import {
   getAllContacts,
   markContactAsRead,
   deleteContact,
+  getUnreadContactCount
 } from "../controllers/contact.controller";
 import { verifyToken } from "../middlewares/verifyToken";
 import { verifyAdmin } from "../middlewares/verifyAdmin";
@@ -20,5 +21,7 @@ contact.post("/createContactByMember", verifyToken, createContactByMember); // �
 contact.get("/getAllContacts", verifyToken, verifyAdmin, getAllContacts); // สำหรับแอดมินไว้ดึงข้อมูลการติดต่อทั้งหมด
 contact.patch("/markContactAsRead/:id", verifyToken, verifyAdmin, markContactAsRead); // สำหรับแอดมินไว้อ่านแล้ว
 contact.delete("/deleteContact/:id", verifyToken, verifyAdmin, deleteContact);
+
+contact.get("/getUnreadContactCount", verifyToken, verifyAdmin, getUnreadContactCount);
 
 export default contact;

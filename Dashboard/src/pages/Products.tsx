@@ -47,6 +47,7 @@ import {
 import { SortableImage } from "@/components/dashboard/SortableImage";
 import { toast } from "@/hooks/use-toast";
 import axios from "axios";
+import { getBaseUrl } from "@/lib/api";
 
 export interface Product {
   _id: string; // MongoDB _id
@@ -124,12 +125,11 @@ const Products: React.FC = () => {
 
   const sensors = useSensors(useSensor(PointerSensor));
 
-  const IMAGE_BASE_URL = "http://localhost:3000";
 
   const fetchProducts = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:3000/api/product/getAllProducts",
+        `${getBaseUrl()}/api/product/getAllProducts`,
         { withCredentials: true }
       );
       setProducts(response.data.products);
@@ -228,7 +228,7 @@ const Products: React.FC = () => {
         });
 
       await axios.post(
-        "http://localhost:3000/api/product/addProducts",
+        `${getBaseUrl()}/api/product/addProducts`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -290,7 +290,7 @@ const Products: React.FC = () => {
       });
 
       await axios.patch(
-        `http://localhost:3000/api/product/updateProducts/${newProduct.id_product}`,
+        `${getBaseUrl()}/api/product/updateProducts/${newProduct.id_product}`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -312,7 +312,7 @@ const Products: React.FC = () => {
     if (!productToDelete) return;
     try {
       await axios.delete(
-        `http://localhost:3000/api/product/delProducts/${productToDelete}`,
+        `${getBaseUrl()}/api/product/delProducts/${productToDelete}`,
         { withCredentials: true }
       );
 
@@ -517,7 +517,7 @@ const Products: React.FC = () => {
                         <img
                           src={
                             product.images && product.images.length > 0
-                              ? `${IMAGE_BASE_URL}${product.images[0]}`
+                              ? `${getBaseUrl()}${product.images[0]}`
                               : "/default-image.jpg" // ใช้รูป default สำรอง
                           }
                           className="h-12 w-12 object-cover rounded"
@@ -1090,7 +1090,7 @@ const Products: React.FC = () => {
                                   imageUrl={
                                     item.type === "file"
                                       ? URL.createObjectURL(item.value as File)
-                                      : `${IMAGE_BASE_URL}${
+                                      : `${getBaseUrl()}${
                                           item.value as string
                                         }`
                                   }

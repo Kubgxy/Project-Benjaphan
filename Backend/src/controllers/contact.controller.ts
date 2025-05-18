@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Contact from "../Models_GPT/Contact";
 import User from "../Models_GPT/User"; // ✅ โหลดโมเดล User
+import Notification from "../Models_GPT/Notification";
 
 // ✅ สำหรับผู้ใช้ทั่วไปที่ไม่ต้องล็อคอิน
 export const createContact = async (req: Request, res: Response) => {
@@ -21,6 +22,15 @@ export const createContact = async (req: Request, res: Response) => {
     });
 
     await newContact.save();
+
+    await Notification.create({
+      type: 'message',
+      title: 'New Message from Guest',
+      message: `${name} sent a message: "${subject}"`,
+      link: '/dashboard/messages',
+      isRead: false,
+    });
+
 
     res.status(201).json({ message: "ส่งข้อความสำเร็จ ขอบคุณที่ติดต่อเรา!" });
     return;
@@ -70,6 +80,16 @@ export const createContactByMember = async (req: Request, res: Response) => {
     });
 
     await newContact.save();
+
+    await Notification.create({
+      userId: user._id,
+      type: 'message',
+      title: 'New Message from Member',
+      message: `${user.firstName} ${user.lastName} sent a message: "${subject}"`,
+      link: '/dashboard/messages',
+      isRead: false,
+    });
+
 
     res.status(201).json({ message: "ส่งข้อความสำเร็จ ขอบคุณที่ติดต่อเรา!" });
     return;
@@ -168,3 +188,15 @@ export const deleteContact = async (req: Request, res: Response) => {
     res.status(500).json({ message: "เกิดข้อผิดพลาดในการลบข้อความ" });
   }
 };
+
+// ✅ ดึงจำนวนข้อความที่ยังไม่อ่าน
+export const getUnreadContactCount = async (req: Request, res: Response) => {
+  try {
+    const count = await Contact.countDocuments({ isRead: false });
+    res.status(200).json({ count });
+  } catch (error) {
+    console.error("Error fetching unread count:", error);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการดึงข้อมูล" });
+  }
+};
+
