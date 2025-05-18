@@ -21,6 +21,7 @@ import { RegisterForm } from "./register-form";
 import { ProfileForm } from "./profile-form";
 import Swal from "sweetalert2";
 import { useToast } from "@/components/ui/use-toast";
+import { getBaseUrl } from "@/lib/api";
 
 type AccountTab =
   | "profile"
@@ -99,7 +100,7 @@ export function AccountContent() {
 
   const refreshUser = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/user/getUserProfile", {
+      const res = await fetch(`${getBaseUrl()}/api/user/getUserProfile`, {
         method: "GET",
         credentials: "include",
       });
@@ -117,7 +118,7 @@ export function AccountContent() {
     const formData = new FormData();
     formData.append("avatar", file);
     try {
-      const res = await fetch("http://localhost:3000/api/user/updateuser", {
+      const res = await fetch(`${getBaseUrl()}/api/user/updateuser`, {
         method: "PATCH",
         body: formData,
         credentials: "include",
@@ -154,7 +155,7 @@ export function AccountContent() {
   const fetchOrders = async () => {
     try {
       const res = await fetch(
-        "http://localhost:3000/api/order/getOrdersByUser",
+        `${getBaseUrl()}/api/order/getOrdersByUser`,
         {
           credentials: "include",
         }
@@ -169,7 +170,7 @@ export function AccountContent() {
   };
 
   const fetchAddresses = async () => {
-    const res = await fetch("http://localhost:3000/api/user/getAddress", {
+    const res = await fetch(`${getBaseUrl()}/api/user/getAddress`, {
       credentials: "include",
     });
     const data = await res.json();
@@ -181,7 +182,7 @@ export function AccountContent() {
   }, []);
 
   const handleAdd = async () => {
-    await fetch("http://localhost:3000/api/user/addAddress", {
+    await fetch(`${getBaseUrl()}/api/user/addAddress`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -207,7 +208,7 @@ export function AccountContent() {
   };
 
   const handleUpdate = async (addressId: string) => {
-    await fetch(`http://localhost:3000/api/user/updateAddress/${addressId}`, {
+    await fetch(`${getBaseUrl()}/api/user/updateAddress/${addressId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -222,7 +223,7 @@ export function AccountContent() {
   };
 
   const handleDelete = async (addressId: string) => {
-    await fetch(`http://localhost:3000/api/user/deleteAddress/${addressId}`, {
+    await fetch(`${getBaseUrl()}/api/user/deleteAddress/${addressId}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -251,7 +252,7 @@ export function AccountContent() {
 
     try {
       const res = await fetch(
-        `http://localhost:3000/api/order/cancelOrder/${orderId}`,
+        `${getBaseUrl()}/api/order/cancelOrder/${orderId}`,
         {
           method: "PATCH",
           credentials: "include",
@@ -354,7 +355,7 @@ export function AccountContent() {
                 user?.avatar
                   ? user.avatar.startsWith("http") // ถ้าเป็น full URL แล้ว
                     ? user.avatar
-                    : `http://localhost:3000/${user.avatar.replace(/^\/+/, "")}` // ลบ / ซ้ำออก
+                    : `${getBaseUrl()}/${user.avatar.replace(/^\/+/, "")}` // ลบ / ซ้ำออก
                   : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.firstName || "User")}`
               }
               alt={user?.firstName || "User"}
@@ -511,7 +512,7 @@ export function AccountContent() {
                                 className="flex items-center"
                               >
                                 <Image
-                                  src={`http://localhost:3000${item.images[0]}`}
+                                  src={`${getBaseUrl()}${item.images[0]}`}
                                   alt={item.name}
                                   width={48}
                                   height={48}

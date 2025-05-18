@@ -36,6 +36,7 @@ services:
     depends_on:
       - backend
     container_name: Dashboard
+    
       
   # ========================
   # BACKEND (Express + TypeScript)
@@ -54,6 +55,8 @@ services:
     networks:
       - benjaphan-network
     container_name: Backend
+    volumes:
+      - ./Backend/uploads:/app/uploads
 
   # ========================
   # MONGO DATABASE

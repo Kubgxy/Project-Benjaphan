@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { formatPrice } from "@/lib/utils";
 import { WishlistItem } from "@/lib/types";
+import { getBaseUrl } from "@/lib/api";
 
 export function WishlistContent() {
   const [addedToCart, setAddedToCart] = useState<string | null>(null);
@@ -16,11 +17,27 @@ export function WishlistContent() {
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(true); // default true ไว้ก่อน
   const [loading, setLoading] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+
+  const openModalToChooseSize = (product: any) => {
+    if (!product.availableSizes || product.availableSizes.length === 0) {
+      toast({
+        title: "ไม่พบขนาดสินค้า",
+        description: "สินค้านี้ไม่มีขนาดให้เลือก",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedProduct(product);
+    setSelectedSize(null); // reset เผื่อเปิดหลายครั้ง
+  };
 
   const fetchWishlist = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:3000/api/wishlist/getWishlist",
+        `${getBaseUrl()}/api/wishlist/getWishlist`,
         {
           withCredentials: true,
         }
@@ -48,22 +65,26 @@ export function WishlistContent() {
   };
 
   const handleAddToCart = async (productId: string, name: string) => {
+    if (!selectedProduct || !selectedSize) return;
     try {
       await axios.post(
-        "http://localhost:3000/api/cart/addToCart",
+        `${getBaseUrl()}/api/cart/addToCart`,
         {
-          productId,
+          productId: selectedProduct.id_product,
           quantity: 1,
+          size: selectedSize,
         },
         { withCredentials: true }
       );
 
-      setAddedToCart(productId);
+      setAddedToCart(selectedProduct.id_product);
       toast({
         title: "✅ เพิ่มสินค้าลงตะกร้าสำเร็จ!",
-        description: `${name} ถูกเพิ่มลงตะกร้าแล้ว`,
+        description: `${selectedProduct.name} ไซส์ ${selectedSize} ถูกเพิ่มลงตะกร้าแล้ว`,
         duration: 3000,
       });
+      setSelectedProduct(null);
+      setSelectedSize(null);
     } catch (error) {
       console.error("❌ Error adding to cart:", error);
       toast({
@@ -78,7 +99,7 @@ export function WishlistContent() {
   const handleRemoveWishlist = async (productId: string) => {
     try {
       await axios.post(
-        "http://localhost:3000/api/wishlist/removeFromWishlist",
+        `${getBaseUrl()}/api/wishlist/removeFromWishlist`,
         { productId },
         { withCredentials: true }
       );
@@ -102,6 +123,47 @@ export function WishlistContent() {
 
   return (
     <div className="container mx-auto px-4 py-12">
+      {selectedProduct && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">
+              เลือกขนาดสำหรับ {selectedProduct.name}
+            </h2>
+
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {selectedProduct.availableSizes.map((s: any, idx: number) => (
+                <Button
+                  key={idx}
+                  variant={selectedSize === s.size ? "default" : "outline"}
+                  onClick={() => setSelectedSize(s.size)}
+                >
+                  {s.size}
+                </Button>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setSelectedProduct(null)}>
+                ยกเลิก
+              </Button>
+              <Button
+                disabled={!selectedSize}
+                onClick={() => {
+                  if (selectedProduct && selectedSize) {
+                    handleAddToCart(
+                      selectedProduct.id_product,
+                      selectedProduct.name
+                    );
+                  }
+                }}
+              >
+                ยืนยัน
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <h1 className="flex items-center gap-2 text-3xl font-display font-medium text-brown-800 mb-8">
         <MessageCircleHeart className="w-8 h-8 text-yellow-500" />
         รายการโปรด
@@ -151,7 +213,7 @@ export function WishlistContent() {
                     {wishlistItems.map((item) => {
                       const product = item.productId;
                       const imageUrl = product?.images?.[0]
-                        ? `http://localhost:3000${product.images[0]}`
+                        ? `${getBaseUrl()}${product.images[0]}`
                         : "/placeholder.jpg";
                       return (
                         <tr key={product._id} className="border-b">
@@ -183,12 +245,7 @@ export function WishlistContent() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() =>
-                                  handleAddToCart(
-                                    product.id_product,
-                                    product.name
-                                  )
-                                }
+                                onClick={() => openModalToChooseSize(product)} // ✅ แก้ตรงนี้
                                 disabled={addedToCart === product.id_product}
                               >
                                 {addedToCart === product.id_product ? (
@@ -203,6 +260,7 @@ export function WishlistContent() {
                                   </>
                                 )}
                               </Button>
+
                               <button
                                 className="text-gray-400 hover:text-red-500 transition-colors"
                                 onClick={() =>
@@ -225,7 +283,7 @@ export function WishlistContent() {
                 {wishlistItems.map((item) => {
                   const product = item.productId;
                   const imageUrl = product?.images?.[0]
-                    ? `http://localhost:3000${product.images[0]}`
+                    ? `${getBaseUrl()}${product.images[0]}`
                     : "/placeholder.jpg";
                   return (
                     <div
@@ -257,11 +315,8 @@ export function WishlistContent() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                            handleAddToCart(product.id_product, product.name)
-                          }
+                          onClick={() => openModalToChooseSize(product)}
                           disabled={addedToCart === product.id_product}
-                          className="w-full"
                         >
                           {addedToCart === product.id_product ? (
                             <>
@@ -275,6 +330,7 @@ export function WishlistContent() {
                             </>
                           )}
                         </Button>
+
                         <Button
                           variant="destructive"
                           size="sm"

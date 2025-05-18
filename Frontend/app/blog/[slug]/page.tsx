@@ -11,6 +11,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { getBaseUrl } from "@/lib/api";
 
 interface Article {
   title: string;
@@ -40,7 +41,7 @@ export default function BlogDetailPage() {
     const fetchPost = async () => {
       try {
         const res = await fetch(
-          `http://localhost:3000/api/article/getOneArticle/${slug}`
+          `${getBaseUrl()}/api/article/getOneArticle/${slug}`
         );
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "เกิดข้อผิดพลาด");
@@ -56,7 +57,7 @@ export default function BlogDetailPage() {
       if (hasIncreased.current) return;
       hasIncreased.current = true;
       try {
-        await fetch(`http://localhost:3000/api/article/increaseView/${slug}`, {
+        await fetch(`${getBaseUrl()}/api/article/increaseView/${slug}`, {
           method: "PATCH",
         });
       } catch (err) {
@@ -127,7 +128,7 @@ export default function BlogDetailPage() {
       data-aos="zoom-in"
     >
       <Image
-        src={`http://localhost:3000/${post.thumbnail}`}
+        src={`${getBaseUrl()}/${post.thumbnail}`}
         alt={post.title}
         fill
         className="object-cover"

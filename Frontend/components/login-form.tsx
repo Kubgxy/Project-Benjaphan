@@ -9,6 +9,7 @@ import Swal from "sweetalert2";
 import { toast } from "@/components/ui/use-toast";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
+import { getBaseUrl } from "@/lib/api";
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -18,7 +19,7 @@ export function LoginForm() {
   
   const login = async (email: string, password: string): Promise<"customer" | "admin" | null> => {
     try {
-      const res = await fetch("http://localhost:3000/api/user/loginUser", {
+      const res = await fetch(`${getBaseUrl()}/api/user/loginUser`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -138,7 +139,7 @@ export function LoginForm() {
         <button
           type="button"
           onClick={() => {
-            window.location.href = 'http://localhost:3000/api/auth/start-google-login';
+            window.location.href = `${getBaseUrl()}/api/auth/start-google-login`;
           }}
           className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white py-2 hover:bg-gray-100 transition"
         >
@@ -149,7 +150,7 @@ export function LoginForm() {
         <button
           type="button"
           onClick={() => {
-            window.location.href = "http://localhost:3000/api/auth/start-facebook-login";
+            window.location.href = `${getBaseUrl()}/api/auth/start-facebook-login`;
           }}
           className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-600 bg-blue-600 py-2 hover:bg-blue-700 transition"
         >

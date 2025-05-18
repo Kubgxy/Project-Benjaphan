@@ -2,15 +2,17 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ProductDetail } from "./product-detail";
 import { notFound } from "next/navigation";
+import { getBaseUrl } from "@/lib/api";
 
 export default async function ProductDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string }; // ✅ ไม่ต้องใช้ Promise
 }) {
-  const { id } = await params; // ✅ ใช้ await params ก่อน
+  const { id } = params;
+
   const res = await fetch(
-    `http://localhost:3000/api/product/getOneProducts/${id}`,
+    `${getBaseUrl()}/api/product/getOneProducts/${id}`,
     {
       credentials: "include",
       cache: "no-store",

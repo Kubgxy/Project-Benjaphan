@@ -10,6 +10,7 @@ import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
 import { categories, testimonials } from "@/lib/data";
 import type { Product } from "@/lib/types";
+import { getBaseUrl } from "@/lib/api";
 
 export default function Home() {
   // Get featured products from our mock data
@@ -27,7 +28,7 @@ export default function Home() {
   const fetchNewProducts = async () => {
     try {
       const response = await fetch(
-        "http://localhost:3000/api/product/getNewProducts"
+        `${getBaseUrl()}/api/product/getNewProducts`
       );
       const data = await response.json();
       setNewProducts(data.products); // ✅ เซ็ตข้อมูลที่ได้มาเข้า state
@@ -45,7 +46,7 @@ export default function Home() {
   const fetchBestsellers = async () => {
     try {
       const response = await fetch(
-        "http://localhost:3000/api/product/getBestsellerProducts"
+        `${getBaseUrl()}/api/product/getBestsellerProducts`
       );
       const data = await response.json();
       setBestsellers(data.products);

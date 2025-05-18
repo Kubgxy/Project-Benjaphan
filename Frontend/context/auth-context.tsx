@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useToast } from "@/components/ui/use-toast"
+import { getBaseUrl } from "@/lib/api";
 
 export interface User {
   id: string
@@ -33,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/user/me", {
+        const res = await fetch(`${getBaseUrl()}/api/user/me`, {
           method: "GET",
           credentials: "include", // ✅ ใช้ cookie-based auth
         });
@@ -58,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Save user to localStorage whenever it changes
   const logout = async () => {
     try {
-      await fetch("http://localhost:3000/api/user/logoutUser", {
+      await fetch(`${getBaseUrl()}/api/user/logoutUser`, {
         method: "POST",
         credentials: "include", // ✅ cookie-based auth สำคัญ!
       });
@@ -76,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateProfile = async (userData: Partial<User>): Promise<boolean> => {
     try {
-      const res = await fetch("http://localhost:3000/api/user/updateUser", {
+      const res = await fetch(`${getBaseUrl()}/api/user/updateUser`, {
         method: "PATCH",
         credentials: "include", // ✅ ใช้ cookie-based auth
         headers: {

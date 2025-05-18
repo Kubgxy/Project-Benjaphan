@@ -10,6 +10,7 @@ import { ArrowRight } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import { getBaseUrl } from "@/lib/api";
 
 // ✅ ประกาศ Type ของบทความให้ชัดเจน
 interface Article {
@@ -45,7 +46,7 @@ export default function BlogPage() {
     const fetchArticles = async () => {
       try {
         const res = await fetch(
-          "http://localhost:3000/api/article/getAllArticle?page=1&limit=100"
+          `${getBaseUrl()}/api/article/getAllArticle?page=1&limit=100`
         );
         const data = await res.json();
         setArticles(data.articles);
@@ -115,7 +116,7 @@ export default function BlogPage() {
                   <div className="relative h-52 w-full">
                     {post.thumbnail ? (
                       <Image
-                        src={`http://localhost:3000/${post.thumbnail}`}
+                        src={`${getBaseUrl()}/${post.thumbnail}`}
                         alt={`ภาพบทความ: ${post.title}`}
                         fill
                         className="object-cover"

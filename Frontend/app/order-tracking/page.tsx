@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { getOrderById } from "@/actions/order-actions";
 import { formatPrice } from "@/lib/utils";
 import Swal from "sweetalert2";
+import { getBaseUrl } from "@/lib/api";
 
 export default function OrderTrackingPage() {
   const searchParams = useSearchParams();
@@ -104,7 +105,7 @@ export default function OrderTrackingPage() {
 
     try {
       const res = await fetch(
-        `http://localhost:3000/api/order/cancelOrder/${orderId}`,
+        `${getBaseUrl()}/api/order/cancelOrder/${orderId}`,
         {
           method: "PATCH",
           credentials: "include",
@@ -261,7 +262,7 @@ export default function OrderTrackingPage() {
               >
                 <div className="relative w-full sm:w-20 h-40 sm:h-20 rounded border overflow-hidden">
                   <Image
-                    src={`http://localhost:3000${item.images[0]}`}
+                    src={`${getBaseUrl()}${item.images[0]}`}
                     alt={item.name}
                     fill
                     className="object-cover"

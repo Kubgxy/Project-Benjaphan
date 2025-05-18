@@ -5,6 +5,7 @@ import type React from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { getBaseUrl } from "@/lib/api";
 interface RegisterFormProps {
   onSuccess?: () => void;
 }
@@ -29,7 +30,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     phoneNumber: string
   ): Promise<boolean> => {
     try {
-      const res = await fetch("http://localhost:3000/api/user/registerUser", {
+      const res = await fetch(`${getBaseUrl()}/api/user/registerUser`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

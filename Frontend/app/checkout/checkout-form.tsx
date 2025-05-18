@@ -16,6 +16,7 @@ import {
   QrCode,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { getBaseUrl } from "@/lib/api";
 
 export function CheckoutForm() {
   const router = useRouter();
@@ -49,7 +50,7 @@ export function CheckoutForm() {
   // โหลด checkout summary
   useEffect(() => {
     axios
-      .get("http://localhost:3000/api/order/checkoutSummary", {
+      .get(`${getBaseUrl()}/api/order/checkoutSummary`, {
         withCredentials: true,
       })
       .then((res) => {
@@ -68,7 +69,7 @@ export function CheckoutForm() {
   // โหลด address list
   useEffect(() => {
     axios
-      .get("http://localhost:3000/api/user/getAddress", {
+      .get(`${getBaseUrl()}/api/user/getAddress`, {
         withCredentials: true,
       })
       .then((res) => {
@@ -97,14 +98,16 @@ export function CheckoutForm() {
     if (selectedAddressId) {
       axios
         .patch(
-          `http://localhost:3000/api/user/updateAddress/${selectedAddressId}`,
+          `${getBaseUrl()}/api/user/updateAddress/${selectedAddressId}`,
           {
+            Name: shippingInfo.Name,
             label: shippingInfo.label,
             addressLine: shippingInfo.addressLine,
             city: shippingInfo.city,
             province: shippingInfo.province,
             postalCode: shippingInfo.postalCode,
             country: shippingInfo.country,
+            phone: shippingInfo.phone,
           },
           { withCredentials: true }
         )
@@ -126,14 +129,16 @@ export function CheckoutForm() {
     } else {
       axios
         .post(
-          "http://localhost:3000/api/user/addAddress",
+          `${getBaseUrl()}/api/user/addAddress`,
           {
+            Name: shippingInfo.Name,
             label: shippingInfo.label,
             addressLine: shippingInfo.addressLine,
             city: shippingInfo.city,
             province: shippingInfo.province,
             postalCode: shippingInfo.postalCode,
             country: shippingInfo.country,
+            phone: shippingInfo.phone,
           },
           { withCredentials: true }
         )
@@ -255,7 +260,7 @@ export function CheckoutForm() {
         formData.append("slip", slipFile);
 
         await axios.post(
-          `http://localhost:3000/api/order/uploadSlip/${orderId}`,
+          `${getBaseUrl()}/api/order/uploadSlip/${orderId}`,
           formData,
           {
             withCredentials: true,
@@ -471,7 +476,7 @@ export function CheckoutForm() {
               <Image
                 src={
                   item.images?.[0]
-                    ? `http://localhost:3000${item.images[0]}`
+                    ? `${getBaseUrl()}${item.images[0]}`
                     : "/placeholder.svg"
                 }
                 alt={item.name}
