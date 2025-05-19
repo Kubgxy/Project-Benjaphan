@@ -18,7 +18,13 @@ pipeline {
 
     stage('📥 Checkout Source Code') {
       steps {
-        checkout scm
+        checkout([
+            $class: 'GitSCM',
+            branches: scm.branches,
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [[$class: 'WipeWorkspace']], // ✅ เคลียร์ workspace + cache
+            userRemoteConfigs: scm.userRemoteConfigs
+        ])
       }
     }
 
