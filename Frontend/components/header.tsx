@@ -29,7 +29,7 @@ export function Header() {
     async function fetchProducts() {
       try {
         const res = await axios.get(
-          `/api/product/getAllProducts`
+          `${getBaseUrl()}/api/product/getAllProducts`
         ); // ← ดึงข้อมูลจริง
         setProducts(res.data.products);
         console.log("Fetched products:", res.data);

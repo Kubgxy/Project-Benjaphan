@@ -53,7 +53,7 @@ export default function ProductsPage() {
     const fetchProducts = async () => {
       try {
         const response = await fetch(
-          `/api/product/getAllProducts`,
+          `${getBaseUrl()}/api/product/getAllProducts`,
           {
             credentials: "include",
           }
