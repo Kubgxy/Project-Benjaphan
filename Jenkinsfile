@@ -45,7 +45,7 @@ pipeline {
           ls -l nginx/nginx.conf || echo "❌ nginx.conf not found"
 
           echo "📁 cert folder tree:"
-          ls -lhR nginx/cert || echo "❌ cert folder not found
+          ls -lhR nginx/cert || echo "❌ cert folder not found"
         '''
       }
     }
