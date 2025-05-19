@@ -18,13 +18,7 @@ pipeline {
 
     stage('📥 Checkout Source Code') {
       steps {
-        checkout([
-            $class: 'GitSCM',
-            branches: scm.branches,
-            doGenerateSubmoduleConfigurations: false,
-            extensions: [[$class: 'WipeWorkspace']], // ✅ เคลียร์ workspace + cache
-            userRemoteConfigs: scm.userRemoteConfigs
-        ])
+        checkout scm
       }
     }
 
@@ -50,8 +44,8 @@ pipeline {
           echo "📄 nginx.conf:"
           ls -l nginx/nginx.conf || echo "❌ nginx.conf not found"
 
-          echo "📁 cert:"
-          ls -l nginx/cert || echo "❌ cert folder not found"
+          echo "📁 cert folder tree:"
+          ls -lhR nginx/cert || echo "❌ cert folder not found
         '''
       }
     }
