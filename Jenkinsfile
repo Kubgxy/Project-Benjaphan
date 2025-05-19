@@ -1,6 +1,10 @@
 pipeline {
   agent any
 
+  options {
+    skipDefaultCheckout() // ❌ ไม่ให้ Jenkins checkout ก่อนเรา clean เอง
+  }
+
   parameters {
     booleanParam(
       name: 'USE_NO_CACHE',
