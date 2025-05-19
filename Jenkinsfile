@@ -9,37 +9,35 @@ pipeline {
     )
   }
 
-  environment {
-    PROJECT_DIR = "/root/Project-Benjaphan"
-  }
-
   stages {
-    stage('📥 Checkout') {
+    stage('🔄 Clean Workspace') {
       steps {
-        echo '✅ Jenkins จะ checkout จาก GitHub ให้โดยอัตโนมัติ'
+        deleteDir() // ล้าง workspace เดิมก่อน pull ใหม่
+      }
+    }
+
+    stage('📥 Checkout Source Code') {
+      steps {
+        checkout scm // ดึงจาก GitHub ตามที่ config SCM ไว้
       }
     }
 
     stage('♻️ Docker Down & Clean') {
       steps {
-        dir("${env.PROJECT_DIR}") {
-          echo '🧹 หยุด container เก่า (และลบ orphan)'
-          sh 'docker-compose down --remove-orphans || true'
-        }
+        echo '🧹 หยุด container เก่า (และลบ orphan)'
+        sh 'docker-compose down --remove-orphans || true'
       }
     }
 
     stage('🐳 Docker Build') {
       steps {
-        dir("${env.PROJECT_DIR}") {
-          script {
-            if (params.USE_NO_CACHE) {
-              echo '🔥 Build ใหม่ทั้งหมด (--no-cache)'
-              sh 'docker-compose build --no-cache'
-            } else {
-              echo '⚡ Build ปกติ (ใช้ cache)'
-              sh 'docker-compose build'
-            }
+        script {
+          if (params.USE_NO_CACHE) {
+            echo '🔥 Build ใหม่ทั้งหมด (--no-cache)'
+            sh 'docker-compose build --no-cache'
+          } else {
+            echo '⚡ Build ปกติ (ใช้ cache)'
+            sh 'docker-compose build'
           }
         }
       }
@@ -47,10 +45,8 @@ pipeline {
 
     stage('🚀 Deploy Compose') {
       steps {
-        dir("${env.PROJECT_DIR}") {
-          echo '🚀 รันระบบด้วย docker compose up'
-          sh 'docker compose up -d'
-        }
+        echo '🚀 รันระบบด้วย docker-compose up'
+        sh 'docker-compose up -d'
       }
     }
   }
