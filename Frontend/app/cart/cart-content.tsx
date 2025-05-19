@@ -19,6 +19,7 @@ interface CartItem {
   quantity: number;
   size: string;
   images: string[];
+  availableSizes: { size: string; quantity: number }[];
 }
 
 interface CartResponse {
@@ -338,6 +339,7 @@ export function CartContent() {
                         />
                         สินค้า
                       </th>
+                      <th className="text-center pb-4">ขนาด</th>
                       <th className="text-center pb-4">จำนวน</th>
                       <th className="text-right pb-4">ราคา</th>
                     </tr>
@@ -391,6 +393,50 @@ export function CartContent() {
                             </div>
                           </div>
                         </td>
+                        <td className="py-4 text-center">
+                          <select
+                            value={item.size}
+                            onChange={async (e) => {
+                              const newSize = e.target.value;
+
+                              if (newSize === item.size) return;
+
+                              try {
+                                await axios.post(
+                                  `${getBaseUrl()}/api/cart/changeItemSize`,
+                                  {
+                                    productId: item.productId,
+                                    oldSize: item.size,
+                                    newSize: newSize,
+                                  },
+                                  { withCredentials: true }
+                                );
+
+                                toast({
+                                  title: "✅ เปลี่ยนขนาดสำเร็จ",
+                                  description: `ขนาดใหม่: ${newSize}`,
+                                  duration: 3000,
+                                });
+
+                                fetchCart(); // โหลดตะกร้าใหม่
+                              } catch (error) {
+                                toast({
+                                  title: "❌ เปลี่ยนขนาดไม่สำเร็จ",
+                                  description: "กรุณาลองใหม่",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                            className="border rounded px-2 py-1 text-sm text-gray-700"
+                          >
+                            {item.availableSizes?.map((s) => (
+                              <option key={s.size} value={s.size}>
+                                {s.size} (เหลือ {s.quantity})
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+
                         <td className="py-4">
                           <div className="flex items-center justify-center">
                             <button
@@ -420,6 +466,20 @@ export function CartContent() {
                                   item.size,
                                   item.quantity + 1
                                 )
+                              }
+                              disabled={
+                                item.quantity >=
+                                (item.availableSizes.find(
+                                  (s) => s.size === item.size
+                                )?.quantity || Infinity)
+                              }
+                              title={
+                                item.quantity >=
+                                (item.availableSizes.find(
+                                  (s) => s.size === item.size
+                                )?.quantity || Infinity)
+                                  ? "ไม่สามารถเพิ่มเกินจำนวนคงเหลือ"
+                                  : ""
                               }
                             >
                               <Plus className="w-4 h-4" />

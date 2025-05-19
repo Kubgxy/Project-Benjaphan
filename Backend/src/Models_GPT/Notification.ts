@@ -4,16 +4,17 @@ const notificationSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true                           // ผู้ใช้เจ้าของ notification
+    required: true
   },
   type: {
     type: String,
-    enum: ['order', 'promotion', 'system'],  // ประเภทแจ้งเตือน
+    enum: ['order', 'cancel', 'message', 'stock', 'promotion', 'system'],
     required: true
   },
-  message: { type: String, required: true }, // เนื้อหาแจ้งเตือน
-  link: { type: String },                    // URL หรือ path ที่เชื่อมไปหน้าอื่น (optional)
-  isRead: { type: Boolean, default: false }, // อ่านแล้วหรือยัง
-}, { collection: 'Notifications', timestamps: true });                    // createdAt, updatedAt
+  title: { type: String, required: true },       // เพิ่มหัวข้อหลัก เช่น "New Order Received"
+  message: { type: String, required: true },     // รายละเอียด เช่น "Order #1234 has been placed..."
+  link: { type: String },                        // เช่น "/dashboard/orders/1234"
+  isRead: { type: Boolean, default: false },
+}, { collection: 'Notifications', timestamps: true });
 
 export default mongoose.model('Notification', notificationSchema);

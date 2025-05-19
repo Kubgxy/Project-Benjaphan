@@ -51,7 +51,7 @@ export default function OrderTrackingPage() {
         currentStep = 2;
         break;
       case "delivered":
-        currentStep = 4;
+        currentStep = 3;
         break;
       default:
         currentStep = 0;
@@ -174,20 +174,25 @@ export default function OrderTrackingPage() {
             <div key={index} className="flex items-center">
               <div className="flex flex-col items-center">
                 <div
-                  className={`flex items-center justify-center w-24 h-24 rounded-full ${
-                    step.status === "complete"
-                      ? "bg-green-500 text-white"
-                      : step.status === "current"
-                      ? "bg-gold-600 text-white"
-                      : "bg-gray-200 text-gray-500"
-                  }`}
+                  className={`flex items-center justify-center w-24 h-24 rounded-full
+                    ${
+                      step.status === "complete"
+                        ? "bg-green-500 text-white"
+                        : step.status === "current" &&
+                          order.orderStatus === "delivered"
+                        ? "bg-green-500 text-white"
+                        : step.status === "current"
+                        ? "bg-gold-600 text-white"
+                        : "bg-gray-200 text-gray-500"
+                    }`}
                 >
                   <step.icon className="w-10 h-10" />
                 </div>
                 <p className="text-sm mt-2 text-center w-24">{step.name}</p>
-                {step.status === "current" && (
-                  <p className="text-xs text-gold-600 mt-1">กำลังดำเนินการ</p>
-                )}
+                {step.status === "current" &&
+                  order.orderStatus !== "delivered" && (
+                    <p className="text-xs text-gold-600 mt-1">กำลังดำเนินการ</p>
+                  )}
               </div>
 
               {/* เส้นเชื่อม */}
@@ -204,11 +209,20 @@ export default function OrderTrackingPage() {
             .filter((step) => step.status === "current")
             .map((step, index) => (
               <div key={index} className="flex flex-col items-center">
-                <div className="w-20 h-20 rounded-full flex items-center justify-center bg-gold-600 text-white">
+                <div
+                  className={`w-20 h-20 rounded-full flex items-center justify-center ${
+                    order.orderStatus === "delivered"
+                      ? "bg-green-500 text-white"
+                      : "bg-gold-600 text-white"
+                  }`}
+                >
                   <step.icon className="w-10 h-10" />
                 </div>
+
                 <p className="text-sm mt-2 text-center w-24">{step.name}</p>
-                <p className="text-xs text-gold-600 mt-1">กำลังดำเนินการ</p>
+                {order.orderStatus !== "delivered" && (
+                  <p className="text-xs text-gold-600 mt-1">กำลังดำเนินการ</p>
+                )}
               </div>
             ))}
         </div>
@@ -236,15 +250,14 @@ export default function OrderTrackingPage() {
               📍 ที่อยู่จัดส่ง
             </h3>
             <p className="text-sm text-gray-700">
-              <strong>ชื่อผู้รับ:</strong> {" "}
-              {order.shippingInfo.Name}
+              <strong>ชื่อผู้รับ:</strong> {order.shippingInfo.Name}
             </p>
             <p className="text-sm text-gray-700">
               <strong>เบอร์โทร:</strong>{" "}
               {order.shippingInfo.phone || "ไม่พบข้อมูล"}
             </p>
             <p className="text-sm text-gray-700">
-              <strong>ที่อยู่:</strong>{" "} {order.shippingInfo.addressLine},{" "}
+              <strong>ที่อยู่:</strong> {order.shippingInfo.addressLine},{" "}
               {order.shippingInfo.city}, {order.shippingInfo.province},{" "}
               {order.shippingInfo.postalCode}, {order.shippingInfo.country}
             </p>

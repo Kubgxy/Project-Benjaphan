@@ -39,6 +39,7 @@ import {
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import axios from "axios";
 import Swal from "sweetalert2"; // ✅ ใช้ SweetAlert2 Toast
+import { getBaseUrl } from "@/lib/api";
 
 const Messages = () => {
   const { toast } = useToast();
@@ -86,7 +87,7 @@ const Messages = () => {
   const markAsRead = async (messageId: string) => {
     try {
       await axios.patch(
-        `http://localhost:3000/api/contact/markContactAsRead/${messageId}`,
+        `${getBaseUrl()}/api/contact/markContactAsRead/${messageId}`,
         {},
         { withCredentials: true }
       );
@@ -112,7 +113,7 @@ const Messages = () => {
 
     try {
       await axios.delete(
-        `http://localhost:3000/api/contact/deleteContact/${selectedMessage._id}`,
+        `${getBaseUrl()}/api/contact/deleteContact/${selectedMessage._id}`,
         { withCredentials: true }
       );
 
@@ -155,7 +156,7 @@ const Messages = () => {
       }
 
       const response = await axios.get(
-        `http://localhost:3000/api/contact/getAllContacts?${params.toString()}`,
+        `${getBaseUrl()}/api/contact/getAllContacts?${params.toString()}`,
         { withCredentials: true }
       );
 

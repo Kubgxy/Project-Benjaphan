@@ -112,32 +112,85 @@ export const updateCartItem = async (req: Request, res: Response) => {
 export const getCartUser = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.userId;
 
+  if (!userId) {
+    res.status(401).json({ message: "Unauthorized. Missing userId." });
+    console.log("👉 req.user:", req.user);
+    return 
+  }
+
   try {
-    const cart = await Cart.findOne({ userId: userId }).populate('items.productId', 'name images');
+    const cart = await Cart.findOne({ userId }).populate(
+      "items.productId",
+      "name images availableSizes"
+    );
 
     if (!cart) {
       res.status(200).json({ message: "Cart is empty", cart: { items: [] } });
       return;
     }
 
-    // 🎯 map ข้อมูลให้ง่ายสำหรับ frontend
-    const mappedItems = cart.items.map((item) => {
-      const product = item.productId as any; // หรือ as { _id: string; name: string; images: string[] }
-    
-      return {
-        productId: product._id,
-        name: product.name,
-        images: product.images,
-        size: item.size,
-        quantity: item.quantity,
-        priceAtAdded: item.priceAtAdded,
-      };
-    });
-    
+    const mappedItems = cart.items
+      .filter((item) => item.productId) 
+      .map((item) => {
+        const product = item.productId as any;
+        return {
+          productId: product._id,
+          name: product.name,
+          images: product.images,
+          size: item.size,
+          quantity: item.quantity,
+          priceAtAdded: item.priceAtAdded,
+          availableSizes: product.availableSizes,
+        };
+      });
 
     res.status(200).json({ cart: { items: mappedItems } });
   } catch (error) {
     console.error("❌ Error fetching cart:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+// PATCH /api/cart/changeItemSize
+export const changeItemSize = async (req: Request, res: Response): Promise<void> => {
+  const userId = req.user?.userId;
+  const { productId, oldSize, newSize } = req.body;
+
+  try {
+    const cart = await Cart.findOne({ userId });
+    if (!cart) {
+      res.status(404).json({ message: "Cart not found" });
+      return;
+    }
+
+    const existingItemIndex = cart.items.findIndex(
+      (item) =>
+        item.productId.toString() === productId && item.size === oldSize
+    );
+
+    const duplicateItemIndex = cart.items.findIndex(
+      (item) =>
+        item.productId.toString() === productId && item.size === newSize
+    );
+
+    if (existingItemIndex === -1) {
+      res.status(404).json({ message: "Item not found in cart" });
+      return
+    }
+
+    // ถ้ามี size ใหม่ซ้ำใน cart -> รวม quantity
+    if (duplicateItemIndex !== -1) {
+      cart.items[duplicateItemIndex].quantity +=
+        cart.items[existingItemIndex].quantity;
+      cart.items.splice(existingItemIndex, 1); // ลบตัวเดิม
+    } else {
+      cart.items[existingItemIndex].size = newSize;
+    }
+
+    await cart.save();
+    res.status(200).json({ message: "Size updated", cart });
+  } catch (error) {
+    console.error("Error changing item size:", error);
     res.status(500).json({ message: "Server error", error });
   }
 };

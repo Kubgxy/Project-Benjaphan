@@ -1,8 +1,9 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { useEffect, useState } from "react";
+
+import { Link, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard,
   Package,
@@ -14,8 +15,9 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  LogOut
-} from 'lucide-react';
+  LogOut,
+} from "lucide-react";
+import { getBaseUrl } from "@/lib/api";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -29,75 +31,115 @@ interface NavItem {
   badge?: number;
 }
 
-// Group navItems by section
-const navSections = [
-  {
-    label: 'MAIN',
-    items: [
-      {
-        label: 'แดชบอร์ด',
-        icon: LayoutDashboard,
-        href: '/dashboard',
-      },
-      {
-        label: 'สินค้า',
-        icon: Package,
-        href: '/dashboard/products',
-      },
-      {
-        label: 'ออเดอร์',
-        icon: ShoppingBag,
-        href: '/dashboard/orders',
-        badge: 5,
-      },
-      {
-        label: 'ลูกค้า',
-        icon: Users,
-        href: '/dashboard/customers',
-      },
-    ],
-  },
-  {
-    label: 'LISTS',
-    items: [
-      {
-        label: 'บทความ',
-        icon: BookText,
-        href: '/dashboard/articles',
-      },
-      {
-        label: 'ติดต่อเรา',
-        icon: MessageSquare,
-        href: '/dashboard/messages',
-        badge: 3,
-      },
-      {
-        label: 'การแจ้งเตือน',
-        icon: Bell,
-        href: '/dashboard/notifications',
-        badge: 8,
-      },
-    ],
-  },
-  {
-    label: 'SETTINGS',
-    items: [
-      {
-        label: 'ตั้งค่า',
-        icon: Settings,
-        href: '/dashboard/settings',
-      },
-    ],
-  },
-];
-
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, toggleCollapse }) => {
   const location = useLocation();
   const { logout } = useAuth();
-
+  const [orderCount, setOrderCount] = useState<number>(0);
+  const [messageCount, setMessageCount] = useState<number>(0);
+  const [notificationCount, setNotificationCount] = useState<number>(0);
   const isActive = (href: string) => {
-    return location.pathname === href || location.pathname.startsWith(`${href}/`);
+    return (
+      location.pathname === href || location.pathname.startsWith(`${href}/`)
+    );
   };
+
+  const getNavSections = () => [
+    {
+      label: "MAIN",
+      items: [
+        {
+          label: "แดชบอร์ด",
+          icon: LayoutDashboard,
+          href: "/dashboard",
+        },
+        {
+          label: "สินค้า",
+          icon: Package,
+          href: "/dashboard/products",
+        },
+        {
+          label: "ออเดอร์",
+          icon: ShoppingBag,
+          href: "/dashboard/orders",
+          badge: orderCount,
+        },
+        {
+          label: "ลูกค้า",
+          icon: Users,
+          href: "/dashboard/customers",
+        },
+      ],
+    },
+    {
+      label: "LISTS",
+      items: [
+        {
+          label: "บทความ",
+          icon: BookText,
+          href: "/dashboard/articles",
+        },
+        {
+          label: "ติดต่อเรา",
+          icon: MessageSquare,
+          href: "/dashboard/messages",
+          badge: messageCount,
+        },
+        {
+          label: "การแจ้งเตือน",
+          icon: Bell,
+          href: "/dashboard/notifications",
+          badge: notificationCount,
+        },
+      ],
+    },
+    {
+      label: "SETTINGS",
+      items: [
+        {
+          label: "ตั้งค่า",
+          icon: Settings,
+          href: "/dashboard/settings",
+        },
+      ],
+    },
+  ];
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const orderRes = await fetch(
+          `${getBaseUrl()}/api/order/getPendingOrderCount`,
+          {
+            credentials: "include",
+          }
+        );
+        const orderData = await orderRes.json();
+        setOrderCount(orderData.count || 0);
+
+        const messageRes = await fetch(
+          `${getBaseUrl()}/api/contact/getUnreadContactCount`,
+          {
+            credentials: "include",
+          }
+        );
+        const messageData = await messageRes.json();
+        setMessageCount(messageData.count || 0);
+
+        const notiRes = await fetch(
+          `${getBaseUrl()}/api/notifications/unread-count`,
+          {
+            credentials: "include",
+          }
+        );
+        const notiData = await notiRes.json();
+        setNotificationCount(notiData.count || 0);
+      } catch (error) {
+        console.error("โหลดข้อมูล badge ไม่สำเร็จ:", error);
+      }
+    };
+
+    fetchCounts();
+  }, []);
 
   return (
     <aside
@@ -126,7 +168,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, toggleCollapse }) => {
       </div>
 
       <div className="flex-1 py-4 overflow-y-auto">
-        {navSections.map((section) => (
+        {getNavSections().map((section) => (
           <div key={section.label} className="mb-4">
             {!collapsed && (
               <div className="px-4 mb-2 mt-4 text-xs font-semibold text-sidebar-foreground/60 tracking-widest uppercase">
@@ -140,15 +182,15 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, toggleCollapse }) => {
                   to={item.href}
                   className={cn(
                     "flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition-all sidebar-item group",
-                    isActive(item.href) && "bg-primary/20 text-primary sidebar-item-active",
-                    !isActive(item.href) && "hover:bg-sidebar-accent/40 hover:text-primary",
+                    isActive(item.href) &&
+                      "bg-primary/20 text-primary sidebar-item-active",
+                    !isActive(item.href) &&
+                      "hover:bg-sidebar-accent/40 hover:text-primary",
                     collapsed && "justify-center p-3"
                   )}
                 >
                   <item.icon size={20} />
-                  {!collapsed && (
-                    <span className="flex-1">{item.label}</span>
-                  )}
+                  {!collapsed && <span className="flex-1">{item.label}</span>}
                   {!collapsed && item.badge && (
                     <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs">
                       {item.badge}

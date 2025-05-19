@@ -9,12 +9,13 @@ import {
   getOrdersByUser,
   getAllOrders,
   updateOrderStatus,
+  getPendingOrderCount,
 //   updatePaymentStatus,
 } from "../controllers/order.controller";
 import { verifyToken } from "../middlewares/verifyToken";
+import { verifyAdmin } from "../middlewares/verifyAdmin";
 
 import { slipUpload } from "../middlewares/slipUpload.middleware";
-import { verifyAdmin } from "../middlewares/verifyAdmin";
 
 const order = express.Router();
 
@@ -47,7 +48,7 @@ order.get("/getAllOrders", verifyToken, verifyAdmin, getAllOrders);
 // PATCH /api/order/updateStatus/:orderId
 order.patch("/updateStatus/:orderId", verifyToken, verifyAdmin, updateOrderStatus);
 
-// PATCH /api/order/updatePaymentStatus/:orderId
-// order.patch("/updatePaymentStatus/:orderId", verifyToken, verifyAdmin, updatePaymentStatus);
+// GET /api/order/getPendingOrderCount
+order.get("/getPendingOrderCount", verifyToken, verifyAdmin, getPendingOrderCount);
 
 export default order;

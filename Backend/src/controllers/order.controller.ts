@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { Types } from "mongoose";
 import Cart from "../Models_GPT/Cart";
 import Order from "../Models_GPT/Order";
+import Notification from "../Models_GPT/Notification";
 
 // ✅ POST /api/order/selectItems
 export const selectItemsForCheckout = async (req: Request, res: Response) => {
@@ -118,6 +119,16 @@ export const createOrder = async (req: Request, res: Response) => {
 
     await newOrder.save();
 
+    // ✅ เพิ่ม Notification ไปที่ DB
+    await Notification.create({
+      userId: userId,
+      type: 'order',
+      title: 'New Order Received',
+      message: `Order #${newOrder._id.toString().slice(-6)} has been placed for ฿${total.toLocaleString()}.`,
+      link: `/dashboard/orders`,
+    });
+
+
     res.status(201).json({
       success: true,
       message: "Order created successfully",
@@ -130,7 +141,7 @@ export const createOrder = async (req: Request, res: Response) => {
   }
 };
 
-  // ✅ GET /api/order/getOrderById/:id
+// ✅ GET /api/order/getOrderById/:id
   export const getOrderById = async (req: Request, res: Response) => {
     const userId = req.user?.userId; // <-- ดึงจาก Auth middleware
     const orderId = req.params.id;
@@ -272,6 +283,14 @@ export const cancelOrder: RequestHandler = async (req, res) => {
 
     await order.save();
 
+    await Notification.create({
+      userId: userId,
+      type: 'cancel',
+      title: 'Order Cancelled',
+      message: `Order #${order._id.toString().slice(-6)} has been cancelled.`,
+      link: `/dashboard/orders`,
+    });
+
     res.status(200).json({
       success: true,
       message: "Order has been cancelled successfully",
@@ -362,3 +381,14 @@ export const updateOrderStatus = async (req: Request, res : Response) => {
     res.status(500).json({ success: false, message: 'Server error', error });
   }
 };
+
+// controllers/orderController.ts
+export const getPendingOrderCount = async (req: Request, res: Response) => {
+  try {
+    const count = await Order.countDocuments({ status: 'pending' });
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ message: 'เกิดข้อผิดพลาด', error: err });
+  }
+};
+

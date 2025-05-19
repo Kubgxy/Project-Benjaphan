@@ -17,21 +17,15 @@ export function WishlistContent() {
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(true); // default true ไว้ก่อน
   const [loading, setLoading] = useState(true);
-  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>(
+    {}
+  );
 
-  const openModalToChooseSize = (product: any) => {
-    if (!product.availableSizes || product.availableSizes.length === 0) {
-      toast({
-        title: "ไม่พบขนาดสินค้า",
-        description: "สินค้านี้ไม่มีขนาดให้เลือก",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setSelectedProduct(product);
-    setSelectedSize(null); // reset เผื่อเปิดหลายครั้ง
+  const handleSelectSize = (productId: string, size: string) => {
+    setSelectedSizes((prev) => ({
+      ...prev,
+      [productId]: size,
+    }));
   };
 
   const fetchWishlist = async () => {
@@ -64,34 +58,39 @@ export function WishlistContent() {
     }
   };
 
-  const handleAddToCart = async (productId: string, name: string) => {
-    if (!selectedProduct || !selectedSize) return;
+  const handleAddToCart = async (product: any) => {
+    const size = selectedSizes[product.id_product];
+    if (!size) {
+      toast({
+        title: "⚠️ กรุณาเลือกขนาด",
+        description: "ต้องเลือกขนาดสินค้าก่อนเพิ่มลงตะกร้า",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await axios.post(
         `${getBaseUrl()}/api/cart/addToCart`,
         {
-          productId: selectedProduct.id_product,
+          productId: product.id_product,
           quantity: 1,
-          size: selectedSize,
+          size,
         },
         { withCredentials: true }
       );
 
-      setAddedToCart(selectedProduct.id_product);
+      setAddedToCart(product.id_product);
       toast({
-        title: "✅ เพิ่มสินค้าลงตะกร้าสำเร็จ!",
-        description: `${selectedProduct.name} ไซส์ ${selectedSize} ถูกเพิ่มลงตะกร้าแล้ว`,
-        duration: 3000,
+        title: "✅ เพิ่มสินค้าลงตะกร้าแล้ว",
+        description: `${product.name} ไซส์ ${size} ถูกเพิ่มลงตะกร้า`,
       });
-      setSelectedProduct(null);
-      setSelectedSize(null);
     } catch (error) {
       console.error("❌ Error adding to cart:", error);
       toast({
         title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถเพิ่มสินค้าลงตะกร้าได้ กรุณาลองใหม่อีกครั้ง",
+        description: "ไม่สามารถเพิ่มสินค้าลงตะกร้าได้",
         variant: "destructive",
-        duration: 3000,
       });
     }
   };
@@ -123,47 +122,6 @@ export function WishlistContent() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      {selectedProduct && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">
-              เลือกขนาดสำหรับ {selectedProduct.name}
-            </h2>
-
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              {selectedProduct.availableSizes.map((s: any, idx: number) => (
-                <Button
-                  key={idx}
-                  variant={selectedSize === s.size ? "default" : "outline"}
-                  onClick={() => setSelectedSize(s.size)}
-                >
-                  {s.size}
-                </Button>
-              ))}
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setSelectedProduct(null)}>
-                ยกเลิก
-              </Button>
-              <Button
-                disabled={!selectedSize}
-                onClick={() => {
-                  if (selectedProduct && selectedSize) {
-                    handleAddToCart(
-                      selectedProduct.id_product,
-                      selectedProduct.name
-                    );
-                  }
-                }}
-              >
-                ยืนยัน
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <h1 className="flex items-center gap-2 text-3xl font-display font-medium text-brown-800 mb-8">
         <MessageCircleHeart className="w-8 h-8 text-yellow-500" />
         รายการโปรด
@@ -205,6 +163,7 @@ export function WishlistContent() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left pb-4">สินค้า</th>
+                      <th className="text-center pb-4">ขนาด</th>
                       <th className="text-right pb-4">ราคา</th>
                       <th className="text-right pb-4">จัดการ</th>
                     </tr>
@@ -212,6 +171,7 @@ export function WishlistContent() {
                   <tbody>
                     {wishlistItems.map((item) => {
                       const product = item.productId;
+                      if (!product) return null;
                       const imageUrl = product?.images?.[0]
                         ? `${getBaseUrl()}${product.images[0]}`
                         : "/placeholder.jpg";
@@ -235,40 +195,64 @@ export function WishlistContent() {
                               </Link>
                             </div>
                           </td>
+                          <td className="py-4 text-center">
+                            <div className="flex flex-wrap gap-1 justify-center">
+                              {product.availableSizes?.map((s: any) => (
+                                <Button
+                                  key={s.size}
+                                  variant={
+                                    selectedSizes[product.id_product] === s.size
+                                      ? "default"
+                                      : "outline"
+                                  }
+                                  size="sm"
+                                  onClick={() =>
+                                    handleSelectSize(product.id_product, s.size)
+                                  }
+                                >
+                                  {s.size}
+                                </Button>
+                              ))}
+                            </div>
+                          </td>
                           <td className="py-4 text-right">
                             <span className="font-medium">
                               {formatPrice(product.price)}
                             </span>
                           </td>
                           <td className="py-4 text-right">
-                            <div className="flex items-center justify-end space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openModalToChooseSize(product)} // ✅ แก้ตรงนี้
-                                disabled={addedToCart === product.id_product}
-                              >
-                                {addedToCart === product.id_product ? (
-                                  <>
-                                    <ShoppingBag className="h-4 w-4 mr-1" />
-                                    เพิ่มลงตะกร้าแล้ว
-                                  </>
-                                ) : (
-                                  <>
-                                    <ShoppingBag className="h-4 w-4 mr-1" />
-                                    เพิ่มลงตะกร้า
-                                  </>
-                                )}
-                              </Button>
+                            <div className="flex flex-col items-end space-y-2">
+                              {/* ✅ ปุ่มเพิ่มลงตะกร้า */}
+                              <div className="flex gap-2 items-center">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleAddToCart(product)}
+                                  disabled={addedToCart === product.id_product}
+                                >
+                                  {addedToCart === product.id_product ? (
+                                    <>
+                                      <ShoppingBag className="h-4 w-4 mr-1" />
+                                      เพิ่มลงตะกร้าแล้ว
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ShoppingBag className="h-4 w-4 mr-1" />
+                                      เพิ่มลงตะกร้า
+                                    </>
+                                  )}
+                                </Button>
 
-                              <button
-                                className="text-gray-400 hover:text-red-500 transition-colors"
-                                onClick={() =>
-                                  handleRemoveWishlist(product._id)
-                                }
-                              >
-                                <X className="w-5 h-5" />
-                              </button>
+                                {/* ปุ่มลบรายการโปรด */}
+                                <button
+                                  className="text-gray-400 hover:text-red-500 transition-colors"
+                                  onClick={() =>
+                                    handleRemoveWishlist(product._id)
+                                  }
+                                >
+                                  <X className="w-5 h-5" />
+                                </button>
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -282,6 +266,7 @@ export function WishlistContent() {
               <div className="md:hidden space-y-4">
                 {wishlistItems.map((item) => {
                   const product = item.productId;
+                  if (!product) return null;
                   const imageUrl = product?.images?.[0]
                     ? `${getBaseUrl()}${product.images[0]}`
                     : "/placeholder.jpg";
@@ -312,11 +297,33 @@ export function WishlistContent() {
                         </div>
                       </div>
                       <div className="flex flex-col space-y-2">
+                        {/* ✅ ปุ่มเลือกขนาด (Inline) */}
+                        <div className="flex flex-wrap gap-1">
+                          {product.availableSizes?.map((s: any) => (
+                            <Button
+                              key={s.size}
+                              size="sm"
+                              variant={
+                                selectedSizes[product.id_product] === s.size
+                                  ? "default"
+                                  : "outline"
+                              }
+                              onClick={() =>
+                                handleSelectSize(product.id_product, s.size)
+                              }
+                            >
+                              {s.size}
+                            </Button>
+                          ))}
+                        </div>
+
+                        {/* ✅ ปุ่มเพิ่มลงตะกร้า */}
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => openModalToChooseSize(product)}
+                          onClick={() => handleAddToCart(product)}
                           disabled={addedToCart === product.id_product}
+                          className="w-full"
                         >
                           {addedToCart === product.id_product ? (
                             <>
@@ -331,6 +338,7 @@ export function WishlistContent() {
                           )}
                         </Button>
 
+                        {/* ✅ ปุ่มลบ */}
                         <Button
                           variant="destructive"
                           size="sm"

@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Eye, ImageIcon } from "lucide-react";
+import { getBaseUrl } from "@/lib/api";
 
 type OrderStatus =
   | "pending"
@@ -127,7 +128,7 @@ const Orders = () => {
     const fetchOrders = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:3000/api/order/getAllOrders",
+          `${getBaseUrl()}/api/order/getAllOrders`,
           {
             withCredentials: true,
           }
@@ -157,7 +158,7 @@ const Orders = () => {
   const refreshOrderData = async (orderId: string) => {
     try {
       const res = await axios.get(
-        `http://localhost:3000/api/order/getOrderById/${orderId}`,
+        `${getBaseUrl()}/api/order/getOrderById/${orderId}`,
         {
           withCredentials: true,
         }
@@ -178,7 +179,7 @@ const Orders = () => {
     setIsLoading(true);
     try {
       const res = await axios.patch(
-        `http://localhost:3000/api/order/updateStatus/${orderId}`,
+        `${getBaseUrl()}/api/order/updateStatus/${orderId}`,
         { status: newStatus },
         { withCredentials: true }
       );
@@ -526,13 +527,13 @@ const Orders = () => {
                 <div>
                   <h3 className="font-semibold mb-2 text-lg">Payment Slip</h3>
                   <a
-                    href={`http://localhost:3000${selectedOrder.payment.slipImage}`}
+                    href={`${getBaseUrl()}${selectedOrder.payment.slipImage}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block w-fit"
                   >
                     <img
-                      src={`http://localhost:3000${selectedOrder.payment.slipImage}`}
+                      src={`${getBaseUrl()}${selectedOrder.payment.slipImage}`}
                       alt="Payment Slip"
                       className="max-w-xs rounded shadow hover:opacity-90 transition"
                     />
