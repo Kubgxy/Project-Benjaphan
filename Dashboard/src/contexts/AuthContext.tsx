@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import axios from "axios";
+import { getBaseUrl } from "@/lib/api";
 
 interface User {
   id: string;
@@ -50,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Function to check if the user is authenticated
   const checkAuth = async (): Promise<boolean> => {
     try {
-      const res = await axios.get("http://localhost:3000/api/user/me", {
+      const res = await axios.get(`${getBaseUrl()}/api/user/me`, {
         withCredentials: true, // ⭐⭐ สำคัญ!
       });
       const user = res.data.user;
@@ -75,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       const res = await axios.post(
-        "http://localhost:3000/api/user/loginUser",
+        `${getBaseUrl()}/api/user/loginUser`,
         { email, password },
         { withCredentials: true } // ⭐⭐ สำคัญ!
       );
@@ -121,7 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(true);
     try {
       await axios.post(
-        "http://localhost:3000/api/user/logoutUser",
+        `${getBaseUrl()}/api/user/logoutUser`,
         {},
         { withCredentials: true }
       );
