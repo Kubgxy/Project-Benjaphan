@@ -18,6 +18,7 @@ import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
+import MembersPage from "./pages/Members";
 import Index from "./pages/Index";
 
 const queryClient = new QueryClient({
@@ -44,6 +45,7 @@ const App = () => (
                 <Route index element={<Dashboard />} />
                 <Route path="products" element={<Products />} />
                 <Route path="orders" element={<Orders />} />
+                <Route path="members" element={<MembersPage />} />
                 <Route path="customers" element={<Customers />} />
                 <Route path="articles" element={<Articles />} />
                 <Route path="messages" element={<Messages />} />

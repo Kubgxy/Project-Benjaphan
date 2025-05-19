@@ -140,7 +140,7 @@ const Customers = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Customers</h1>
+        <h1 className="text-2xl font-bold">ลูกค้าทั้งหมด</h1>
         <Button
           onClick={exportToCSV}
           variant="outline"

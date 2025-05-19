@@ -10,7 +10,8 @@ import {
   getAllOrders,
   updateOrderStatus,
   getPendingOrderCount,
-//   updatePaymentStatus,
+  getMonthlyRevenue,
+  getRevenueByCategory,
 } from "../controllers/order.controller";
 import { verifyToken } from "../middlewares/verifyToken";
 import { verifyAdmin } from "../middlewares/verifyAdmin";
@@ -50,5 +51,11 @@ order.patch("/updateStatus/:orderId", verifyToken, verifyAdmin, updateOrderStatu
 
 // GET /api/order/getPendingOrderCount
 order.get("/getPendingOrderCount", verifyToken, verifyAdmin, getPendingOrderCount);
+
+// GET /api/order/getMonthlyRevenue
+order.get("/getMonthlyRevenue", verifyToken, verifyAdmin, getMonthlyRevenue);
+
+// GET /api/order/getRevenueByCategory
+order.get("/getRevenueByCategory", verifyToken, verifyAdmin, getRevenueByCategory);
 
 export default order;

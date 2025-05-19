@@ -27,6 +27,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -127,12 +128,9 @@ const Orders = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await axios.get(
-          `${getBaseUrl()}/api/order/getAllOrders`,
-          {
-            withCredentials: true,
-          }
-        );
+        const res = await axios.get(`${getBaseUrl()}/api/order/getAllOrders`, {
+          withCredentials: true,
+        });
         if (res.data.success) {
           setOrders(res.data.orders);
         } else {
@@ -214,7 +212,56 @@ const Orders = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Orders</h1>
+      <h1 className="text-2xl font-bold">ออเดอร์ทั้งหมด</h1>
+
+      <div className="grid gap-4 w-full max-w-7xl md:grid-cols-5 my-4">
+        <Card>
+          <CardContent className="py-4">
+            <div className="text-sm text-muted-foreground mb-1">
+              ออเดอร์ทั้งหมด
+            </div>
+            <div className="text-2xl font-bold">{orders.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="py-4">
+            <div className="text-sm text-muted-foreground mb-1">กำลังรอดำเนินการ</div>
+            <div className="text-2xl font-bold text-yellow-600">
+              {orders.filter((o) => o.orderStatus === "pending").length}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="py-4">
+            <div className="text-sm text-muted-foreground mb-1">กำลังจัดส่ง</div>
+            <div className="text-2xl font-bold text-yellow-600">
+              {orders.filter((o) => o.orderStatus === "shipped").length}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="py-4">
+            <div className="text-sm text-muted-foreground mb-1">
+              จัดส่งสำเร็จ
+            </div>
+            <div className="text-2xl font-bold text-green-600">
+              {orders.filter((o) => o.orderStatus === "delivered").length}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="py-4">
+            <div className="text-sm text-muted-foreground mb-1">ยกเลิก</div>
+            <div className="text-2xl font-bold text-red-600">
+              {orders.filter((o) => o.orderStatus === "cancelled").length}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="flex gap-4 items-center">
         <Input

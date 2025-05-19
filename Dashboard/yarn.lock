@@ -5994,6 +5994,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"q@npm:~0.9.6":
+  version: 0.9.7
+  resolution: "q@npm:0.9.7"
+  checksum: 10c0/288bf3e54e91fa06381819ff47ed5302d190ebd2d21da064573fffd10c240eff24db6cdf61df62ec5041aac7d7e90857db82fe0584e3acc97078c0b64b358182
+  languageName: node
+  linkType: hard
+
 "queue-microtask@npm:^1.2.2":
   version: 1.2.3
   resolution: "queue-microtask@npm:1.2.3"
@@ -6866,6 +6873,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"th@npm:^0.1.1":
+  version: 0.1.1
+  resolution: "th@npm:0.1.1"
+  dependencies:
+    q: "npm:~0.9.6"
+  checksum: 10c0/462bd7c03689263ef9e13e5e3a7761e39601a3efefaa7517c026c64ec4f7146efb98572d8b4c70322b5391c9119471ef210377635e9fccc67da66936a4af7885
+  languageName: node
+  linkType: hard
+
 "thenify-all@npm:^1.0.0":
   version: 1.6.0
   resolution: "thenify-all@npm:1.6.0"
@@ -7347,6 +7363,7 @@ __metadata:
     tailwind-merge: "npm:^2.5.2"
     tailwindcss: "npm:^3.4.11"
     tailwindcss-animate: "npm:^1.0.7"
+    th: "npm:^0.1.1"
     typescript: "npm:^5.5.3"
     typescript-eslint: "npm:^8.0.1"
     vaul: "npm:^0.9.3"

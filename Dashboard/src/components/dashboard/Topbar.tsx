@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Bell, Moon, Sun, Search, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,15 +22,46 @@ import {
 } from "@/components/ui/select";
 // เพิ่ม import สำหรับ useNavigate ถ้าต้องการนำทาง หรือใช้ context สำหรับการค้นหา
 import { useNavigate, useLocation } from "react-router-dom";
+import { getBaseUrl } from "@/lib/api";
 
 // ตัวอย่าง: สมมติว่ามีข้อมูลสำหรับค้นหา (กรณีจริงควรดึงข้อมูลหรือใช้ context/store)
 const mockSearchIndex = [
-  { type: "product", label: "สินค้า", value: "iPhone 15", url: "/dashboard/products/iphone-15" },
-  { type: "order", label: "ออเดอร์", value: "Order #1234", url: "/dashboard/orders/1234" },
-  { type: "customer", label: "ลูกค้า", value: "สมชาย ใจดี", url: "/dashboard/customers/1" },
-  { type: "article", label: "บทความ", value: "เทคนิคขายดี", url: "/dashboard/articles/42" },
-  { type: "message", label: "ข้อความ", value: "สอบถามสินค้า", url: "/dashboard/messages/9" },
-  { type: "notification", label: "แจ้งเตือน", value: "ออเดอร์ใหม่", url: "/dashboard/notifications" },
+  {
+    type: "product",
+    label: "สินค้า",
+    value: "iPhone 15",
+    url: "/dashboard/products/iphone-15",
+  },
+  {
+    type: "order",
+    label: "ออเดอร์",
+    value: "Order #1234",
+    url: "/dashboard/orders/1234",
+  },
+  {
+    type: "customer",
+    label: "ลูกค้า",
+    value: "สมชาย ใจดี",
+    url: "/dashboard/customers/1",
+  },
+  {
+    type: "article",
+    label: "บทความ",
+    value: "เทคนิคขายดี",
+    url: "/dashboard/articles/42",
+  },
+  {
+    type: "message",
+    label: "ข้อความ",
+    value: "สอบถามสินค้า",
+    url: "/dashboard/messages/9",
+  },
+  {
+    type: "notification",
+    label: "แจ้งเตือน",
+    value: "ออเดอร์ใหม่",
+    url: "/dashboard/notifications",
+  },
   // ... เพิ่มข้อมูลอื่นๆ ตามต้องการ
 ];
 
@@ -43,8 +74,11 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
   const { user, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<typeof mockSearchIndex>([]);
+  const [searchResults, setSearchResults] = useState<typeof mockSearchIndex>(
+    []
+  );
   const [showDropdown, setShowDropdown] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -54,9 +88,10 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
     setSearchQuery(query);
 
     if (query.length > 1) {
-      const results = mockSearchIndex.filter((item) =>
-        item.value.toLowerCase().includes(query.toLowerCase()) ||
-        item.label.toLowerCase().includes(query.toLowerCase())
+      const results = mockSearchIndex.filter(
+        (item) =>
+          item.value.toLowerCase().includes(query.toLowerCase()) ||
+          item.label.toLowerCase().includes(query.toLowerCase())
       );
       setSearchResults(results);
       setShowDropdown(true);
@@ -94,6 +129,28 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
     setSearchResults([]);
   }, [location.pathname]);
 
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch(
+          `${getBaseUrl()}/api/notifications/getNotifications`,
+          {
+            credentials: "include", // ✅ จำเป็นถ้าใช้ cookie auth
+          }
+        );
+
+        const data = await res.json();
+        if (data.success) {
+          setNotifications(data.notifications.slice(0, 5)); // แสดง 5 อันล่าสุด
+        }
+      } catch (error) {
+        console.error("โหลดการแจ้งเตือนไม่สำเร็จ", error);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
   return (
     <header className="border-b bg-background z-30 relative">
       <div className="flex h-16 items-center justify-between px-4">
@@ -104,17 +161,6 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
             autoComplete="off"
           >
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="ค้นหา..."
-                className="w-full pl-8 bg-background"
-                value={searchQuery}
-                onChange={handleInputChange}
-                onFocus={() => setShowDropdown(searchResults.length > 0)}
-                onBlur={() => setTimeout(() => setShowDropdown(false), 100)}
-                autoComplete="off"
-              />
               {showDropdown && (
                 <div className="absolute left-0 top-10 w-full rounded-md bg-popover shadow-lg border z-50 max-h-60 overflow-auto">
                   {searchResults.length > 0 ? (
@@ -124,7 +170,9 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
                         className="flex items-center px-4 py-2 hover:bg-muted cursor-pointer gap-2"
                         onMouseDown={() => handleResultClick(item.url)}
                       >
-                        <span className="text-xs text-muted-foreground">{item.label}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {item.label}
+                        </span>
                         <span className="font-medium">{item.value}</span>
                       </div>
                     ))
@@ -140,19 +188,6 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
         </div>
 
         <div className="flex items-center gap-4">
-          <Select
-            value={language}
-            onValueChange={(value: "th" | "en") => setLanguage(value)}
-          >
-            <SelectTrigger className="w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="th">ไทย</SelectItem>
-              <SelectItem value="en">English</SelectItem>
-            </SelectContent>
-          </Select>
-
           <Button
             variant="ghost"
             size="icon"
@@ -178,23 +213,33 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
               <DropdownMenuLabel>การแจ้งเตือน</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <div className="max-h-80 overflow-y-auto">
-                {[1, 2, 3].map((_, i) => (
-                  <DropdownMenuItem
-                    key={i}
-                    className="flex flex-col items-start py-2"
-                  >
-                    <p className="font-medium">ออเดอร์ใหม่ #{10001 + i}</p>
-                    <p className="text-sm text-muted-foreground">
-                      มีการสั่งซื้อสินค้าใหม่
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date().toLocaleDateString()}
-                    </p>
-                  </DropdownMenuItem>
-                ))}
+                {notifications.length > 0 ? (
+                  notifications.map((n, i) => (
+                    <DropdownMenuItem
+                      key={n._id || i}
+                      className="flex flex-col items-start py-2 cursor-pointer"
+                      onClick={() => navigate("/dashboard/notifications")} // หรือเจาะจงแต่ละ order ได้
+                    >
+                      <p className="font-medium">{n.title}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {n.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(n.createdAt).toLocaleDateString("th-TH")}
+                      </p>
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <p className="text-sm px-4 py-2 text-muted-foreground">
+                    ไม่พบการแจ้งเตือน
+                  </p>
+                )}
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="justify-center font-medium">
+              <DropdownMenuItem
+                className="justify-center font-medium cursor-pointer"
+                onClick={() => navigate("/dashboard/notifications")}
+              >
                 ดูทั้งหมด
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -267,7 +312,9 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
                       className="flex items-center px-4 py-2 hover:bg-muted cursor-pointer gap-2"
                       onMouseDown={() => handleResultClick(item.url)}
                     >
-                      <span className="text-xs text-muted-foreground">{item.label}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {item.label}
+                      </span>
                       <span className="font-medium">{item.value}</span>
                     </div>
                   ))
