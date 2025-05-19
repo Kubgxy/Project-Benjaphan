@@ -24,7 +24,7 @@ pipeline {
       steps {
         dir("${env.PROJECT_DIR}") {
           echo '🧹 หยุด container เก่า (และลบ orphan)'
-          sh 'docker compose down --remove-orphans || true'
+          sh 'docker-compose down --remove-orphans || true'
         }
       }
     }
@@ -35,10 +35,10 @@ pipeline {
           script {
             if (params.USE_NO_CACHE) {
               echo '🔥 Build ใหม่ทั้งหมด (--no-cache)'
-              sh 'docker compose build --no-cache'
+              sh 'docker-compose build --no-cache'
             } else {
               echo '⚡ Build ปกติ (ใช้ cache)'
-              sh 'docker compose build'
+              sh 'docker-compose build'
             }
           }
         }
