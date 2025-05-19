@@ -11,13 +11,18 @@ import { IncomingMessage } from 'http';
 // โหลดค่า .env
 dotenv.config();
 
-  const app = express();
-  const port = process.env.PORT;
-  const mongoURI = process.env.MONGODB_URI as string;
+const app = express();
+const port = parseInt(process.env.PORT || '3000', 10);
+const mongoURI = process.env.MONGODB_URI as string;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174' ],
+  origin: [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://benjaphan5.com',
+  'https://admin-dashboard.benjaphan5.com',
+  ],
   credentials: true              
 }));
 app.use(cookieParser());
@@ -62,6 +67,6 @@ app.use(bodyParser.json({
   app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
   // Start server
-  app.listen(port, () => {
+  app.listen(port, '0.0.0.0',() => {
     console.log(`🚀 Server is running at http://localhost:${port}`);
   });
