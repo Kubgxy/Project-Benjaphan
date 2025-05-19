@@ -22,7 +22,9 @@ pipeline {
 
     stage('📥 Checkout Source Code') {
       steps {
-        checkout scm
+        dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
+          checkout scm
+        }
       }
     }
 
@@ -44,13 +46,15 @@ pipeline {
 
     stage('🧪 Check nginx.conf & cert') {
       steps {
-        sh '''
-          echo "📄 nginx.conf:"
-          ls -l nginx/nginx.conf || echo "❌ nginx.conf not found"
+        dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
+          sh '''
+            echo "📄 nginx.conf:"
+            ls -l nginx/nginx.conf || echo "❌ nginx.conf not found"
 
-          echo "📁 cert folder tree:"
-          ls -lhR nginx/cert || echo "❌ cert folder not found"
-        '''
+            echo "📁 cert folder tree:"
+            ls -lhR nginx/cert || echo "❌ cert folder not found"
+          '''
+        }
       }
     }
 
@@ -62,8 +66,29 @@ pipeline {
 
     stage('🐳 Docker Build') {
       steps {
-        script {
-          def composeCmd = params.USE_NO_CACHE ? 'docker-compose build --no-cache' : 'docker-compose build'
+        dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
+          script {
+            def composeCmd = params.USE_NO_CACHE ? 'docker-compose build --no-cache' : 'docker-compose build'
+            withEnv([
+              "MONGODB_URI=${env.MONGODB_URI}",
+              "PORT=${env.PORT}",
+              "JWT_SECRET=${env.JWT_SECRET}",
+              "GOOGLE_CLIENT_ID=${env.GOOGLE_CLIENT_ID}",
+              "GOOGLE_CLIENT_SECRET=${env.GOOGLE_CLIENT_SECRET}",
+              "FACEBOOK_CLIENT_ID=${env.FACEBOOK_CLIENT_ID}",
+              "FACEBOOK_CLIENT_SECRET=${env.FACEBOOK_CLIENT_SECRET}",
+              "NODE_ENV=production"
+            ]) {
+              sh composeCmd
+            }
+          }
+        }
+      }
+    }
+
+    stage('🚀 Docker Up') {
+      steps {
+        dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
           withEnv([
             "MONGODB_URI=${env.MONGODB_URI}",
             "PORT=${env.PORT}",
@@ -74,25 +99,8 @@ pipeline {
             "FACEBOOK_CLIENT_SECRET=${env.FACEBOOK_CLIENT_SECRET}",
             "NODE_ENV=production"
           ]) {
-            sh composeCmd
+            sh 'docker-compose up -d'
           }
-        }
-      }
-    }
-
-    stage('🚀 Docker Up') {
-      steps {
-        withEnv([
-          "MONGODB_URI=${env.MONGODB_URI}",
-          "PORT=${env.PORT}",
-          "JWT_SECRET=${env.JWT_SECRET}",
-          "GOOGLE_CLIENT_ID=${env.GOOGLE_CLIENT_ID}",
-          "GOOGLE_CLIENT_SECRET=${env.GOOGLE_CLIENT_SECRET}",
-          "FACEBOOK_CLIENT_ID=${env.FACEBOOK_CLIENT_ID}",
-          "FACEBOOK_CLIENT_SECRET=${env.FACEBOOK_CLIENT_SECRET}",
-          "NODE_ENV=production"
-        ]) {
-          sh 'docker-compose up -d'
         }
       }
     }
