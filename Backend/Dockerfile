@@ -32,7 +32,6 @@ RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 
 # ✅ คัดลอกไฟล์ที่จำเป็นสำหรับ install production deps
 COPY package.json yarn.lock ./
-COPY .yarn ./.yarn
 COPY .yarnrc.yml ./.yarnrc.yml
 
 # ✅ ติดตั้ง dependencies แบบ production (Yarn 4 Style)
