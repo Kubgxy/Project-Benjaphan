@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # ========================
   # FRONTEND (Next.js)
@@ -16,7 +14,8 @@ services:
     depends_on:
       - backend
     container_name: frontend
-
+    volumes:
+      - frontend_cache:/app/.next
 
   # ========================
   # DASHBOARD (React + Vite)
@@ -33,8 +32,8 @@ services:
     depends_on:
       - backend
     container_name: dashboard
-
-    
+    volumes:
+      - dashboard_cache:/app/dist
       
   # ========================
   # BACKEND (Express + TypeScript)
@@ -59,8 +58,7 @@ services:
       - benjaphan-network
     container_name: backend
     volumes:
-      - ./Backend/uploads:/app/uploads
-
+      - backend_uploads:/app/uploads
 
   # ========================
   # MONGO DATABASE
@@ -104,6 +102,9 @@ services:
 # ========================
 volumes:
   mongo-data:
+  backend_uploads:
+  frontend_cache:
+  dashboard_cache:
 
 # ========================
 # NETWORK
