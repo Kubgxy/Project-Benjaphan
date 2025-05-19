@@ -52,11 +52,14 @@ pipeline {
       steps {
         dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
           script {
-            def useNoCache = !fileExists('.built_once') || params.USE_NO_CACHE
+            def markerFile = '/opt/jenkins_marker/.built_once'
+            def useNoCache = !fileExists(markerFile) || params.USE_NO_CACHE
             def composeCmd = useNoCache ? 'docker-compose build --no-cache' : 'docker-compose build'
 
+            echo "🧠 Using no-cache: ${useNoCache}"
+
             if (useNoCache) {
-              writeFile file: '.built_once', text: 'Built at ' + new Date().toString()
+              writeFile file: markerFile, text: "✅ Built at: ${new Date()}"
             }
 
             withEnv([
