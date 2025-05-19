@@ -273,7 +273,7 @@ export default function OrderTrackingPage() {
                 key={index}
                 className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4 border-b pb-4"
               >
-                <div className="relative w-full sm:w-20 h-40 sm:h-20 rounded border overflow-hidden">
+                <div className="relative w-full sm:w-[200px] h-[250px] sm:h-[150px] rounded border overflow-hidden">
                   <Image
                     src={`${getBaseUrl()}${item.images[0]}`}
                     alt={item.name}

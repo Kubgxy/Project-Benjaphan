@@ -11,19 +11,57 @@ import { Button } from "@/components/ui/button";
 import { categories, testimonials } from "@/lib/data";
 import type { Product } from "@/lib/types";
 import { getBaseUrl } from "@/lib/api";
+import { useToast } from "@/components/ui/use-toast";
+import axios from "axios";
+import { useKeenSlider } from "keen-slider/react";
+import "keen-slider/keen-slider.min.css";
 
 export default function Home() {
   // Get featured products from our mock data
   const [newProducts, setNewProducts] = useState<Product[]>([]); // ✅ สร้าง state
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   const [bestsellers, setBestsellers] = useState<Product[]>([]);
   const [loadingBestsellers, setLoadingBestsellers] = useState(true);
   const featuredCategories = categories.filter(
     (cat) =>
       ["chaloms", "bracelets", "bencharm"].includes(cat.slug) && cat.featured
   );
-
+  const [email, setEmail] = useState("");
   const featuredTestimonials = testimonials.slice(0, 3);
+
+  const [sliderRef, instanceRef] = useKeenSlider<HTMLDivElement>({
+    loop: false,
+    slides: {
+      perView: 3,
+      spacing: 20,
+    },
+    breakpoints: {
+      "(max-width: 768px)": {
+        slides: { perView: 1 },
+      },
+    },
+    slideChanged(slider) {
+      setCurrentSlide(slider.track.details.rel);
+    },
+  });
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const [dotCount, setDotCount] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (instanceRef.current) {
+        const totalSlides = instanceRef.current.track.details.slides.length;
+        const isMobile = window.innerWidth <= 768;
+        const perView = isMobile ? 1 : 3;
+        setDotCount(Math.ceil(totalSlides / perView));
+      }
+    }, 100); // ❗ delay นิดหน่อยให้ slider init เสร็จ
+
+    return () => clearTimeout(timer);
+  }, [bestsellers]);
 
   const fetchNewProducts = async () => {
     try {
@@ -60,6 +98,31 @@ export default function Home() {
   useEffect(() => {
     fetchBestsellers();
   }, []);
+
+  const handleSubscribe = async () => {
+    if (!email) {
+      toast({ title: "❌ กรุณากรอกอีเมล", variant: "destructive" });
+      return;
+    }
+
+    try {
+      await axios.post(
+        `${getBaseUrl()}/api/user/subscribeNewsletter`,
+        { email },
+        { withCredentials: true }
+      );
+      toast({ title: "✅ สมัครสมาชิกสำเร็จ" });
+      setEmail(""); // clear input
+    } catch (error: any) {
+      if (error?.response?.status === 409) {
+        toast({ title: "❗️คุณสมัครเป็นสมาชิกแล้ว" });
+      } else if (error?.response?.status === 401) {
+        toast({ title: "❌ กรุณาเข้าสู่ระบบก่อน", variant: "destructive" });
+      } else {
+        toast({ title: "❌ สมัครไม่สำเร็จ", variant: "destructive" });
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-cream-50">
@@ -319,14 +382,12 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {loadingBestsellers ? (
-                <p>กำลังโหลดสินค้าขายดี...</p>
-              ) : (
-                bestsellers.map((product) => {
+            {bestsellers.length <= 3 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {bestsellers.map((product) => {
                   const productWithId = {
                     ...product,
-                    id: product.id_product, // ✅ ตรงนี้เหมือนกัน
+                    id: product.id_product,
                   };
                   return (
                     <ProductCard
@@ -334,9 +395,45 @@ export default function Home() {
                       product={productWithId}
                     />
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            ) : (
+              <>
+                <div ref={sliderRef} className="keen-slider">
+                  {bestsellers.map((product) => {
+                    const productWithId = {
+                      ...product,
+                      id: product.id_product,
+                    };
+                    return (
+                      <div
+                        key={product.id_product}
+                        className="keen-slider__slide"
+                      >
+                        <ProductCard product={productWithId} />
+                      </div>
+                    );
+                  })}
+                </div>
+                {dotCount > 1 && (
+                  <div className="flex justify-center mt-4 gap-2">
+                    {Array.from({ length: dotCount }).map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() =>
+                          instanceRef.current?.moveToIdx(idx, true)
+                        }
+                        className={`w-3 h-3 rounded-full transition-colors duration-300 ${
+                          currentSlide === idx
+                            ? "bg-gold-600"
+                            : "bg-gray-300 hover:bg-gray-400"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </section>
       )}
@@ -430,16 +527,21 @@ export default function Home() {
           <h2 className="text-3xl font-heading font-medium mb-4">
             รับข่าวสารและโปรโมชั่น
           </h2>
-          <p className="mt-4 max-w-md mx-auto mb-8">
+          <p className="mt-4 max-w-xl mx-auto mb-8">
             ลงทะเบียนเพื่อรับข่าวสาร โปรโมชั่นพิเศษ และสิทธิพิเศษสำหรับสมาชิก
           </p>
           <div className="max-w-md mx-auto flex">
             <input
               type="email"
               placeholder="อีเมลของคุณ"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="flex-1 px-4 py-3 text-brown-800 focus:outline-none rounded-l-md"
             />
-            <button className="px-6 py-3 bg-brown-800 text-white font-medium hover:bg-brown-900 transition-colors rounded-r-md">
+            <button
+              onClick={handleSubscribe}
+              className="px-6 py-3 bg-brown-800 text-white font-medium hover:bg-brown-900 transition-colors rounded-r-md"
+            >
               สมัคร
             </button>
           </div>

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { Minus, Plus, X, ShoppingBag } from "lucide-react";
+import { Minus, Plus, X, ShoppingBag, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
@@ -219,51 +219,91 @@ export function CartContent() {
               {cartItems.map((item) => (
                 <div
                   key={`${item.productId}-${item.size}`}
-                  className="bg-white rounded-lg shadow-sm p-4"
+                  className="bg-white rounded-lg shadow-sm p-3 flex items-start gap-3"
                 >
-                  <div className="flex items-center mb-3">
-                    <input
-                      type="checkbox"
-                      checked={
-                        selectedItems[`${item.productId}-${item.size}`] || false
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedItems[`${item.productId}-${item.size}`] || false
+                    }
+                    onChange={(e) =>
+                      setSelectedItems({
+                        ...selectedItems,
+                        [`${item.productId}-${item.size}`]: e.target.checked,
+                      })
+                    }
+                    className="mt-1"
+                  />
+
+                  {/* รูปสินค้า */}
+                  <div className="relative w-40 h-40 bg-gray-100 rounded overflow-hidden">
+                    <Image
+                      src={
+                        item.images[0]
+                          ? `${getBaseUrl()}${item.images[0]}`
+                          : "/placeholder.svg"
                       }
-                      onChange={(e) =>
-                        setSelectedItems({
-                          ...selectedItems,
-                          [`${item.productId}-${item.size}`]: e.target.checked,
-                        })
-                      }
-                      className="mr-2"
+                      alt={item.name}
+                      fill
+                      className="object-cover"
                     />
-                    <div className="relative w-20 h-20 bg-gray-50 rounded-md overflow-hidden">
-                      <Image
-                        src={
-                          item.images[0]
-                            ? `${getBaseUrl()}${item.images[0]}`
-                            : "/placeholder.svg"
-                        }
-                        alt={item.name}
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="font-medium">{item.name}</h3>
-                      <p className="text-sm text-gray-600">
-                        {formatPrice(item.priceAtAdded)}
-                      </p>
-                      {item.size && (
-                        <p className="text-xs text-gray-500">
-                          Size: {item.size}
-                        </p>
-                      )}
-                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center">
+                  {/* รายละเอียด */}
+                  <div className="flex-1 text-sm text-brown-800">
+                    <h3 className="font-medium leading-snug">{item.name}</h3>
+                    <span>ราคา: {item.priceAtAdded} บาท</span>
+                    {/* เลือกขนาด (เฉพาะ mobile) */}
+                    <div className="items-center py-2 gap-2 mt-2">
+                      <label className="flex text-xs text-gray-600">ขนาด :</label>
+                      <select
+                        value={item.size}
+                        onChange={async (e) => {
+                          const newSize = e.target.value;
+                          if (newSize === item.size) return;
+
+                          try {
+                            await axios.post(
+                              `${getBaseUrl()}/api/cart/changeItemSize`,
+                              {
+                                productId: item.productId,
+                                oldSize: item.size,
+                                newSize: newSize,
+                              },
+                              { withCredentials: true }
+                            );
+
+                            toast({
+                              title: "✅ เปลี่ยนขนาดสำเร็จ",
+                              description: `ขนาดใหม่: ${newSize}`,
+                              duration: 3000,
+                            });
+
+                            fetchCart(); // โหลดตะกร้าใหม่
+                          } catch (error) {
+                            toast({
+                              title: "❌ เปลี่ยนขนาดไม่สำเร็จ",
+                              description: "กรุณาลองใหม่",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        className="mt-1 w-full border rounded px-2 py-1 text-sm text-gray-700"
+                      >
+                        {item.availableSizes?.map((s) => (
+                          <option key={s.size} value={s.size}>
+                            {s.size} (เหลือ {s.quantity})
+                          </option>
+                        ))}
+                      </select>
+                      
+                    </div>
+
+
+                    {/* ปุ่มจำนวน */}
+                    <div className="flex items-center mb-2">
                       <button
-                        className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-l"
+                        className="w-7 h-7 border border-gray-300 rounded-l"
                         onClick={() =>
                           handleUpdateQuantity(
                             item.productId,
@@ -278,11 +318,11 @@ export function CartContent() {
                       <input
                         type="text"
                         value={item.quantity}
-                        className="w-12 h-8 text-center border-t border-b border-gray-300"
+                        className="w-10 h-7 text-center border-t border-b border-gray-300"
                         readOnly
                       />
                       <button
-                        className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-r"
+                        className="w-7 h-7 border border-gray-300 rounded-r"
                         onClick={() =>
                           handleUpdateQuantity(
                             item.productId,
@@ -294,16 +334,17 @@ export function CartContent() {
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>
-                    <span className="font-medium">
-                      {formatPrice(item.priceAtAdded * item.quantity)}
+
+                    <span className="font-medium ">
+                      รวมทั้งสิ้น : {formatPrice(item.priceAtAdded * item.quantity)}
                     </span>
                   </div>
 
                   <button
-                    className="w-full text-center text-white rounded-md py-2 bg-red-500 hover:bg-red-600 text-sm"
+                    className=" text-center text-white rounded-md py-2 px-2 bg-red-500 hover:bg-red-600 text-sm"
                     onClick={() => handleRemoveItem(item.productId, item.size)}
                   >
-                    ลบออกจากตะกร้า
+                    <Trash className="w-8 h-4" />
                   </button>
                 </div>
               ))}
@@ -574,13 +615,13 @@ export function CartContent() {
             <ShoppingBag className="h-10 w-10 text-gray-400" />
           </div>
           <h2 className="text-2xl font-display font-medium text-gray-900 mb-2">
-            Your cart is empty
+            ไม่มีสินค้าในตะกร้า
           </h2>
           <p className="text-gray-600 mb-8">
-            Looks like you haven't added any items to your cart yet.
+            คุณยังไม่มีสินค้าในตะกร้าสินค้าของคุณ
           </p>
           <Button variant="luxury" size="lg" asChild>
-            <Link href="/product">Start Shopping</Link>
+            <Link href="/product">เลือกซื้อสินค้า</Link>
           </Button>
         </div>
       )}

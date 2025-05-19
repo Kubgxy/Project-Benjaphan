@@ -385,10 +385,84 @@ export const updateOrderStatus = async (req: Request, res : Response) => {
 // controllers/orderController.ts
 export const getPendingOrderCount = async (req: Request, res: Response) => {
   try {
-    const count = await Order.countDocuments({ status: 'pending' });
+    const count = await Order.countDocuments({ orderStatus: 'pending' });
     res.json({ count });
   } catch (err) {
     res.status(500).json({ message: 'เกิดข้อผิดพลาด', error: err });
   }
 };
+
+export const getMonthlyRevenue = async (req: Request, res: Response) => {
+  try {
+    const orders = await Order.find({ orderStatus: "delivered" });
+
+    const summary = Array(12).fill(0); // สรุปรายได้ 12 เดือน
+
+    for (const order of orders) {
+      const month = new Date(order.createdAt).getMonth(); // 0 = Jan
+      summary[month] += order.total;
+    }
+
+    const months = [
+      "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+      "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค.",
+    ];
+
+    const data = summary.map((value, index) => ({
+      name: months[index],
+      value,
+    }));
+
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("Error generating revenue summary:", error);
+    res.status(500).json({ success: false, message: "ไม่สามารถสรุปยอดขายรายเดือนได้" });
+  }
+};
+
+// ✅ API: รายได้ตามหมวดหมู่
+export const getRevenueByCategory = async (req: Request, res: Response) => {
+  try {
+    const orders = await Order.find({ orderStatus: "delivered" }).populate("items.productId");
+
+    const categoryMap: Record<string, number> = {};
+
+    const categoryNameMap: Record<string, string> = {
+      bencharm: "น้ำหอม",
+      chaloms: "ชะลอม",
+      bracelets: "กำไลข้อมือ",
+      jakkraphat: "พระบูชา",
+    };
+
+    for (const order of orders) {
+      for (const item of order.items) {
+        const product = item?.productId as any;
+
+        if (!product) continue; // กันพัง
+
+        const categoryCode = product.category || "unknown";
+        const categoryName = categoryNameMap[categoryCode] || "ไม่ระบุหมวดหมู่";
+
+        const price = item?.priceAtPurchase ?? 0;
+        const quantity = item?.quantity ?? 0;
+        const total = price * quantity;
+
+        if (!categoryMap[categoryName]) categoryMap[categoryName] = 0;
+        categoryMap[categoryName] += total;
+      }
+    }
+
+    const result = Object.entries(categoryMap).map(([name, value]) => ({
+      name,
+      value,
+    }));
+
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    console.error("Error calculating revenue by category:", error);
+    res.status(500).json({ success: false, message: "เกิดข้อผิดพลาดในการดึงข้อมูล" });
+  }
+};
+
+
 

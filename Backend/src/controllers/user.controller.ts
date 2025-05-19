@@ -1,12 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+
 
 // Model
 // import User from "../Models/User";
 import User from "../Models_GPT/User";
 import Cart from "../Models_GPT/Cart";
 import Wishlist from "../Models_GPT/Wishlist";
+import Member from "../Models_GPT/Member";
 
 // Register
 export const registerUser = async (
@@ -400,5 +403,59 @@ export const getAllCustomers = async (
     res.status(200).json({ customers });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
+  }
+};
+
+// Subscribe to newsletter
+export const subscribeNewsletter = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    const userId = req.user?.userId; // ต้องมี verifyToken middleware
+
+    if (!userId) {
+      res.status(401).json({ message: "กรุณาเข้าสู่ระบบก่อน" });
+      return 
+    }
+
+    if (!email) {
+      res.status(400).json({ message: "กรุณาระบุอีเมล" });
+      return 
+    }
+
+    // ✅ ตรวจสอบว่าเคยสมัครแล้วหรือยัง
+    const existing = await Member.findOne({ userId });
+    if (existing) {
+      res.status(409).json({ message: "คุณสมัครรับข่าวสารแล้ว" });
+      return 
+    }
+
+    // ✅ สมัครใหม่
+    const newMember = new Member({  userId: new mongoose.Types.ObjectId(userId), email });
+    await newMember.save();
+
+    res.status(201).json({ message: "สมัครรับข่าวสารสำเร็จ" });
+  } catch (error) {
+    console.error("สมัครสมาชิกล้มเหลว:", error);
+    res.status(500).json({ message: "เกิดข้อผิดพลาด", error });
+  }
+};
+
+// 🧠 Admin Only
+export const getAllNewsletterMembers = async (req: Request, res: Response) => {
+  try {
+    const role = req.user?.role;
+    if (role !== "admin") {
+      res.status(403).json({ message: "คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้" });
+      return 
+    }
+
+    const members = await Member.find()
+      .populate("userId", "firstName lastName email avatar role ") // แสดงเฉพาะบาง field
+      .sort({ subscribedAt: -1 }); // เรียงจากล่าสุด
+
+    res.status(200).json({ members });
+  } catch (error) {
+    console.error("ไม่สามารถดึงรายชื่อสมาชิกได้:", error);
+    res.status(500).json({ message: "เกิดข้อผิดพลาด", error });
   }
 };

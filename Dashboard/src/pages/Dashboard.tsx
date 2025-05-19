@@ -35,24 +35,6 @@ function getThemeColors() {
   ];
 }
 
-// Mock data - In a real app, this would come from an API
-const salesData = [
-  { name: "ม.ค.", value: 4000 },
-  { name: "ก.พ.", value: 3000 },
-  { name: "มี.ค.", value: 5000 },
-  { name: "เม.ย.", value: 2780 },
-  { name: "พ.ค.", value: 1890 },
-  { name: "มิ.ย.", value: 2390 },
-  { name: "ก.ค.", value: 3490 },
-];
-
-const categoryData = [
-  { name: "สร้อยคอ", value: 400 },
-  { name: "แหวน", value: 300 },
-  { name: "กำไล", value: 300 },
-  { name: "ต่างหู", value: 200 },
-];
-
 const COLORS = ["#D4AF37", "#A67C00", "#F5D76E", "#3B82F6"];
 
 const Dashboard: React.FC = () => {
@@ -62,6 +44,11 @@ const Dashboard: React.FC = () => {
   const [customerCount, setCustomerCount] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
+  const [monthlySales, setMonthlySales] = useState([]);
+  const [categorySales, setCategorySales] = useState<
+    { name: string; value: number }[]
+  >([]);
+  const [loadingCategory, setLoadingCategory] = useState(true);
 
   // Stats cards data
   const statsCards = [
@@ -144,6 +131,50 @@ const Dashboard: React.FC = () => {
     fetchCounts();
   }, []);
 
+  useEffect(() => {
+    const fetchMonthlyRevenue = async () => {
+      try {
+        const res = await axios.get(
+          `${getBaseUrl()}/api/order/getMonthlyRevenue`,
+          {
+            withCredentials: true,
+          }
+        );
+        setMonthlySales(res.data.data); // ✅ ใส่เข้า LineChart
+      } catch (err) {
+        console.error("โหลดรายได้ตามเดือนล้มเหลว", err);
+      }
+    };
+
+    fetchMonthlyRevenue();
+  }, []);
+
+  useEffect(() => {
+    const fetchCategorySales = async () => {
+      try {
+        const res = await fetch(
+          `${getBaseUrl()}/api/order/getRevenueByCategory`,
+          {
+            credentials: "include", // ✅ ถ้าใช้ cookie-based auth
+          }
+        );
+
+        const data = await res.json();
+        if (data.success) {
+          setCategorySales(data.data);
+        } else {
+          console.error("Failed to fetch category sales");
+        }
+      } catch (err) {
+        console.error("Error:", err);
+      } finally {
+        setLoadingCategory(false);
+      }
+    };
+
+    fetchCategorySales();
+  }, []);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -195,7 +226,7 @@ const Dashboard: React.FC = () => {
             <div className="h-[300px] px-4 pb-4">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
-                  data={salesData}
+                  data={monthlySales}
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -224,7 +255,7 @@ const Dashboard: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={categoryData}
+                    data={categorySales}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -235,7 +266,7 @@ const Dashboard: React.FC = () => {
                     fill={themeColors[0]}
                     dataKey="value"
                   >
-                    {categoryData.map((entry, index) => (
+                    {categorySales.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={themeColors[index % themeColors.length]}
@@ -264,7 +295,7 @@ const Dashboard: React.FC = () => {
         <CardContent className="p-0">
           <div className="h-[300px] px-4 pb-4">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={salesData}>
+              <BarChart data={monthlySales}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
