@@ -9,10 +9,6 @@ pipeline {
     )
   }
 
-  environment {
-    NODE_ENV = 'production'
-  }
-
   stages {
     stage('🔄 Clean Workspace') {
       steps {
@@ -42,6 +38,18 @@ pipeline {
       }
     }
 
+    stage('🧪 Check nginx.conf & cert') {
+      steps {
+        sh '''
+          echo "📄 nginx.conf:"
+          ls -l nginx/nginx.conf || echo "❌ nginx.conf not found"
+
+          echo "📁 cert:"
+          ls -l nginx/cert || echo "❌ cert folder not found"
+        '''
+      }
+    }
+
     stage('♻️ Docker Down') {
       steps {
         sh 'docker-compose down --remove-orphans || true'
@@ -51,10 +59,18 @@ pipeline {
     stage('🐳 Docker Build') {
       steps {
         script {
-          if (params.USE_NO_CACHE) {
-            sh 'docker-compose build --no-cache'
-          } else {
-            sh 'docker-compose build'
+          def composeCmd = params.USE_NO_CACHE ? 'docker-compose build --no-cache' : 'docker-compose build'
+          withEnv([
+            "MONGODB_URI=${env.MONGODB_URI}",
+            "PORT=${env.PORT}",
+            "JWT_SECRET=${env.JWT_SECRET}",
+            "GOOGLE_CLIENT_ID=${env.GOOGLE_CLIENT_ID}",
+            "GOOGLE_CLIENT_SECRET=${env.GOOGLE_CLIENT_SECRET}",
+            "FACEBOOK_CLIENT_ID=${env.FACEBOOK_CLIENT_ID}",
+            "FACEBOOK_CLIENT_SECRET=${env.FACEBOOK_CLIENT_SECRET}",
+            "NODE_ENV=production"
+          ]) {
+            sh composeCmd
           }
         }
       }
@@ -62,7 +78,18 @@ pipeline {
 
     stage('🚀 Docker Up') {
       steps {
-        sh 'docker-compose up -d'
+        withEnv([
+          "MONGODB_URI=${env.MONGODB_URI}",
+          "PORT=${env.PORT}",
+          "JWT_SECRET=${env.JWT_SECRET}",
+          "GOOGLE_CLIENT_ID=${env.GOOGLE_CLIENT_ID}",
+          "GOOGLE_CLIENT_SECRET=${env.GOOGLE_CLIENT_SECRET}",
+          "FACEBOOK_CLIENT_ID=${env.FACEBOOK_CLIENT_ID}",
+          "FACEBOOK_CLIENT_SECRET=${env.FACEBOOK_CLIENT_SECRET}",
+          "NODE_ENV=production"
+        ]) {
+          sh 'docker-compose up -d'
+        }
       }
     }
   }
