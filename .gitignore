@@ -21,7 +21,6 @@
 .env.*.local
 
 # 🔐 SSL certificate (ถ้าไม่อยาก push)
-# nginx/cert/
 
 # 📦 Mongo dump & backup
 dump/
