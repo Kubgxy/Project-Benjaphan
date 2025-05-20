@@ -9,4 +9,5 @@ Dockerfile
 .env.*
 .idea
 *.DS_Store
-.yarn/cache
+.yarn/*
+!.yarn/cache
