@@ -71,7 +71,6 @@ pipeline {
     stage('📦 Warm Yarn Cache') {
       steps {
         script {
-          sh 'docker volume rm benjaphan-deploy_yarn_cache || true'
           withEnv([
             "MONGODB_URI=${env.MONGODB_URI}",
             "PORT=${env.PORT}",
