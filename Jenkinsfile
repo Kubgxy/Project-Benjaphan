@@ -2,14 +2,20 @@ pipeline {
   agent any
 
   options {
-    skipDefaultCheckout() // ไม่ให้ Jenkins checkout เอง เราจะจัดการเองที่ path เดิม
+    skipDefaultCheckout()
   }
 
   parameters {
     booleanParam(name: 'USE_NO_CACHE', defaultValue: false, description: 'ใช้ --no-cache หรือไม่')
   }
 
+  environment {
+    DOCKER_BUILDKIT = '1'
+    COMPOSE_DOCKER_CLI_BUILD = '1'
+  }
+
   stages {
+
     stage('🔄 Clean Workspace') {
       steps {
         deleteDir()

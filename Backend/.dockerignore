@@ -8,3 +8,5 @@ Dockerfile
 *.log
 .env.*
 .idea
+*.DS_Store
+.yarn/cache
