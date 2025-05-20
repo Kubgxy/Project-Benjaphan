@@ -3,7 +3,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 
-
 // Model
 // import User from "../Models/User";
 import User from "../Models_GPT/User";
@@ -20,19 +19,30 @@ export const registerUser = async (
   const { firstName, lastName, email, password, phoneNumber, addresses } =
     req.body;
 
-  if (!firstName || !lastName || !email || !password) {
-    res
-      .status(400)
-      .json({ message: "❌ Please provide name, email, and password" });
+  // ✅ ตรวจว่ากรอกข้อมูลขั้นต่ำ
+  if (!firstName || !lastName || !email || !password || !phoneNumber) {
+    res.status(400).json({
+      message: "❌ Please provide name, email, phone number, and password",
+    });
     return;
   }
 
   try {
-    const existingUser = await User.findOne({
+    // ✅ ตรวจอีเมลซ้ำ
+    const existingEmail = await User.findOne({
       email: email.toLowerCase().trim(),
     });
-    if (existingUser) {
+    if (existingEmail) {
       res.status(400).json({ message: "❌ Email already exists" });
+      return;
+    }
+
+    // ✅ ตรวจเบอร์โทรศัพท์ซ้ำ
+    const existingPhone = await User.findOne({
+      phoneNumber: phoneNumber.trim(),
+    });
+    if (existingPhone) {
+      res.status(400).json({ message: "❌ Phone number already exists" });
       return;
     }
 
@@ -44,23 +54,17 @@ export const registerUser = async (
       lastName,
       email: email.toLowerCase().trim(),
       password: hashedPassword,
-      phoneNumber,
+      phoneNumber: phoneNumber.trim(),
       addresses,
       provider: "local",
     });
     await newUser.save();
 
-    const existingCart = await Cart.findOne({ userId: newUser._id });
-    const cart = existingCart || new Cart({ userId: newUser._id });
-    if (!existingCart) {
-      await cart.save();
-    }
-
-    const existingWishlist = await Wishlist.findOne({ userId: newUser._id });
-    const wishlist = existingWishlist || new Wishlist({ userId: newUser._id });
-    if (!existingWishlist) {
-      await wishlist.save();
-    }
+    // ✅ สร้างตะกร้าและ Wishlist
+    const cart = new Cart({ userId: newUser._id });
+    const wishlist = new Wishlist({ userId: newUser._id });
+    await cart.save();
+    await wishlist.save();
 
     newUser.cartId = cart._id;
     newUser.wishlistId = wishlist._id;
@@ -73,8 +77,8 @@ export const registerUser = async (
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         email: newUser.email,
-        role: newUser.role,
         phoneNumber: newUser.phoneNumber,
+        role: newUser.role,
         addresses: newUser.addresses,
         cartId: newUser.cartId,
         wishlistId: newUser.wishlistId,
@@ -203,16 +207,59 @@ export const updateMe = async (
   _next: NextFunction
 ): Promise<void> => {
   try {
-    const { firstName, lastName, email } = req.body;
+    const { firstName, lastName, email, phoneNumber } = req.body;
+
+    // ✅ ตรวจ phone format ก่อนเลย
+    if (phoneNumber && !/^\d{9,10}$/.test(phoneNumber)) {
+      res.status(400).json({ message: "เบอร์โทรศัพท์ไม่ถูกต้อง (ต้องมี 9–10 หลัก)" });
+      return;
+    }
+
+    // ✅ ตรวจ email format
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      res.status(400).json({ message: "รูปแบบอีเมลไม่ถูกต้อง" });
+      return;
+    }
+
+    // ✅ ตรวจ email ซ้ำ (ยกเว้นของตัวเอง)
+    const existingEmail = await User.findOne({
+      email: email.toLowerCase().trim(),
+      _id: { $ne: req.user?.userId },
+    });
+    if (existingEmail) {
+      res.status(400).json({ message: "อีเมลนี้ถูกใช้งานแล้ว" });
+      return;
+    }
+
+    // ✅ ตรวจ phoneNumber ซ้ำ (ยกเว้นของตัวเอง)
+    if (phoneNumber) {
+      const existingPhone = await User.findOne({
+        phoneNumber: phoneNumber.trim(),
+        _id: { $ne: req.user?.userId },
+      });
+      if (existingPhone) {
+        res.status(400).json({ message: "เบอร์โทรศัพท์นี้ถูกใช้งานแล้ว" });
+        return;
+      }
+    }
+
+    // ✅ เตรียมข้อมูลอัปเดต
     const avatar = req.file
       ? `/uploads/avatars/${req.file.filename}`
       : undefined;
 
-    const updateData: any = { firstName, lastName, email };
+    const updateData: any = {
+      firstName,
+      lastName,
+      email: email?.toLowerCase().trim(),
+      phoneNumber: phoneNumber?.trim(),
+    };
+
     if (avatar) {
       updateData.avatar = avatar;
     }
 
+    // ✅ อัปเดตข้อมูล
     const updatedUser = await User.findByIdAndUpdate(
       req.user?.userId,
       updateData,
@@ -220,16 +267,20 @@ export const updateMe = async (
     ).select("-password");
 
     if (!updatedUser) {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: "ไม่พบผู้ใช้งาน" });
+      return;
     }
 
-    res
-      .status(200)
-      .json({ message: "Profile updated successfully", user: updatedUser });
+    res.status(200).json({
+      message: "อัปเดตข้อมูลสำเร็จ",
+      user: updatedUser,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    console.error("❌ Update error:", error);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในระบบ", error });
   }
 };
+
 
 //Get Address
 export const getAddress = async (
@@ -255,8 +306,16 @@ export const addAddress = async (
   _next: NextFunction
 ): Promise<void> => {
   try {
-    const { Name, label, addressLine, city, province, postalCode, country, phone } =
-      req.body;
+    const {
+      Name,
+      label,
+      addressLine,
+      city,
+      province,
+      postalCode,
+      country,
+      phone,
+    } = req.body;
     const userId = req.user?.userId;
 
     if (
@@ -295,12 +354,10 @@ export const addAddress = async (
       return;
     }
 
-    res
-      .status(200)
-      .json({
-        message: "✅ Address added successfully",
-        addresses: updatedUser.addresses,
-      });
+    res.status(200).json({
+      message: "✅ Address added successfully",
+      addresses: updatedUser.addresses,
+    });
   } catch (error) {
     res.status(500).json({ message: "❌ Server error", error });
   }
@@ -309,8 +366,16 @@ export const addAddress = async (
 // Update Address
 export const updateAddress = async (req: Request, res: Response) => {
   try {
-    const { Name, addressLine, city, province, postalCode, country, label, phone } =
-      req.body;
+    const {
+      Name,
+      addressLine,
+      city,
+      province,
+      postalCode,
+      country,
+      label,
+      phone,
+    } = req.body;
     const userId = req.user?.userId;
     const addressId = req.params.addressId;
 
@@ -353,12 +418,10 @@ export const updateAddress = async (req: Request, res: Response) => {
       return;
     }
 
-    res
-      .status(200)
-      .json({
-        message: "✅ Address updated successfully",
-        addresses: updatedUser.addresses,
-      });
+    res.status(200).json({
+      message: "✅ Address updated successfully",
+      addresses: updatedUser.addresses,
+    });
   } catch (error) {
     res.status(500).json({ message: "❌ Server error", error });
   }
@@ -381,12 +444,10 @@ export const deleteAddress = async (req: Request, res: Response) => {
       return;
     }
 
-    res
-      .status(200)
-      .json({
-        message: "✅ Address deleted successfully",
-        addresses: updatedUser.addresses,
-      });
+    res.status(200).json({
+      message: "✅ Address deleted successfully",
+      addresses: updatedUser.addresses,
+    });
   } catch (error) {
     res.status(500).json({ message: "❌ Server error", error });
   }
@@ -414,23 +475,26 @@ export const subscribeNewsletter = async (req: Request, res: Response) => {
 
     if (!userId) {
       res.status(401).json({ message: "กรุณาเข้าสู่ระบบก่อน" });
-      return 
+      return;
     }
 
     if (!email) {
       res.status(400).json({ message: "กรุณาระบุอีเมล" });
-      return 
+      return;
     }
 
     // ✅ ตรวจสอบว่าเคยสมัครแล้วหรือยัง
     const existing = await Member.findOne({ userId });
     if (existing) {
       res.status(409).json({ message: "คุณสมัครรับข่าวสารแล้ว" });
-      return 
+      return;
     }
 
     // ✅ สมัครใหม่
-    const newMember = new Member({  userId: new mongoose.Types.ObjectId(userId), email });
+    const newMember = new Member({
+      userId: new mongoose.Types.ObjectId(userId),
+      email,
+    });
     await newMember.save();
 
     res.status(201).json({ message: "สมัครรับข่าวสารสำเร็จ" });
@@ -446,7 +510,7 @@ export const getAllNewsletterMembers = async (req: Request, res: Response) => {
     const role = req.user?.role;
     if (role !== "admin") {
       res.status(403).json({ message: "คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้" });
-      return 
+      return;
     }
 
     const members = await Member.find()

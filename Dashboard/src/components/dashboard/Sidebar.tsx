@@ -66,10 +66,10 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, toggleCollapse }) => {
           badge: orderCount,
         },
         {
-          label: "ลูกค้า", 
+          label: "ลูกค้า",
           icon: Users,
-          href: "#", 
-          isDropdown: true, 
+          href: "#",
+          isDropdown: true,
         },
       ],
     },
@@ -93,7 +93,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, toggleCollapse }) => {
           href: "/dashboard/notifications",
           badge: notificationCount,
         },
-        
       ],
     },
     {
@@ -199,11 +198,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, toggleCollapse }) => {
                         )}
                       >
                         <item.icon size={20} />
-                        {!collapsed && <span className="flex-1">ลูกค้า</span>}
+                        {!collapsed && <span className="mr-[112px]">ลูกค้า</span>}
                         {!collapsed && (
                           <ChevronRight
                             className={cn(
-                              "transition-transform",
+                              "transition-transform justify-end  group-hover:rotate-90",
                               customerOpen && "rotate-90"
                             )}
                             size={16}

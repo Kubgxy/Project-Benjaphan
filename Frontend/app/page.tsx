@@ -47,8 +47,28 @@ export default function Home() {
   });
 
   const [currentSlide, setCurrentSlide] = useState(0);
-
   const [dotCount, setDotCount] = useState(0);
+
+  const [bannerContent, setBannerContent] = useState<{
+    bannerTitle: string;
+    bannerSubtitle: string;
+    bannerDescription: string;
+    bannerImage: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchHomepageContent = async () => {
+      try {
+        const res = await axios.get(`${getBaseUrl()}/api/setting/getHomepage`);
+        const data = res.data.homepage;
+        setBannerContent(data);
+      } catch (err) {
+        console.error("Failed to fetch homepage content", err);
+      }
+    };
+
+    fetchHomepageContent();
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -130,27 +150,28 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative w-full min-h-[60vh] sm:min-h-[70vh] md:min-h-[90vh] flex items-center">
         <div className="absolute inset-0 z-0">
-          <Image
-            src="/bg/ChatGPT Image 30 เม.ย. 2568 05_00_23.png"
-            alt="เครื่องประดับทองคำแท้"
-            fill
-            className="object-cover object-center sm:object-top"
-            priority
-          />
+          {bannerContent?.bannerImage && (
+            <Image
+              src={`${getBaseUrl()}/${bannerContent.bannerImage}`}
+              alt="หน้าแรก"
+              fill
+              className="object-cover object-center sm:object-top"
+              priority
+            />
+          )}
           <div className="absolute inset-0 bg-black bg-opacity-40"></div>
         </div>
 
         {/* ตรงนี้ค่อยใส่ container ข้างใน ไม่ล้อมทั้ง section */}
         <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 text-center sm:text-left max-w-screen-xl mx-auto ">
           <h1 className="text-3xl text-gold-600 sm:text-4xl md:text-6xl font-charm font-semibold mb-6 leading-tight">
-            เบญจภัณฑ์ ๕
+            {bannerContent?.bannerTitle}
           </h1>
           <h2 className="text-2xl font-charm sm:text-3xl md:text-4xl text-gold-600 mb-6 leading-tight">
-            ของดีมีศรัทธา เสริมบุญหนา วาสนาเปล่งประกาย
+            {bannerContent?.bannerSubtitle}
           </h2>
           <p className="text-base font-charm sm:text-lg mb-6 text-white/90 font-light">
-            เปล่งประกายทั้งภายนอกและภายใน เสริมโชคลาภ ดึงดูดความสำเร็จ
-            ให้ชีวิตงดงามทุกก้าว
+            {bannerContent?.bannerDescription}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center sm:justify-start">
             <Button

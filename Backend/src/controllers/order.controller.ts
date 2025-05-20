@@ -320,53 +320,69 @@ export const getAllOrders: RequestHandler = async (_req, res) => {
 
 
 // ✅ PATCH /api/order/updateStatus/:orderId
-export const updateOrderStatus = async (req: Request, res : Response) => {
+export const updateOrderStatus = async (req: Request, res: Response) => {
   const { orderId } = req.params;
-  const { status } = req.body;  // ✅ 'confirmed', 'shipped', 'delivered', 'cancelled'
+  const { status, trackingNumber, carrier } = req.body;
 
-  if (!['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'].includes(status)) {
-    res.status(400).json({ success: false, message: 'Invalid status' });
-    return 
+  if (
+    !["pending", "confirmed", "shipped", "delivered", "cancelled"].includes(
+      status
+    )
+  ) {
+    res.status(400).json({ success: false, message: "Invalid status" });
+    return;
   }
 
   try {
     const order = await Order.findById(orderId);
 
     if (!order) {
-      res.status(404).json({ success: false, message: 'Order not found' });
-      return 
+      res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+      return;
     }
 
-    // ✅ เงื่อนไขตรวจสอบถ้าจำเป็น (เช่นห้ามกระโดด step)
     const validTransitions: Record<string, string[]> = {
-      pending: ['confirmed', 'cancelled'],
-      confirmed: ['shipped', 'cancelled'],
-      shipped: ['delivered'],
-      delivered: [],  // สุดทางแล้ว
-      cancelled: [],  // ไม่เปลี่ยนอะไรแล้ว
+      pending: ["confirmed", "cancelled"],
+      confirmed: ["shipped", "cancelled"],
+      shipped: ["delivered"],
+      delivered: [],
+      cancelled: [],
     };
 
     const currentStatus = order.orderStatus;
     const nextValidStatuses = validTransitions[currentStatus];
 
     if (!nextValidStatuses || !nextValidStatuses.includes(status)) {
-      res.status(400).json({ success: false, message: 'Invalid status transition' });
-      return 
+      res
+        .status(400)
+        .json({ success: false, message: "Invalid status transition" });
+      return;
     }
 
-    // ✅ อัปเดตสถานะ
+    // ✅ เปลี่ยนสถานะหลัก
     order.orderStatus = status;
 
-    // ✅ อัปเดต payment.status ให้สัมพันธ์ด้วย
+    // ✅ อัปเดตข้อมูลพัสดุถ้ามี
+    if (status === "shipped" && trackingNumber && carrier) {
+      order.deliveryTracking = {
+        trackingNumber,
+        carrier,
+        status: "shipped",
+      };
+    }
+
+    // ✅ จัดการ payment สัมพันธ์กัน
     if (!order.payment) {
-      order.payment = { method: "online", status: "pending" };  // fallback เผื่อไม่มี
+      order.payment = { method: "online", status: "pending" };
     }
 
     if (status === "confirmed") {
-      order.payment.status = "paid";  // ✅ เมื่อยืนยันคำสั่งซื้อ → ถือว่าชำระแล้ว
+      order.payment.status = "paid";
       order.payment.paidAt = new Date();
     } else if (status === "cancelled") {
-      order.payment.status = "failed";  // ✅ ยกเลิก → เปลี่ยน payment ให้ล้มเหลว
+      order.payment.status = "failed";
     }
 
     await order.save();
@@ -377,10 +393,13 @@ export const updateOrderStatus = async (req: Request, res : Response) => {
       order,
     });
   } catch (error) {
-    console.error('Error updating order status:', error);
-    res.status(500).json({ success: false, message: 'Server error', error });
+    console.error("Error updating order status:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error });
   }
 };
+
 
 // controllers/orderController.ts
 export const getPendingOrderCount = async (req: Request, res: Response) => {
