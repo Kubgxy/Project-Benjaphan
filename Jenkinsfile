@@ -2,20 +2,18 @@ pipeline {
   agent any
 
   options {
-    skipDefaultCheckout()
+    skipDefaultCheckout() // ❌ ไม่ให้ Jenkins checkout ก่อนเรา clean เอง
   }
 
   parameters {
-    booleanParam(name: 'USE_NO_CACHE', defaultValue: false, description: 'ใช้ --no-cache หรือไม่')
-  }
-
-  environment {
-    DOCKER_BUILDKIT = '1'
-    COMPOSE_DOCKER_CLI_BUILD = '1'
+    booleanParam(
+      name: 'USE_NO_CACHE',
+      defaultValue: false,
+      description: 'เลือกว่าจะใช้ --no-cache หรือไม่'
+    )
   }
 
   stages {
-
     stage('🔄 Clean Workspace') {
       steps {
         deleteDir()
@@ -46,11 +44,23 @@ pipeline {
       }
     }
 
-    stage('♻️ Docker Down') {
+    stage('🧪 Check nginx.conf & cert') {
       steps {
         dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
-          sh 'docker-compose down --remove-orphans || true'
+          sh '''
+            echo "📄 nginx.conf:"
+            ls -l nginx/nginx.conf || echo "❌ nginx.conf not found"
+
+            echo "📁 cert folder tree:"
+            ls -lhR nginx/cert || echo "❌ cert folder not found"
+          '''
         }
+      }
+    }
+
+    stage('♻️ Docker Down') {
+      steps {
+        sh 'docker-compose down --remove-orphans || true'
       }
     }
 
@@ -58,16 +68,7 @@ pipeline {
       steps {
         dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
           script {
-            def markerFile = '/opt/jenkins_marker/.built_once'
-            def useNoCache = !fileExists(markerFile) || params.USE_NO_CACHE
-            def composeCmd = useNoCache ? 'docker-compose build --no-cache' : 'docker-compose build'
-
-            echo "🧠 Using no-cache: ${useNoCache}"
-
-            if (useNoCache) {
-              writeFile file: markerFile, text: "✅ Built at: ${new Date()}"
-            }
-
+            def composeCmd = params.USE_NO_CACHE ? 'docker-compose build --no-cache' : 'docker-compose build'
             withEnv([
               "MONGODB_URI=${env.MONGODB_URI}",
               "PORT=${env.PORT}",
@@ -101,15 +102,6 @@ pipeline {
             sh 'docker-compose up -d'
           }
         }
-      }
-    }
-
-    stage('🧹 Docker Cleanup') {
-      steps {
-        sh '''
-          docker image prune -af --filter "until=24h"
-          docker builder prune -af || true
-        '''
       }
     }
   }
