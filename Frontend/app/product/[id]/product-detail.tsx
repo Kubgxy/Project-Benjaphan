@@ -8,13 +8,12 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Heart,
-  Share2,
   Star,
   Minus,
   Plus,
   Check,
 } from "lucide-react";
-import type { Product } from "@/lib/types";
+import { Product } from "@/lib/types";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/utils";
@@ -24,28 +23,23 @@ import { useRouter } from "next/navigation";
 import ShareProductButton from "@/components/ShareProductButton";
 import { getBaseUrl } from "@/lib/api";
 
-interface ProductDetailProps {
-  product: Product;
-  relatedProducts: Product[];
+interface Props {
+  id: string;
 }
 
-export function ProductDetail({
-  product,
-  relatedProducts,
-}: { params: { id: string } } & ProductDetailProps) {
+export function ProductDetail({ id }: Props) {
+  const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [addedToCart, setAddedToCart] = useState(false);
   const { toast } = useToast();
-  const router = useRouter();
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-
-  const selectedSizeObj = product.availableSizes?.find(
-    (sizeObj) => sizeObj.size === selectedSize
-  );
-  const availableStock = selectedSizeObj ? selectedSizeObj.quantity : 0;
   const [isInWishlist, setIsInWishlist] = useState(false);
 
   const [selectedRating, setSelectedRating] = useState<number>(0);
@@ -54,6 +48,7 @@ export function ProductDetail({
   const [averageRating, setAverageRating] = useState<number>(0);
   const [totalReviews, setTotalReviews] = useState<number>(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   interface Review {
     userId?: { firstName: string; lastName: string; avatar: string };
@@ -61,11 +56,15 @@ export function ProductDetail({
     rating: number;
     comment: string;
   }
+
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewComment, setReviewComment] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const reviewsPerPage = 5; // จำนวนรีวิวต่อหน้า
+  const reviewsPerPage = 5;
+
+  const availableStock = product?.availableSizes?.find(
+    (sizeObj) => sizeObj.size === selectedSize
+  )?.quantity ?? 0;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -82,12 +81,74 @@ export function ProductDetail({
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(`${getBaseUrl()}/api/product/getOneProducts/${id}`, {
+          credentials: "include",
+          cache: "no-store",
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.product) {
+          router.push("/404");
+          return;
+        }
+
+        const parsedProduct = {
+          ...data.product,
+          id: data.product.id_product,
+          formattedPrice: `฿${data.product.price.toFixed(2)}`,
+          isNew: data.product.isNewArrival || false,
+          materials: data.product.materials || [],
+          features: data.product.features || [],
+        };
+
+        const parsedRelated = (data.relatedProducts || []).map((item: any) => ({
+          ...item,
+          id: item.id_product,
+          formattedPrice: `฿${item.price.toFixed(2)}`,
+          isNew: item.isNewArrival || false,
+          materials: item.materials || [],
+          features: item.features || [],
+        }));
+
+        setProduct(parsedProduct);
+        setRelatedProducts(parsedRelated);
+        setLoading(false);
+      } catch (error) {
+        console.error("❌ Fetch failed:", error);
+        router.push("/404");
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  useEffect(() => {
+    if (!product) return;
+    const selected = product.availableSizes?.find(
+      (sizeObj) => sizeObj.size === selectedSize
+    );
+    setQuantity(selected?.quantity ? 1 : 0);
+  }, [selectedSize, product]);
+
+  const incrementQuantity = () => {
+    if (quantity < availableStock) setQuantity(quantity + 1);
+  };
+
+  const decrementQuantity = () => {
+    if (quantity > 1) setQuantity(quantity - 1);
+  };
+
   const handleAddToCart = async () => {
-    if (!selectedSize) {
+    if (!selectedSize || !product) {
       toast({ title: "⚠️ กรุณาเลือกขนาดสินค้า", variant: "destructive" });
       return;
     }
-    if (isAddingToCart) return; // กันกดรัว
+
+    if (isAddingToCart) return;
     setIsAddingToCart(true);
 
     try {
@@ -95,142 +156,39 @@ export function ProductDetail({
         `${getBaseUrl()}/api/cart/addToCart`,
         {
           productId: product.id_product,
-          quantity: quantity, // ✅ ส่ง quantity ที่เลือก
-          size: selectedSize, // ✅ ส่ง size ที่เลือก
+          quantity,
+          size: selectedSize,
         },
-        {
-          withCredentials: true, // ✅ สำคัญ! เพื่อส่ง cookie-based token ไป backend
-        }
+        { withCredentials: true }
       );
 
-      if (!selectedSize) {
-        toast({ title: "⚠️ กรุณาเลือกขนาดสินค้า", variant: "destructive" });
-        return;
-      }
-
-      if (availableStock <= 0) {
-        toast({ title: "❌ สินค้าหมดสต็อก", variant: "destructive" });
-        return;
-      }
-
       if (quantity > availableStock) {
-        toast({ title: "❌ จำนวนเกินสต็อกที่มี", variant: "destructive" });
+        toast({ title: "❌ จำนวนเกินสต็อก", variant: "destructive" });
         return;
       }
 
       setAddedToCart(true);
       toast({ title: "✅ เพิ่มสินค้าลงตะกร้าสำเร็จ!" });
 
-      setTimeout(() => {
-        setAddedToCart(false);
-      }, 3000);
+      setTimeout(() => setAddedToCart(false), 3000);
     } catch (error: any) {
       console.error("❌ Error adding to cart:", error);
-      if (
-        error.response?.status === 401 ||
-        error.response?.data?.message === "No token provided"
-      ) {
+      if (error.response?.status === 401) {
         setShowLoginModal(true);
-        return; // ไม่ต้องขึ้น toast อีก
+        return;
       }
-
       toast({
-        title: "❌ ไม่สามารถเพิ่มสินค้าลงตะกร้าได้",
-        description:
-          error.response?.data?.message ||
-          "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
+        title: "❌ ไม่สามารถเพิ่มลงตะกร้าได้",
+        description: error.response?.data?.message || "โปรดลองอีกครั้ง",
         variant: "destructive",
       });
     } finally {
-      setIsAddingToCart(false); // รีเซ็ตสถานะการเพิ่มลงตะกร้า
-    }
-  };
-
-  useEffect(() => {
-    const selected = product.availableSizes?.find(
-      (sizeObj) => sizeObj.size === selectedSize
-    );
-    if (selected) {
-      setQuantity(selected.quantity > 0 ? 1 : 0);
-    } else {
-      setQuantity(0);
-    }
-  }, [selectedSize]);
-
-  const incrementQuantity = () => {
-    const selectedSizeObj = product.availableSizes?.find(
-      (sizeObj) => sizeObj.size === selectedSize
-    );
-    const availableStock = selectedSizeObj ? selectedSizeObj.quantity : 0;
-
-    if (quantity < availableStock) {
-      setQuantity(quantity + 1);
-    }
-  };
-
-  const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
-    }
-  };
-
-  // ✅ ตรวจสอบว่ามีสินค้านี้ใน wishlist หรือยัง
-  const checkWishlistStatus = async () => {
-    try {
-      const response = await axios.get(
-        `${getBaseUrl()}/api/wishlist/getWishlist`,
-        { withCredentials: true }
-      );
-      const wishlistItems = response.data.wishlist?.products || [];
-      const exists = wishlistItems.some(
-        (item: any) =>
-          (item.productId && item.productId === product._id) ||
-          (item.productId && item.productId._id === product._id)
-      );
-      setIsInWishlist(exists);
-    } catch (error) {
-      console.error("Error checking wishlist:", error);
-    }
-  };
-
-  useEffect(() => {
-    checkWishlistStatus();
-  }, []);
-
-  const handleWishlist = async () => {
-    try {
-      if (isInWishlist) {
-        await axios.post(
-          `${getBaseUrl()}/api/wishlist/removeFromWishlist`,
-          { productId: product._id },
-          { withCredentials: true }
-        );
-        toast({ title: "💔 ลบออกจากรายการโปรดแล้ว" });
-      } else {
-        await axios.post(
-          `${getBaseUrl()}/api/wishlist/addToWishlist`,
-          { productId: product._id },
-          { withCredentials: true }
-        );
-        toast({ title: "❤️ เพิ่มลงในรายการโปรดแล้ว", duration: 3000 });
-        console.log("ส่งไปเพิ่ม wishlist:", product._id);
-      }
-      checkWishlistStatus(); // ✅ Refresh สถานะ
-    } catch (error) {
-      console.error("Error updating wishlist:", error);
-      if (axios.isAxiosError(error)) {
-        if (
-          error.response?.status === 401 ||
-          error.response?.data?.message === "No token provided"
-        ) {
-          setShowLoginModal(true);
-          return;
-        }
-      }
+      setIsAddingToCart(false);
     }
   };
 
   const fetchProductReviews = async (page = 1) => {
+    if (!product) return;
     try {
       const res = await axios.get(
         `${getBaseUrl()}/api/review/getReviews/${product._id}?page=${page}&limit=${reviewsPerPage}`
@@ -244,14 +202,13 @@ export function ProductDetail({
   };
 
   useEffect(() => {
-    fetchProductReviews();
-  }, [product._id]);
+    if (product) fetchProductReviews();
+  }, [product?._id]);
 
   const fetchAverageRating = async () => {
+    if (!product) return;
     try {
-      const res = await axios.get(
-        `${getBaseUrl()}/api/review/average/${product._id}`
-      );
+      const res = await axios.get(`${getBaseUrl()}/api/review/average/${product._id}`);
       setAverageRating(res.data.averageRating);
       setTotalReviews(res.data.totalReviews);
     } catch (error) {
@@ -259,76 +216,76 @@ export function ProductDetail({
     }
   };
 
+  useEffect(() => {
+    if (isLoggedIn && product) {
+      fetchAverageRating();
+      fetchUserRating();
+    } else if (product) {
+      fetchAverageRating();
+    }
+  }, [product?._id, isLoggedIn]);
+
+  const fetchUserRating = async () => {
+    if (!product || !isLoggedIn) return;
+    try {
+      const res = await axios.get(`${getBaseUrl()}/api/review/user-rating/${product._id}`, {
+        withCredentials: true,
+      });
+      setSelectedRating(res.data.rating);
+    } catch (error) {
+      console.error("ไม่สามารถโหลดคะแนนของผู้ใช้ได้", error);
+    }
+  };
+
   const handleSubmitReview = async (rating: number, comment: string) => {
-    if (isSubmitting) return;
+    if (!product || isSubmitting) return;
     setIsSubmitting(true);
 
     try {
-      if (comment.trim() === "" && rating > 0) {
-        // ส่งแค่ดาว
-        await axios.post(
-          `${getBaseUrl()}/api/review/addReview`,
-          { productId: product._id, rating },
-          { withCredentials: true }
-        );
-        toast({ title: "✅ ขอบคุณสำหรับการให้ดาว!" });
-      } else if (comment.trim() !== "" && rating > 0) {
-        // ส่งคอมเมนต์ + ดาว
-        await axios.post(
-          `${getBaseUrl()}/api/review/addReview`,
-          { productId: product._id, rating, comment },
-          { withCredentials: true }
-        );
-        toast({ title: "✅ ขอบคุณสำหรับการรีวิว!", duration: 3000 });
-        setReviewComment("");
-      }
+      await axios.post(
+        `${getBaseUrl()}/api/review/addReview`,
+        { productId: product._id, rating, comment },
+        { withCredentials: true }
+      );
+      toast({ title: "✅ ขอบคุณสำหรับรีวิว!" });
+      setReviewComment("");
       fetchAverageRating();
       fetchProductReviews();
-    } catch (error: any) {
-      console.error("❌ Error submitting review:", error);
-      if (axios.isAxiosError(error)) {
-        if (
-          error.response?.status === 401 ||
-          error.response?.data?.message === "No token provided"
-        ) {
-          setShowLoginModal(true);
-          return;
-        }
-      }
-      toast({
-        title: "❌ ไม่สามารถส่งรีวิวได้",
-        description:
-          error.response?.data?.message ||
-          "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
-        variant: "destructive",
-        duration: 3000,
-      });
+    } catch (error) {
+      console.error("Error submitting review:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const fetchUserRating = async () => {
-    if (!isLoggedIn) return;
+  const handleWishlist = async () => {
+    if (!product) return;
+
+    if (!isLoggedIn) {
+    setShowLoginModal(true);
+    return;
+  }
+
     try {
-      const res = await axios.get(
-        `${getBaseUrl()}/api/review/user-rating/${product._id}`,
-        { withCredentials: true }
-      );
-      setSelectedRating(res.data.rating); // ⭐ preload คะแนนที่ user เคยให้
+      const url = isInWishlist
+        ? `${getBaseUrl()}/api/wishlist/removeFromWishlist`
+        : `${getBaseUrl()}/api/wishlist/addToWishlist`;
+
+      await axios.post(url, { productId: product._id }, { withCredentials: true });
+
+      toast({
+        title: isInWishlist ? "💔 ลบออกจากรายการโปรดแล้ว" : "❤️ เพิ่มลงในรายการโปรดแล้ว",
+        duration: 3000,
+      });
+      setIsInWishlist(!isInWishlist);
     } catch (error) {
-      console.error("❌ ไม่สามารถโหลดคะแนนของผู้ใช้ได้", error);
+      console.error("Error updating wishlist:", error);
     }
   };
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      fetchAverageRating();
-      fetchUserRating(); // โหลดคะแนนของ user (กันกดซ้ำ)
-    } else {
-      fetchAverageRating(); // แค่โหลดค่าเฉลี่ยพอ
-    }
-  }, [product._id, isLoggedIn]);
+  if (loading || !product) {
+    return <div className="py-10 text-center">⏳ กำลังโหลดสินค้า...</div>;
+  }
 
   return (
     <Fragment>

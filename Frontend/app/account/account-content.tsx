@@ -118,6 +118,12 @@ export function AccountContent() {
     }
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    if (activeTab === "profile" && isAuthenticated) {
+      refreshUser();
+    }
+  }, [activeTab, isAuthenticated]);
+
   const refreshUser = async () => {
     try {
       const res = await fetch(`${getBaseUrl()}/api/user/getUserProfile`, {
@@ -186,7 +192,7 @@ export function AccountContent() {
             ?.filter((item: any) => item.productId !== null) // 🛠 กรอง null
             .map((item: any) => ({
               ...item.productId,
-               // ✅ populate result
+              // ✅ populate result
               id_product: item.productId?.id_product,
               size: item.size,
               quantity: item.quantity,
@@ -668,14 +674,21 @@ export function AccountContent() {
                         type="text"
                         placeholder="เบอร์โทรศัพท์"
                         value={newAddress.phone}
-                        onChange={(e) =>
-                          setNewAddress({
-                            ...newAddress,
-                            phone: e.target.value,
-                          })
-                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // ✅ อนุญาตเฉพาะตัวเลข และไม่เกิน 10 ตัว
+                          if (/^\d{0,10}$/.test(value)) {
+                            setNewAddress({
+                              ...newAddress,
+                              phone: value,
+                            });
+                          }
+                        }}
                         className="w-full border rounded px-3 py-2"
+                        inputMode="numeric"
+                        pattern="\d*"
                       />
+
                       <input
                         type="text"
                         placeholder="สถานที่ (บ้าน, ออฟฟิศ)"
@@ -941,9 +954,7 @@ export function AccountContent() {
                               <Button
                                 variant="destructive"
                                 size="icon"
-                                onClick={() =>
-                                  handleRemoveWishlist(item._id)
-                                }
+                                onClick={() => handleRemoveWishlist(item._id)}
                               >
                                 <Trash className="w-4 h-4" />
                               </Button>

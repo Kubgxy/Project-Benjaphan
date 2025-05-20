@@ -348,20 +348,20 @@ const Articles = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Articles</h1>
+        <h1 className="text-2xl font-bold">บทความ</h1>
         <Button 
           onClick={() => openArticleDialog(null, 'create')} 
           className="flex items-center gap-2"
         >
           <Plus size={16} />
-          Create Article
+          เพิ่มบทความ
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Articles</CardTitle>
+            <CardTitle className="text-sm font-medium">บทความทั้งหมด</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{articles.length}</div>
@@ -369,7 +369,7 @@ const Articles = () => {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Published Articles</CardTitle>
+            <CardTitle className="text-sm font-medium">บทความเผยแพร่</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
@@ -379,7 +379,7 @@ const Articles = () => {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Draft Articles</CardTitle>
+            <CardTitle className="text-sm font-medium">บทความไม่เผยแพร่</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">

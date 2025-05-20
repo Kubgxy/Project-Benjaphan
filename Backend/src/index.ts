@@ -52,6 +52,7 @@ app.use(bodyParser.json({
   import order from './routes/order.route';
   import contact from './routes/contact.route';
   import notification from './routes/notification.route';
+  import setting from './routes/setting.route';
 
   // Use routes
   app.use('/api/auth', auth);
@@ -64,6 +65,7 @@ app.use(bodyParser.json({
   app.use('/api/order', order);
   app.use('/api/contact', contact);
   app.use('/api/notifications', notification);
+  app.use('/api/setting', setting);
   
 
 
