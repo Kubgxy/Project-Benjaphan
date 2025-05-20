@@ -1,8 +1,11 @@
 pipeline {
-  agent any
+  agent {
+    label 'master' // หรือ node ที่น้องใช้
+    customWorkspace '/opt/jenkins_workspace/Benjaphan-Deploy'
+  }
 
   options {
-    skipDefaultCheckout() // ✅ ไม่ checkout อัตโนมัติ เพราะเราจะทำเองใน dir กำหนด
+    skipDefaultCheckout()
   }
 
   parameters {
@@ -16,9 +19,7 @@ pipeline {
   stages {
     stage('📥 Checkout Source Code') {
       steps {
-        dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
-          checkout scm
-        }
+        checkout scm
       }
     }
 
@@ -40,37 +41,14 @@ pipeline {
 
     stage('♻️ Docker Down') {
       steps {
-        dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
-          sh 'docker-compose down --remove-orphans || true'
-        }
+        sh 'docker-compose down --remove-orphans || true'
       }
     }
 
     stage('🐳 Docker Build') {
       steps {
-        dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
-          script {
-            def buildCmd = params.USE_NO_CACHE ? 'docker-compose build --no-cache' : 'docker-compose build'
-            withEnv([
-              "MONGODB_URI=${env.MONGODB_URI}",
-              "PORT=${env.PORT}",
-              "JWT_SECRET=${env.JWT_SECRET}",
-              "GOOGLE_CLIENT_ID=${env.GOOGLE_CLIENT_ID}",
-              "GOOGLE_CLIENT_SECRET=${env.GOOGLE_CLIENT_SECRET}",
-              "FACEBOOK_CLIENT_ID=${env.FACEBOOK_CLIENT_ID}",
-              "FACEBOOK_CLIENT_SECRET=${env.FACEBOOK_CLIENT_SECRET}",
-              "NODE_ENV=production"
-            ]) {
-              sh buildCmd
-            }
-          }
-        }
-      }
-    }
-
-    stage('🚀 Docker Up') {
-      steps {
-        dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
+        script {
+          def buildCmd = params.USE_NO_CACHE ? 'docker-compose build --no-cache' : 'docker-compose build'
           withEnv([
             "MONGODB_URI=${env.MONGODB_URI}",
             "PORT=${env.PORT}",
@@ -81,18 +59,33 @@ pipeline {
             "FACEBOOK_CLIENT_SECRET=${env.FACEBOOK_CLIENT_SECRET}",
             "NODE_ENV=production"
           ]) {
-            sh 'docker-compose up -d'
+            sh buildCmd
           }
+        }
+      }
+    }
+
+    stage('🚀 Docker Up') {
+      steps {
+        withEnv([
+          "MONGODB_URI=${env.MONGODB_URI}",
+          "PORT=${env.PORT}",
+          "JWT_SECRET=${env.JWT_SECRET}",
+          "GOOGLE_CLIENT_ID=${env.GOOGLE_CLIENT_ID}",
+          "GOOGLE_CLIENT_SECRET=${env.GOOGLE_CLIENT_SECRET}",
+          "FACEBOOK_CLIENT_ID=${env.FACEBOOK_CLIENT_ID}",
+          "FACEBOOK_CLIENT_SECRET=${env.FACEBOOK_CLIENT_SECRET}",
+          "NODE_ENV=production"
+        ]) {
+          sh 'docker-compose up -d'
         }
       }
     }
 
     stage('🧹 Docker Cleanup') {
       steps {
-        echo '🧼 Cleaning old Docker images and cache...'
-        sh '''
-          docker builder prune -af || true
-        '''
+        echo '🧼 Cleaning old Docker builder cache...'
+        sh 'docker builder prune -af || true'
       }
     }
   }
