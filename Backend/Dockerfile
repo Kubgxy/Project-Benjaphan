@@ -11,6 +11,7 @@ RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 
 # คัดลอกเฉพาะไฟล์ที่จำเป็นในการติดตั้ง dependency
 COPY package.json yarn.lock ./
+COPY .yarnrc.yml ./
 
 # ติดตั้ง dependencies โดยใช้ yarn
 # RUN yarn install --frozen-lockfile
@@ -18,6 +19,7 @@ RUN echo "✅ INSTALL START" && date && yarn install --frozen-lockfile && echo "
 
 # คัดลอก source code ทั้งหมด
 # COPY . .
+COPY tsconfig.json ./
 COPY src ./src
 
 # สร้าง production build
