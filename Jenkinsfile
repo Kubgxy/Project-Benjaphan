@@ -68,6 +68,30 @@ pipeline {
       }
     }
 
+    stage('📦 Warm Yarn Cache') {
+      steps {
+        script {
+          withEnv([
+            "MONGODB_URI=${env.MONGODB_URI}",
+            "PORT=${env.PORT}",
+            "JWT_SECRET=${env.JWT_SECRET}",
+            "GOOGLE_CLIENT_ID=${env.GOOGLE_CLIENT_ID}",
+            "GOOGLE_CLIENT_SECRET=${env.GOOGLE_CLIENT_SECRET}",
+            "FACEBOOK_CLIENT_ID=${env.FACEBOOK_CLIENT_ID}",
+            "FACEBOOK_CLIENT_SECRET=${env.FACEBOOK_CLIENT_SECRET}",
+            "NODE_ENV=production"
+          ]) {
+            sh '''
+              docker-compose run --rm backend yarn install || true
+              docker-compose run --rm frontend yarn install || true
+              docker-compose run --rm dashboard yarn install || true
+            '''
+            echo '📦 Warmed up yarn_cache'
+          }
+        }
+      }
+    }
+
     stage('🐳 Docker Build') {
       steps {
         dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
