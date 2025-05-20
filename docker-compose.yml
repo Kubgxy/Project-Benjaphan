@@ -6,9 +6,7 @@ services:
     build:
       context: ./Frontend
       dockerfile: Dockerfile
-      cache_from:
-        - benjaphan-frontend
-    image: benjaphan-frontend
+    image: benjaphan-frontend:latest
     restart: always
     networks:
       - benjaphan-network
@@ -27,9 +25,7 @@ services:
     build:
       context: ./Dashboard
       dockerfile: Dockerfile
-      cache_from:
-        - benjaphan-dashboard
-    image: benjaphan-dashboard
+    image: benjaphan-dashboard:latest
     restart: always
     networks:
       - benjaphan-network
@@ -48,9 +44,7 @@ services:
     build:
       context: ./Backend
       dockerfile: Dockerfile
-      cache_from:
-        - benjaphan-backend
-    image: benjaphan-backend
+    image: benjaphan-backend:latest
     restart: always
     environment:
       - MONGODB_URI=${MONGODB_URI}

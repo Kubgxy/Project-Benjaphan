@@ -38,19 +38,6 @@ pipeline {
       }
     }
 
-    stage('🧪 Check nginx.conf & cert') {
-      steps {
-        dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
-          sh '''
-            echo "📄 nginx.conf:"
-            ls -l nginx/nginx.conf
-            echo "📁 cert folder tree:"
-            ls -lhR nginx/cert
-          '''
-        }
-      }
-    }
-
     stage('♻️ Docker Down') {
       steps {
         dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
@@ -104,7 +91,6 @@ pipeline {
       steps {
         echo '🧼 Cleaning old Docker images and cache...'
         sh '''
-          docker image prune -af --filter "until=24h"
           docker builder prune -af || true
         '''
       }
