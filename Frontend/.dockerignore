@@ -6,3 +6,7 @@ Dockerfile
 .vscode
 .env
 .idea
+dist
+*.log
+*.DS_Store
+.yarn/cache

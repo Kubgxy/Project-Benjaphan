@@ -20,3 +20,7 @@ Thumbs.db
 # Env
 .env
 .env.*
+
+.git
+*.DS_Store
+.yarn/cache
