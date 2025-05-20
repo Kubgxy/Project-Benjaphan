@@ -36,6 +36,7 @@ build
 public/build
 
 .yarn/*
+!.yarn/cache
 !.yarn/releases
 !.yarn/plugins
 !.yarn/sdks

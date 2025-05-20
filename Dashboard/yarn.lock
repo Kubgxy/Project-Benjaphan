@@ -3248,10 +3248,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"date-fns@npm:^4.1.0":
-  version: 4.1.0
-  resolution: "date-fns@npm:4.1.0"
-  checksum: 10c0/b79ff32830e6b7faa009590af6ae0fb8c3fd9ffad46d930548fbb5acf473773b4712ae887e156ba91a7b3dc30591ce0f517d69fd83bd9c38650fdc03b4e0bac8
+"date-fns@npm:^3.0.0":
+  version: 3.6.0
+  resolution: "date-fns@npm:3.6.0"
+  checksum: 10c0/0b5fb981590ef2f8e5a3ba6cd6d77faece0ea7f7158948f2eaae7bbb7c80a8f63ae30b01236c2923cf89bb3719c33aeb150c715ea4fe4e86e37dcf06bed42fb6
   languageName: node
   linkType: hard
 
@@ -5994,13 +5994,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"q@npm:~0.9.6":
-  version: 0.9.7
-  resolution: "q@npm:0.9.7"
-  checksum: 10c0/288bf3e54e91fa06381819ff47ed5302d190ebd2d21da064573fffd10c240eff24db6cdf61df62ec5041aac7d7e90857db82fe0584e3acc97078c0b64b358182
-  languageName: node
-  linkType: hard
-
 "queue-microtask@npm:^1.2.2":
   version: 1.2.3
   resolution: "queue-microtask@npm:1.2.3"
@@ -6039,7 +6032,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:^18.3.1":
+"react-dom@npm:18.3.1":
   version: 18.3.1
   resolution: "react-dom@npm:18.3.1"
   dependencies:
@@ -6210,7 +6203,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:^18.3.1":
+"react@npm:18.3.1":
   version: 18.3.1
   resolution: "react@npm:18.3.1"
   dependencies:
@@ -6873,15 +6866,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"th@npm:^0.1.1":
-  version: 0.1.1
-  resolution: "th@npm:0.1.1"
-  dependencies:
-    q: "npm:~0.9.6"
-  checksum: 10c0/462bd7c03689263ef9e13e5e3a7761e39601a3efefaa7517c026c64ec4f7146efb98572d8b4c70322b5391c9119471ef210377635e9fccc67da66936a4af7885
-  languageName: node
-  linkType: hard
-
 "thenify-all@npm:^1.0.0":
   version: 1.6.0
   resolution: "thenify-all@npm:1.6.0"
@@ -7334,7 +7318,7 @@ __metadata:
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
     cmdk: "npm:^1.0.0"
-    date-fns: "npm:^4.1.0"
+    date-fns: "npm:^3.0.0"
     date-fns-tz: "npm:^3.2.0"
     embla-carousel-react: "npm:^8.3.0"
     eslint: "npm:^9.9.0"
@@ -7363,7 +7347,6 @@ __metadata:
     tailwind-merge: "npm:^2.5.2"
     tailwindcss: "npm:^3.4.11"
     tailwindcss-animate: "npm:^1.0.7"
-    th: "npm:^0.1.1"
     typescript: "npm:^5.5.3"
     typescript-eslint: "npm:^8.0.1"
     vaul: "npm:^0.9.3"

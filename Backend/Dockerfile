@@ -1,5 +1,5 @@
 # ========================
-# 1. Build Stage
+# 1. Build Stage Grok3
 # ========================
 FROM node:20-alpine AS builder
 
@@ -9,21 +9,21 @@ WORKDIR /app
 # ติดตั้ง Yarn 4 ด้วย Corepack
 RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 
-# คัดลอกเฉพาะไฟล์ที่จำเป็นในการติดตั้ง dependency
+# คัดลอกไฟล์ที่จำเป็นในการติดตั้ง dependency
 COPY package.json yarn.lock ./
 COPY .yarnrc.yml ./
+COPY .yarn .yarn
+
+# สร้างโฟลเดอร์สำหรับ cache
+RUN mkdir -p /app/.yarn/cache
 
 # ติดตั้ง dependencies โดยใช้ yarn
-# RUN yarn install --frozen-lockfile
-RUN echo "✅ INSTALL START" && date && yarn install --frozen-lockfile && echo "✅ INSTALL DONE" && date
+RUN echo "✅ INSTALL START" && date && yarn install --immutable --immutable-cache && echo "✅ INSTALL DONE" && date
 
 # คัดลอก source code ทั้งหมด
 COPY . .
-# COPY tsconfig.json ./
-# COPY src ./src
 
 # สร้าง production build
-# RUN yarn build
 RUN echo "✅ BUILD START" && date && yarn build && echo "✅ BUILD DONE" && date
 
 # ========================
@@ -32,17 +32,18 @@ RUN echo "✅ BUILD START" && date && yarn build && echo "✅ BUILD DONE" && dat
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-# ✅ ติดตั้ง Yarn 4 ด้วย Corepack
+# ติดตั้ง Yarn 4 ด้วย Corepack
 RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 
-# ✅ คัดลอกไฟล์ที่จำเป็นสำหรับ install production deps
+# คัดลอกไฟล์ที่จำเป็นสำหรับ install production deps
 COPY package.json yarn.lock ./
 COPY .yarnrc.yml ./.yarnrc.yml
+COPY .yarn ./.yarn
 
-# ✅ ติดตั้ง dependencies แบบ production (Yarn 4 Style)
-RUN yarn install --immutable
+# ติดตั้ง dependencies แบบ production
+RUN yarn install --production --immutable --immutable-cache
 
-# ✅ คัดลอก build output
+# คัดลอก build output
 COPY --from=builder /app/dist ./dist
 
 # เปิด port ที่ 3000

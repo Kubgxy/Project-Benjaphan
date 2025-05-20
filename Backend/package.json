@@ -1,6 +1,6 @@
 {
   "name": "backend",
-  "packageManager": "yarn@4.9.1",
+  "packageManager": "yarn@4.5.2",
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon --watch 'src' --exec 'ts-node' src/index.ts",
