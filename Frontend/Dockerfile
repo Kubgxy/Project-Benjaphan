@@ -8,7 +8,6 @@ RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 # Copy Yarn configuration, lock files, and local cache
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
-COPY .yarn/cache .yarn/cache
 
 # Install dependencies with cache ( When first time build )
 # RUN --mount=type=cache,target=/app/.yarn/cache \
