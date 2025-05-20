@@ -18,9 +18,7 @@ RUN echo "✅ INSTALL START" && date && yarn install --frozen-lockfile && echo "
 
 # คัดลอก source code ทั้งหมด
 # COPY . .
-COPY public ./public
 COPY src ./src
-COPY next.config.js ./
 
 # สร้าง production build
 # RUN yarn build
