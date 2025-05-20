@@ -14,9 +14,8 @@ COPY .yarn .yarn
 #     yarn install --frozen-lockfile
 
 # Install dependencies with cache
-RUN --mount=type=cache,target=/app/.yarn/cache \
+RUN --mount=type=volume,source=benjaphan-deploy_yarn_cache,target=/app/.yarn/cache \
     yarn install --immutable --immutable-cache
-
 # Copy source code
 COPY . .
 
@@ -41,8 +40,9 @@ COPY --from=builder /app/.yarnrc.yml ./.yarnrc.yml
 COPY --from=builder /app/.yarn ./.yarn
 
 # Install only production dependencies
-RUN --mount=type=cache,target=/app/.yarn/cache yarn install --immutable --immutable-cache
-
+RUN --mount=type=volume,source=benjaphan-deploy_yarn_cache,target=/app/.yarn/cache \
+    yarn install --immutable --immutable-cache
+    
 # Expose port
 EXPOSE 5174
 

@@ -20,7 +20,7 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      - yarn_cache:/app/.yarn/cache
+      - benjaphan-deploy_yarn_cache:/app/.yarn/cache
 
   # ========================
   # DASHBOARD (React + Vite)
@@ -43,7 +43,7 @@ services:
     ports:
       - "5174:5174"
     volumes:
-      - yarn_cache:/app/.yarn/cache
+      - benjaphan-deploy_yarn_cache:/app/.yarn/cache
 
   # ========================
   # BACKEND (Express + TypeScript)
@@ -73,7 +73,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - yarn_cache:/app/.yarn/cache
+      - benjaphan-deploy_yarn_cache:/app/.yarn/cache
       - backend_uploads:/app/uploads
 
   # ========================
