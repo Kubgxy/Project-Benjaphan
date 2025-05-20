@@ -79,6 +79,9 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
   );
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [avatar, setAvatar] = useState<File | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -249,12 +252,23 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 px-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {user?.firstName
-                      ? user.firstName.substring(0, 2).toUpperCase()
-                      : "AD"}
-                  </AvatarFallback>
+                  {user?.avatar ? (
+                    <img
+                      src={`${getBaseUrl()}${
+                        user.avatar.startsWith("/")
+                          ? user.avatar
+                          : `/${user.avatar}`
+                      }`}
+                      alt="Avatar"
+                      className="rounded-full object-cover w-full h-full"
+                    />
+                  ) : (
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {user?.firstName?.substring(0, 2).toUpperCase() || "AD"}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
+
                 <span className="hidden md:inline-block">
                   {user?.firstName || "แอดมิน"}
                 </span>

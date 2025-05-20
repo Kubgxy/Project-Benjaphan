@@ -8,6 +8,8 @@ interface User {
   id: string;
   firstName: string;
   role: string;
+  avatar?: string;
+  email: string;
 }
 
 interface AuthContextType {
@@ -31,9 +33,16 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  const [user, setUser] = useState<User | null>(null);
+  useEffect(() => {
+    axios
+      .get("/api/user/getUserProfile", { withCredentials: true })
+      .then((res) => setUser(res.data.user))
+      .catch(() => setUser(null));
+  }, []);
 
   // Check if the user is authenticated when the component mounts
   useEffect(() => {
@@ -60,6 +69,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         id: user._id,
         firstName: user.firstName,
         role: user.role,
+        avatar: user.avatar,
+        email: user.email,
       });
 
       return true;
@@ -94,8 +105,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setUser({
         id: user._id,
-        firstName: user.firstName, 
+        firstName: user.firstName,
         role: user.role,
+        avatar: user.avatar,
+        email: user.email,
       });
 
       toast({

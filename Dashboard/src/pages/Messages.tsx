@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { MessageSquare, MailCheck, MailX, Mail, Trash2 } from "lucide-react";
+import { MessageSquare, MailCheck, MailX, Mail, Trash2, Eye } from "lucide-react";
 import {
   Table,
   TableHeader,
@@ -40,6 +40,7 @@ import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import axios from "axios";
 import Swal from "sweetalert2"; // ✅ ใช้ SweetAlert2 Toast
 import { getBaseUrl } from "@/lib/api";
+import { th } from "date-fns/locale/th";
 
 const Messages = () => {
   const { toast } = useToast();
@@ -181,24 +182,24 @@ const Messages = () => {
     <div className="space-y-6">
       {/* ✅ Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Contacts</h1>
+        <h1 className="text-2xl font-bold">การติดต่อทั้งหมด</h1>
         <Button
           variant="outline"
           onClick={() =>
             setMessages((prev) => prev.map((msg) => ({ ...msg, isRead: true })))
           }
         >
-          Mark All as Read
+          คลิกเพื่ออ่านทั้งหมด
         </Button>
       </div>
 
       {/* ✅ Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 max-w-6xl md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2 flex justify-between items-center">
             <div>
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <MessageSquare size={16} /> Total Messages
+                <MessageSquare size={16} /> 
               </CardTitle>
               <CardDescription>รวมข้อความทั้งหมด</CardDescription>
             </div>
@@ -210,7 +211,7 @@ const Messages = () => {
           <CardHeader className="pb-2 flex justify-between items-center">
             <div>
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <MailX size={16} /> Unread Messages
+                <MailX size={16} /> 
               </CardTitle>
               <CardDescription>ยังไม่ได้อ่าน</CardDescription>
             </div>
@@ -224,7 +225,7 @@ const Messages = () => {
           <CardHeader className="pb-2 flex justify-between items-center">
             <div>
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <MailCheck size={16} /> Read Messages
+                <MailCheck size={16} /> 
               </CardTitle>
               <CardDescription>อ่านแล้ว</CardDescription>
             </div>
@@ -273,13 +274,13 @@ const Messages = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[120px] font-semibold text-center">
-                Status
+                สถานะ
               </TableHead>
-              <TableHead className="font-semibold">Sender</TableHead>
-              <TableHead className="font-semibold">Subject</TableHead>
-              <TableHead className="font-semibold">Date</TableHead>
+              <TableHead className="font-semibold">ผู้ส่ง</TableHead>
+              <TableHead className="font-semibold">หัวข้อ</TableHead>
+              <TableHead className="font-semibold">วันที่ส่ง</TableHead>
               <TableHead className="font-semibold text-right">
-                Actions
+                จัดการ
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -336,7 +337,9 @@ const Messages = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {format(new Date(msg.createdAt), "MMM dd, yyyy")}
+                    {format(new Date(msg.createdAt), "d MMM yyyy", {
+                      locale: th,
+                    })}
                     <div className="text-xs text-muted-foreground">
                       {format(new Date(msg.createdAt), "HH:mm")}
                     </div>
@@ -348,7 +351,7 @@ const Messages = () => {
                         size="sm"
                         onClick={() => viewMessage(msg)}
                       >
-                        View
+                        <Eye size={16} />
                       </Button>
                       <Button
                         variant="ghost"
@@ -369,7 +372,7 @@ const Messages = () => {
                     className="text-muted-foreground mb-2 mx-auto"
                   />
                   <p className="text-sm text-muted-foreground">
-                    No messages found. Try searching or adjusting filters.
+                    ไม่พบข้อมูล
                   </p>
                 </TableCell>
               </TableRow>
@@ -473,7 +476,8 @@ const Messages = () => {
                   <span>
                     {format(
                       new Date(selectedMessage.createdAt),
-                      "MMMM dd, yyyy HH:mm:ss"
+                      "d MMM yyyy HH:mm:ss", {
+                        locale: th,}
                     )}
                   </span>
                 </div>
@@ -507,7 +511,7 @@ const Messages = () => {
                 variant="outline"
                 onClick={() => setShowMessageDialog(false)}
               >
-                Close
+                ปิด
               </Button>
               <Button
                 variant="destructive"
@@ -516,7 +520,7 @@ const Messages = () => {
                   setTimeout(() => openDeleteDialog(selectedMessage), 100);
                 }}
               >
-                Delete
+                ลบ
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -31,8 +31,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Eye, ImageIcon } from "lucide-react";
+import { Eye, Copy } from "lucide-react";
 import { getBaseUrl } from "@/lib/api";
+import Swal from "sweetalert2";
+import { th } from "date-fns/locale";
+
 
 type OrderStatus =
   | "pending"
@@ -81,6 +84,11 @@ type Order = {
     postalCode: string;
     country: string;
     phone: string;
+  };
+  deliveryTracking: {
+    trackingNumber: string;
+    carrier: string;
+    status: string;
   };
 };
 
@@ -175,24 +183,89 @@ const Orders = () => {
     newStatus: OrderStatus
   ) => {
     setIsLoading(true);
+
     try {
+      if (newStatus === "shipped") {
+        // ✅ ปิด Dialog ก่อนเรียก Swal
+        setShowOrderDetails(false);
+        await new Promise((resolve) => setTimeout(resolve, 200)); // หน่วงรอ Dialog ปิด
+
+        // 👉 Step 1: ขอเลขพัสดุ
+        const { value: trackingNumber } = await Swal.fire({
+          title: "ใส่เลขพัสดุ",
+          input: "text",
+          inputLabel: "เลขพัสดุ",
+          inputPlaceholder: "เช่น TH1234567890",
+          showCancelButton: true,
+          inputValidator: (value) => {
+            if (!value) return "กรุณากรอกเลขพัสดุ";
+          },
+        });
+
+        if (!trackingNumber) {
+          setIsLoading(false);
+          setShowOrderDetails(true); // เปิด Dialog กลับ
+          return;
+        }
+
+        // 👉 Step 2: ขอชื่อบริษัทขนส่ง
+        const { value: carrier } = await Swal.fire({
+          title: "ใส่บริษัทขนส่ง",
+          input: "text",
+          inputLabel: "บริษัทขนส่ง",
+          inputPlaceholder: "เช่น Kerry, Flash",
+          showCancelButton: true,
+          inputValidator: (value) => {
+            if (!value) return "กรุณากรอกชื่อบริษัทขนส่ง";
+          },
+        });
+
+        if (!carrier) {
+          setIsLoading(false);
+          setShowOrderDetails(true);
+          return;
+        }
+
+        // ✅ ส่งไป backend
+        const res = await axios.patch(
+          `${getBaseUrl()}/api/order/updateStatus/${orderId}`,
+          {
+            status: newStatus,
+            trackingNumber,
+            carrier,
+          },
+          { withCredentials: true }
+        );
+
+        if (res.data.success) {
+          toast({
+            title: "อัปเดตคำสั่งซื้อสำเร็จ",
+            description: `เปลี่ยนสถานะเป็น ${newStatus}`,
+          });
+          setSelectedOrder(res.data.order);
+        } else {
+          toast({ title: "Error", description: res.data.message });
+        }
+
+        setShowOrderDetails(true); // ✅ เปิด Dialog กลับ
+        return;
+      }
+
+      // ✅ กรณีอื่น
       const res = await axios.patch(
         `${getBaseUrl()}/api/order/updateStatus/${orderId}`,
         { status: newStatus },
         { withCredentials: true }
       );
+
       if (res.data.success) {
         toast({
           title: "Order Updated",
           description: `Order ${orderId} status updated to ${newStatus}`,
         });
-        // ✅ Update state ทันที
         setSelectedOrder(res.data.order);
       } else {
-        toast({
-          title: "Error",
-          description: res.data.message || "Failed to update order",
-        });
+        toast({ title: "Error", description: res.data.message });
       }
     } catch (error) {
       console.error("Error updating status:", error);
@@ -214,7 +287,7 @@ const Orders = () => {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">ออเดอร์ทั้งหมด</h1>
 
-      <div className="grid gap-4 w-full max-w-7xl md:grid-cols-5 my-4">
+      <div className="grid gap-4 w-full max-w-8xl md:grid-cols-5 my-4">
         <Card>
           <CardContent className="py-4">
             <div className="text-sm text-muted-foreground mb-1">
@@ -226,7 +299,9 @@ const Orders = () => {
 
         <Card>
           <CardContent className="py-4">
-            <div className="text-sm text-muted-foreground mb-1">กำลังรอดำเนินการ</div>
+            <div className="text-sm text-muted-foreground mb-1">
+              กำลังรอดำเนินการ
+            </div>
             <div className="text-2xl font-bold text-yellow-600">
               {orders.filter((o) => o.orderStatus === "pending").length}
             </div>
@@ -235,8 +310,10 @@ const Orders = () => {
 
         <Card>
           <CardContent className="py-4">
-            <div className="text-sm text-muted-foreground mb-1">กำลังจัดส่ง</div>
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="text-sm text-muted-foreground mb-1">
+              กำลังจัดส่ง
+            </div>
+            <div className="text-2xl font-bold text-blue-600">
               {orders.filter((o) => o.orderStatus === "shipped").length}
             </div>
           </CardContent>
@@ -314,11 +391,11 @@ const Orders = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Order ID</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>เลขคำสั่งซื้อ</TableHead>
+              <TableHead>วันที่สั่งซื้อ</TableHead>
+              <TableHead>ราคารวมทั้งหมด</TableHead>
+              <TableHead>สถานะ</TableHead>
+              <TableHead>รายละเอียด</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -349,7 +426,9 @@ const Orders = () => {
                 <TableRow key={order._id}>
                   <TableCell>{order._id}</TableCell>
                   <TableCell>
-                    {format(new Date(order.createdAt), "dd MMM yyyy")}
+                    {format(new Date(order.createdAt), "d MMM yyyy",{
+                      locale: th,
+                    })}
                   </TableCell>
                   <TableCell>฿{order.total.toLocaleString()}</TableCell>
                   <TableCell>
@@ -495,6 +574,44 @@ const Orders = () => {
                   {selectedOrder.shippingInfo.country}
                 </p>
               </div>
+
+              {selectedOrder.deliveryTracking?.trackingNumber && (
+                <div className="bg-gray-50 p-4 rounded shadow-sm">
+                  <h3 className="text-lg font-semibold text-gold-800 mb-2">
+                    🚚 ข้อมูลการจัดส่งพัสดุ
+                  </h3>
+                  <p className="text-sm text-gray-700">
+                    <strong>บริษัทขนส่ง:</strong>{" "}
+                    {selectedOrder.deliveryTracking.carrier}
+                  </p>
+                  <p className="text-sm mt-2 text-gray-700">
+                    <strong>เลขพัสดุ:</strong>{" "}
+                    <span className="font-bold text-lg text-blue-600 mr-4">
+                      {selectedOrder.deliveryTracking.trackingNumber}
+                    </span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(
+                          selectedOrder.deliveryTracking.trackingNumber
+                        );
+                        // แจ้งเตือนแบบ toast หรือ alert
+                        Swal.fire({
+                          toast: true,
+                          position: "bottom-end",
+                          icon: "success",
+                          title: "คัดลอกเลขพัสดุแล้ว",
+                          showConfirmButton: false,
+                          timer: 1500,
+                        });
+                      }}
+                      className="bg-blue-300 p-2 rounded-lg text-white  hover:text-black-600 hover:scale-105 hover:bg-blue-600 transition"
+                      title="คัดลอกเลขพัสดุ"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </p>
+                </div>
+              )}
 
               {/* ✅ รายละเอียดสินค้า */}
               <div>

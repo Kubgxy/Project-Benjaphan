@@ -29,8 +29,8 @@ user.get("/me", verifyToken, (req, res) => {
 user.post("/registerUser", registerUser);
 user.post("/loginUser", loginUser);
 user.post("/logoutUser", logoutUser);
-user.get("/getUserProfile", verifyToken, getUserProfile);
-user.patch("/updateUser", verifyToken, upload.single("avatar"), updateMe);
+user.get("/getUserProfile", verifyToken, verifyAdmin, getUserProfile);
+user.patch("/updateUser", verifyToken, verifyAdmin, upload.single("avatar"), updateMe);
 user.get("/getAddress", verifyToken, getAddress);
 user.post("/addAddress", verifyToken, addAddress);
 user.patch("/updateAddress/:addressId", verifyToken, updateAddress);
