@@ -11,12 +11,12 @@ COPY .yarn .yarn
 COPY .yarn/cache .yarn/cache
 
 # Install dependencies with cache ( When first time build )
-RUN --mount=type=cache,target=/app/.yarn/cache \
-    yarn install --frozen-lockfile
+# RUN --mount=type=cache,target=/app/.yarn/cache \
+#     yarn install --frozen-lockfile
 
 # Install dependencies with cache
-# RUN --mount=type=cache,target=/app/.yarn/cache \
-#     yarn install --immutable --immutable-cache
+RUN --mount=type=cache,target=/app/.yarn/cache \
+    yarn install --immutable --immutable-cache
 
 # Copy source code
 COPY . .
