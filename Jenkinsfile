@@ -34,8 +34,9 @@ pipeline {
 
     stage('📥 Checkout Source Code') {
       steps {
-          checkout scm
-          echo '📥 Checked out source code'
+        checkout scm
+        sh 'cp -r /var/jenkins_home/workspace/Benjaphan-Deploy/* /opt/jenkins_workspace/Benjaphan-Deploy/ || true'
+        echo '📥 Checked out source code and copied to /opt/jenkins_workspace/Benjaphan-Deploy'
       }
     }
 
@@ -66,7 +67,7 @@ pipeline {
         }
       }
     }
-    
+
     stage('🐳 Docker Build') {
       steps {
         dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
