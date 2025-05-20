@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Bell, Moon, Sun, Search, User, Settings, LogOut } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -82,6 +83,7 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [avatar, setAvatar] = useState<File | null>(null);
+  const [admin, setAdmin] = useState<any>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -152,6 +154,29 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
     };
 
     fetchNotifications();
+  }, []);
+
+  useEffect(() => {
+    const fetchAdminInfo = async () => {
+      try {
+        const res = await fetch(`${getBaseUrl()}/api/user/getUserProfile`, {
+          credentials: "include",
+        });
+
+        const data = await res.json();
+        if (data?.user) {
+          // ✅ ส่งเข้าคอนเท็กซ์
+          setAdmin(data.user);
+        }
+      } catch (error) {
+        console.error("โหลดข้อมูลแอดมินล้มเหลว", error);
+      }
+    };
+
+    // กรณี user ยังไม่ถูกโหลด (เช่นรีเฟรช)
+    if (!user?.firstName) {
+      fetchAdminInfo();
+    }
   }, []);
 
   return (
@@ -252,25 +277,26 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 px-2">
                 <Avatar className="h-8 w-8">
-                  {user?.avatar ? (
+                  {admin?.avatar ? (
                     <img
                       src={`${getBaseUrl()}${
-                        user.avatar.startsWith("/")
-                          ? user.avatar
-                          : `/${user.avatar}`
+                        admin.avatar.startsWith("/")
+                          ? admin.avatar
+                          : `/${admin.avatar}`
                       }`}
                       alt="Avatar"
                       className="rounded-full object-cover w-full h-full"
                     />
                   ) : (
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {user?.firstName?.substring(0, 2).toUpperCase() || "AD"}
+                    <AvatarFallback>
+                      {admin?.firstName?.substring(0, 2).toUpperCase() || "AD"}
                     </AvatarFallback>
                   )}
+                  <span>{admin?.firstName || "แอดมิน"}</span>
                 </Avatar>
 
                 <span className="hidden md:inline-block">
-                  {user?.firstName || "แอดมิน"}
+                  {admin?.firstName || "แอดมิน"}
                 </span>
               </Button>
             </DropdownMenuTrigger>
@@ -278,16 +304,10 @@ const Topbar: React.FC<TopbarProps> = ({ setDarkMode, isDarkMode }) => {
               <DropdownMenuLabel>บัญชีของฉัน</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer" asChild>
-                <div className="flex items-center">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>โปรไฟล์</span>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" asChild>
-                <div className="flex items-center">
+                <Link to="/dashboard/settings" className="flex items-center">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>ตั้งค่า</span>
-                </div>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

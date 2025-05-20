@@ -150,28 +150,32 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative w-full min-h-[60vh] sm:min-h-[70vh] md:min-h-[90vh] flex items-center">
         <div className="absolute inset-0 z-0">
-          {bannerContent?.bannerImage && (
-            <Image
-              src={`${getBaseUrl()}/${bannerContent.bannerImage}`}
-              alt="หน้าแรก"
-              fill
-              className="object-cover object-center sm:object-top"
-              priority
-            />
-          )}
+          <Image
+            src={
+              bannerContent?.bannerImage
+                ? `${getBaseUrl()}/${bannerContent.bannerImage}`
+                : "/bg/ChatGPT Image 30 เม.ย. 2568 05_00_23.png"
+            }
+            alt="หน้าแรก"
+            fill
+            className="object-cover object-center sm:object-top"
+            priority
+          />
           <div className="absolute inset-0 bg-black bg-opacity-40"></div>
         </div>
 
         {/* ตรงนี้ค่อยใส่ container ข้างใน ไม่ล้อมทั้ง section */}
         <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 text-center sm:text-left max-w-screen-xl mx-auto ">
           <h1 className="text-3xl text-gold-600 sm:text-4xl md:text-6xl font-charm font-semibold mb-6 leading-tight">
-            {bannerContent?.bannerTitle}
+            {bannerContent?.bannerTitle || "เบญจภัณฑ์ ๕"}
           </h1>
           <h2 className="text-2xl font-charm sm:text-3xl md:text-4xl text-gold-600 mb-6 leading-tight">
-            {bannerContent?.bannerSubtitle}
+            {bannerContent?.bannerSubtitle ||
+              "ของดีมีศรัทธา เสริมบุญหนา วาสนาเปล่งประกาย"}
           </h2>
           <p className="text-base font-charm sm:text-lg mb-6 text-white/90 font-light">
-            {bannerContent?.bannerDescription}
+            {bannerContent?.bannerDescription ||
+              "เปล่งประกายทั้งภายนอกและภายใน เสริมโชคลาภ ดึงดูดความสำเร็จ ให้ชีวิตงดงามทุกก้าว"}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center sm:justify-start">
             <Button

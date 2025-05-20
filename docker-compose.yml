@@ -6,6 +6,8 @@ services:
     build:
       context: ./Frontend
       dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
     image: benjaphan-frontend:latest
     restart: always
     networks:
@@ -15,8 +17,10 @@ services:
     depends_on:
       - backend
     container_name: frontend
+    ports:
+      - "5173:5173"
     volumes:
-      - frontend_cache:/app/.next
+      - benjaphan-deploy_yarn_cache:/app/.yarn/cache
 
   # ========================
   # DASHBOARD (React + Vite)
@@ -25,6 +29,8 @@ services:
     build:
       context: ./Dashboard
       dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
     image: benjaphan-dashboard:latest
     restart: always
     networks:
@@ -34,9 +40,11 @@ services:
     depends_on:
       - backend
     container_name: dashboard
+    ports:
+      - "5174:5174"
     volumes:
-      - dashboard_cache:/app/dist
-      
+      - benjaphan-deploy_yarn_cache:/app/.yarn/cache
+
   # ========================
   # BACKEND (Express + TypeScript)
   # ========================
@@ -44,6 +52,8 @@ services:
     build:
       context: ./Backend
       dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
     image: benjaphan-backend:latest
     restart: always
     environment:
@@ -54,13 +64,16 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - FACEBOOK_CLIENT_ID=${FACEBOOK_CLIENT_ID}
       - FACEBOOK_CLIENT_SECRET=${FACEBOOK_CLIENT_SECRET}
-      - NODE_ENV=${NODE_ENV}
+      - NODE_ENV=production
     depends_on:
       - mongo
     networks:
       - benjaphan-network
     container_name: backend
+    ports:
+      - "3000:3000"
     volumes:
+      - benjaphan-deploy_yarn_cache:/app/.yarn/cache
       - backend_uploads:/app/uploads
 
   # ========================
@@ -69,14 +82,14 @@ services:
   mongo:
     image: mongo:6
     restart: always
-    ports:
-      - "3001:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: benjaphan5
     volumes:
       - mongo-data:/data/db
       - ./dump:/dump
+    ports:
+      - "3001:27017"
     networks:
       - benjaphan-network
     container_name: mongo
@@ -107,8 +120,8 @@ services:
 volumes:
   mongo-data:
   backend_uploads:
-  frontend_cache:
-  dashboard_cache:
+  benjaphan-deploy_yarn_cache:
+    external: true
 
 # ========================
 # NETWORK

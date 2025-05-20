@@ -154,7 +154,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, toggleCollapse }) => {
       <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
         {!collapsed && (
           <div className="text-sidebar-foreground font-bold text-lg">
-            เบญจภัณฑ์๕
+            เบญจภัณฑ์ ๕ 
           </div>
         )}
         <Button
