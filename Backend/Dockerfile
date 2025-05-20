@@ -18,9 +18,9 @@ COPY .yarnrc.yml ./
 RUN echo "✅ INSTALL START" && date && yarn install --frozen-lockfile && echo "✅ INSTALL DONE" && date
 
 # คัดลอก source code ทั้งหมด
-# COPY . .
-COPY tsconfig.json ./
-COPY src ./src
+COPY . .
+# COPY tsconfig.json ./
+# COPY src ./src
 
 # สร้าง production build
 # RUN yarn build

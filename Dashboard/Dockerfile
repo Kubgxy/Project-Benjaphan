@@ -19,10 +19,10 @@ COPY .yarnrc.yml .yarnrc.yml
 RUN echo "✅ INSTALL START" && date && yarn install --frozen-lockfile && echo "✅ INSTALL DONE" && date
 
 # คัดลอก source code
-# COPY . .
-COPY public ./public
-COPY src ./src
-COPY vite.config.ts ./
+COPY . .
+# COPY public ./public
+# COPY src ./src
+# COPY vite.config.ts ./
 
 # สร้าง production build
 # RUN yarn build

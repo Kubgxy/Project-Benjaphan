@@ -17,10 +17,7 @@ COPY package.json yarn.lock ./
 RUN echo "✅ INSTALL START" && date && yarn install --frozen-lockfile && echo "✅ INSTALL DONE" && date
 
 # คัดลอก source code ทั้งหมด
-# COPY . .
-COPY public ./public
-COPY src ./src
-COPY next.config.js ./
+COPY . .
 
 # สร้าง production build
 # RUN yarn build
