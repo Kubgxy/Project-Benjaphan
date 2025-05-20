@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   options {
-    skipDefaultCheckout() // ❌ ไม่ให้ Jenkins checkout ก่อนเรา clean เอง
+    skipDefaultCheckout() // ✅ ไม่ checkout อัตโนมัติ เพราะเราจะทำเองใน dir กำหนด
   }
 
   parameters {
@@ -14,12 +14,6 @@ pipeline {
   }
 
   stages {
-    stage('🔄 Clean Workspace') {
-      steps {
-        deleteDir()
-      }
-    }
-
     stage('📥 Checkout Source Code') {
       steps {
         dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
@@ -49,10 +43,9 @@ pipeline {
         dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
           sh '''
             echo "📄 nginx.conf:"
-            ls -l nginx/nginx.conf || echo "❌ nginx.conf not found"
-
+            ls -l nginx/nginx.conf
             echo "📁 cert folder tree:"
-            ls -lhR nginx/cert || echo "❌ cert folder not found"
+            ls -lhR nginx/cert
           '''
         }
       }
@@ -60,7 +53,9 @@ pipeline {
 
     stage('♻️ Docker Down') {
       steps {
-        sh 'docker-compose down --remove-orphans || true'
+        dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
+          sh 'docker-compose down --remove-orphans || true'
+        }
       }
     }
 
@@ -68,7 +63,7 @@ pipeline {
       steps {
         dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
           script {
-            def composeCmd = params.USE_NO_CACHE ? 'docker-compose build --no-cache' : 'docker-compose build'
+            def buildCmd = params.USE_NO_CACHE ? 'docker-compose build --no-cache' : 'docker-compose build'
             withEnv([
               "MONGODB_URI=${env.MONGODB_URI}",
               "PORT=${env.PORT}",
@@ -79,7 +74,7 @@ pipeline {
               "FACEBOOK_CLIENT_SECRET=${env.FACEBOOK_CLIENT_SECRET}",
               "NODE_ENV=production"
             ]) {
-              sh composeCmd
+              sh buildCmd
             }
           }
         }
@@ -102,6 +97,16 @@ pipeline {
             sh 'docker-compose up -d'
           }
         }
+      }
+    }
+
+    stage('🧹 Docker Cleanup') {
+      steps {
+        echo '🧼 Cleaning old Docker images and cache...'
+        sh '''
+          docker image prune -af --filter "until=24h"
+          docker builder prune -af || true
+        '''
       }
     }
   }
