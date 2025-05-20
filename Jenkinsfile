@@ -93,7 +93,10 @@ pipeline {
       steps {
         dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
           echo '🧼 Cleaning Docker builder cache...'
-          sh 'docker builder prune -af || true'
+          sh '''
+            docker image prune -af --filter "until=24h"
+            docker builder prune -af || true
+          '''
         }
       }
     }
