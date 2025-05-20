@@ -13,13 +13,18 @@ RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 COPY package.json yarn.lock ./
 
 # ติดตั้ง dependencies โดยใช้ yarn
-RUN yarn install --frozen-lockfile
+# RUN yarn install --frozen-lockfile
+RUN echo "✅ INSTALL START" && date && yarn install --frozen-lockfile && echo "✅ INSTALL DONE" && date
 
 # คัดลอก source code ทั้งหมด
-COPY . .
+# COPY . .
+COPY public ./public
+COPY src ./src
+COPY next.config.js ./
 
 # สร้าง production build
-RUN yarn build
+# RUN yarn build
+RUN echo "✅ BUILD START" && date && yarn build && echo "✅ BUILD DONE" && date
 
 # ========================
 # 2. Production Stage

@@ -3,23 +3,28 @@
 # ========================
 FROM node:20-alpine AS builder
 
-# สร้าง directory ชื่อ /app
+# สร้าง working directory
 WORKDIR /app
 
 # ติดตั้ง Yarn 4 ด้วย Corepack
 RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 
-# คัดลอกไฟล์ที่ใช้ build ก่อน เพื่อใช้ Docker cache ให้ build เร็วขึ้น
-COPY package.json yarn.lock tsconfig.json ./
+# คัดลอกเฉพาะไฟล์ที่จำเป็นในการติดตั้ง dependency
+COPY package.json yarn.lock ./
 
-# ติดตั้ง dependencies
-RUN yarn install --frozen-lockfile
+# ติดตั้ง dependencies โดยใช้ yarn
+# RUN yarn install --frozen-lockfile
+RUN echo "✅ INSTALL START" && date && yarn install --frozen-lockfile && echo "✅ INSTALL DONE" && date
 
-# คัดลอก source code ที่เหลือ
+# คัดลอก source code ทั้งหมด
+# COPY . .
+COPY public ./public
 COPY src ./src
+COPY next.config.js ./
 
-# Compile TypeScript → เป็น JavaScript
-RUN yarn build
+# สร้าง production build
+# RUN yarn build
+RUN echo "✅ BUILD START" && date && yarn build && echo "✅ BUILD DONE" && date
 
 # ========================
 # 2. Production Stage

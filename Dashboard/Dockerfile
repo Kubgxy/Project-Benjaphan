@@ -15,13 +15,18 @@ COPY .yarn .yarn
 COPY .yarnrc.yml .yarnrc.yml
 
 # ติดตั้ง dependencies
-RUN yarn install --frozen-lockfile
+# RUN yarn install --frozen-lockfile
+RUN echo "✅ INSTALL START" && date && yarn install --frozen-lockfile && echo "✅ INSTALL DONE" && date
 
 # คัดลอก source code
-COPY . .
+# COPY . .
+COPY public ./public
+COPY src ./src
+COPY vite.config.ts ./
 
 # สร้าง production build
-RUN yarn build
+# RUN yarn build
+RUN echo "✅ BUILD START" && date && yarn build && echo "✅ BUILD DONE" && date
 
 # ========================
 # 2. Production Stage
