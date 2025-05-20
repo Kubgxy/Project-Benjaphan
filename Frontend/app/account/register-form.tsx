@@ -21,7 +21,6 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [error, setError] = useState("");
   const { toast } = useToast();
 
-
   const register = async (
     email: string,
     password: string,
@@ -49,9 +48,10 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
 
       if (!res.ok) {
         const errorMsg = data.message || "Registration failed";
-        throw new Error(errorMsg);
+        toast({ variant: "destructive", description: ` ${errorMsg}` });
+        setError(errorMsg); // หรือโชว์ใน form
+        return false;
       }
-      
 
       return true;
     } catch (err) {
@@ -72,7 +72,13 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     setIsLoading(true);
 
     try {
-      const success = await register(email, password, firstName, lastName, phoneNumber);
+      const success = await register(
+        email,
+        password,
+        firstName,
+        lastName,
+        phoneNumber
+      );
       if (success) {
         toast({ description: "✅ ลงทะเบียนสำเร็จ! กรุณาเข้าสู่ระบบ" });
         if (onSuccess) onSuccess();
@@ -80,7 +86,9 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         setError("❌ ลงทะเบียนไม่สำเร็จ");
       }
     } catch (err: any) {
-      setError(err.message || "❌ An error occurred. Please try again.");
+      const msg = err?.message || "เกิดข้อผิดพลาด โปรดลองใหม่อีกครั้ง";
+      toast({ variant: "destructive", description: ` ${msg}` });
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
@@ -140,7 +148,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           required
         />
       </div>
-      
+
       <div className="mb-4">
         <label
           htmlFor="register-phone"
@@ -150,13 +158,19 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         </label>
         <input
           id="register-phone"
-          type="text"
+          type="tel"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={10}
           value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
+          onChange={(e) => {
+            const input = e.target.value;
+            const onlyNumbers = input.replace(/\D/g, "").slice(0, 10); // ลบทุกอย่างที่ไม่ใช่ตัวเลข แล้วตัดให้ไม่เกิน 10
+            setPhoneNumber(onlyNumbers);
+          }}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent"
         />
       </div>
-
 
       <div className="mb-4">
         <label

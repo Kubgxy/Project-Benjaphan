@@ -23,10 +23,9 @@ export default function ContactPage() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const res = await axios.get(
-          `${getBaseUrl()}/api/user/getUserProfile`,
-          { withCredentials: true }
-        );
+        const res = await axios.get(`${getBaseUrl()}/api/user/getUserProfile`, {
+          withCredentials: true,
+        });
         if (res.data?.user) {
           console.log("✅ Profile Data:", res.data.user);
           setIsLoggedIn(true);
@@ -260,8 +259,19 @@ export default function ContactPage() {
                       <input
                         type="tel"
                         id="phone"
+                        name="phone"
                         value={formData.phone}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                          const input = e.target.value;
+                          // กรองเฉพาะตัวเลข และจำกัด 10 หลัก
+                          const onlyNums = input
+                            .replace(/\D/g, "")
+                            .slice(0, 10);
+                          setFormData({ ...formData, phone: onlyNums });
+                        }}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={10}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent"
                       />
                     </div>

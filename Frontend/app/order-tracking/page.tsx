@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Check, Package, Truck, Home } from "lucide-react";
+import { Check, Package, Truck, Home, Copy } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -168,64 +168,98 @@ export default function OrderTrackingPage() {
           ติดตามคำสั่งซื้อ
         </h1>
 
-        {/* ✅ Tracking Steps Responsive */}
-        <div className="hidden sm:flex items-center justify-center mb-8">
-          {steps.map((step, index) => (
-            <div key={index} className="flex items-center">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`flex items-center justify-center w-24 h-24 rounded-full
-                    ${
-                      step.status === "complete"
-                        ? "bg-green-500 text-white"
-                        : step.status === "current" &&
-                          order.orderStatus === "delivered"
-                        ? "bg-green-500 text-white"
-                        : step.status === "current"
-                        ? "bg-gold-600 text-white"
-                        : "bg-gray-200 text-gray-500"
-                    }`}
-                >
-                  <step.icon className="w-10 h-10" />
-                </div>
-                <p className="text-sm mt-2 text-center w-24">{step.name}</p>
-                {step.status === "current" &&
-                  order.orderStatus !== "delivered" && (
-                    <p className="text-xs text-gold-600 mt-1">กำลังดำเนินการ</p>
-                  )}
+        <>
+          {order.orderStatus === "cancelled" ? (
+            // ✅ กรณียกเลิกคำสั่งซื้อ
+            <div className="flex flex-col items-center justify-center mb-8">
+              <div className="w-24 h-24 rounded-full flex items-center justify-center bg-red-500/80 text-white shadow-lg">
+                <span className="text-4xl font-bold">✖</span>
               </div>
-
-              {/* เส้นเชื่อม */}
-              {index < steps.length - 1 && (
-                <div className="w-16 h-1 bg-gray-200 mx-2"></div>
-              )}
+              <h2 className="text-xl font-bold text-red-500 mt-4">
+                คำสั่งซื้อถูกยกเลิกแล้ว
+              </h2>
             </div>
-          ))}
-        </div>
-
-        {/* ✅ แสดงแค่ขั้นตอนปัจจุบันบน Mobile */}
-        <div className="flex sm:hidden justify-center mb-8">
-          {steps
-            .filter((step) => step.status === "current")
-            .map((step, index) => (
-              <div key={index} className="flex flex-col items-center">
-                <div
-                  className={`w-20 h-20 rounded-full flex items-center justify-center ${
-                    order.orderStatus === "delivered"
-                      ? "bg-green-500 text-white"
-                      : "bg-gold-600 text-white"
-                  }`}
-                >
-                  <step.icon className="w-10 h-10" />
-                </div>
-
-                <p className="text-sm mt-2 text-center w-24">{step.name}</p>
-                {order.orderStatus !== "delivered" && (
-                  <p className="text-xs text-gold-600 mt-1">กำลังดำเนินการ</p>
-                )}
+          ) : order.orderStatus === "delivered" ? (
+            // ✅ กรณีจัดส่งสำเร็จแล้ว
+            <div className="flex flex-col items-center justify-center mb-8">
+              <div className="w-24 h-24 rounded-full flex items-center justify-center bg-green-500 text-white shadow-lg">
+                <Check className="w-10 h-10" />
               </div>
-            ))}
-        </div>
+              <h2 className="text-xl font-bold text-green-500 mt-4">
+                จัดส่งเรียบร้อยแล้ว
+              </h2>
+            </div>
+          ) : (
+            <>
+              {/* ✅ Tracking Steps Responsive */}
+              <div className="hidden sm:flex items-center justify-center mb-8">
+                {steps.map((step, index) => (
+                  <div key={index} className="flex items-center">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className={`flex items-center justify-center w-24 h-24 rounded-full
+                  ${
+                    step.status === "complete"
+                      ? "bg-green-500 text-white"
+                      : step.status === "current" &&
+                        order.orderStatus === "delivered"
+                      ? "bg-green-500 text-white"
+                      : step.status === "current"
+                      ? "bg-gold-600 text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                      >
+                        <step.icon className="w-10 h-10" />
+                      </div>
+                      <p className="text-sm mt-2 text-center w-24">
+                        {step.name}
+                      </p>
+                      {step.status === "current" &&
+                        order.orderStatus !== "delivered" && (
+                          <p className="text-xs text-gold-600 mt-1">
+                            กำลังดำเนินการ
+                          </p>
+                        )}
+                    </div>
+
+                    {/* เส้นเชื่อม */}
+                    {index < steps.length - 1 && (
+                      <div className="w-16 h-1 bg-gray-200 mx-2"></div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* ✅ แสดงแค่ขั้นตอนปัจจุบันบน Mobile */}
+              <div className="flex sm:hidden justify-center mb-8">
+                {steps
+                  .filter((step) => step.status === "current")
+                  .map((step, index) => (
+                    <div key={index} className="flex flex-col items-center">
+                      <div
+                        className={`w-20 h-20 rounded-full flex items-center justify-center ${
+                          order.orderStatus === "delivered"
+                            ? "bg-green-500 text-white"
+                            : "bg-gold-600 text-white"
+                        }`}
+                      >
+                        <step.icon className="w-10 h-10" />
+                      </div>
+
+                      <p className="text-sm mt-2 text-center w-24">
+                        {step.name}
+                      </p>
+                      {order.orderStatus !== "delivered" && (
+                        <p className="text-xs text-gold-600 mt-1">
+                          กำลังดำเนินการ
+                        </p>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </>
+          )}
+        </>
 
         <div className="md:col-span-2">
           {/* ✅ ข้อมูลคำสั่งซื้อ */}
@@ -262,6 +296,48 @@ export default function OrderTrackingPage() {
               {order.shippingInfo.postalCode}, {order.shippingInfo.country}
             </p>
           </div>
+
+          {order.deliveryTracking?.trackingNumber && (
+            <div className="bg-[#fdfaf5] rounded-xl p-6 shadow mb-6 border border-gold-200">
+              <h3 className="text-lg font-semibold text-gold-800 mb-2">
+                🚚 ข้อมูลการจัดส่งพัสดุ
+              </h3>
+              <p className="text-sm text-gray-700">
+                <strong>บริษัทขนส่ง:</strong> {order.deliveryTracking.carrier}
+              </p>
+              <p className="text-sm mt-2 text-gray-700">
+                <strong>เลขพัสดุ:</strong>{" "}
+                <span className="font-bold text-lg text-green-600 mr-4">
+                  {order.deliveryTracking.trackingNumber}
+                </span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      order.deliveryTracking.trackingNumber
+                    );
+                    // แจ้งเตือนแบบ toast หรือ alert
+                    Swal.fire({
+                      toast: true,
+                      icon: "success",
+                      title: "คัดลอกเลขพัสดุแล้ว",
+                      position:
+                        window.innerWidth < 640 ? "bottom" : "bottom-end", // 💡 ปรับตำแหน่งตามขนาดจอ
+                      showConfirmButton: false,
+                      timer: 1500,
+                      customClass: {
+                        popup: "rounded-lg text-sm px-4 py-2",
+                        title: "text-green-800 font-semibold",
+                      },
+                    });
+                  }}
+                  className="bg-yellow-300 p-2 rounded-lg text-white  hover:text-black-600 hover:scale-105 hover:bg-yellow-600 transition"
+                  title="คัดลอกเลขพัสดุ"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </p>
+            </div>
+          )}
 
           {/* ✅ รายการสินค้า */}
           <div className="bg-[#fdfaf5] rounded-xl p-6 shadow border border-gold-200">

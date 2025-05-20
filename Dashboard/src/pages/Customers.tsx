@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { getBaseUrl } from "@/lib/api";
+import { th } from "date-fns/locale";
 
 type CustomerStatus = "active" | "unverified";
 
@@ -304,7 +305,9 @@ const Customers = () => {
                   </TableCell>
                   <TableCell>
                     {customer.registeredDate
-                      ? format(customer.registeredDate, "dd MMM yyyy")
+                      ? format(customer.registeredDate, "d MMM yyyy", {
+                          locale: th,
+                        })
                       : "-"}
                   </TableCell>
                   <TableCell>{customer.ordersCount}</TableCell>

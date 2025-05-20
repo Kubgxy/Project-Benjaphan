@@ -10,6 +10,7 @@ import {
   ArrowDown,
   ArrowUp,
   Trash2,
+  Eye,
 } from "lucide-react";
 import {
   Table,
@@ -91,6 +92,7 @@ const Notifications = () => {
 
   // Count unread notifications
   const unreadCount = notifications.filter((notif) => !notif.read).length;
+  const readCount = notifications.filter((notif) => notif.read).length;
 
   // Filter notifications
   const filteredNotifications = notifications.filter(
@@ -237,11 +239,10 @@ const Notifications = () => {
     }
   };
 
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Notifications</h1>
+        <h1 className="text-2xl font-bold">การแจ้งเตือนทั้งหมด</h1>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -249,7 +250,7 @@ const Notifications = () => {
             disabled={unreadCount === 0}
           >
             <Check className="mr-2 h-4 w-4" />
-            Mark All as Read
+            คลิกเพื่ออ่านทั้งหมด
           </Button>
           <Button
             variant="outline"
@@ -258,7 +259,7 @@ const Notifications = () => {
             disabled={notifications.length === 0}
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            Clear All
+            ลบทั้งหมด
           </Button>
         </div>
       </div>
@@ -267,7 +268,7 @@ const Notifications = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Notifications
+              จำนวนการแจ้งเตือนทั้งหมด
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -277,7 +278,7 @@ const Notifications = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              Unread Notifications
+              ที่ยังไม่ได้อ่าน
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -289,22 +290,12 @@ const Notifications = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              Order Notifications
+              ที่อ่านแล้ว
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {notifications.filter((n) => n.type === "order").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Stock Alerts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {notifications.filter((n) => n.type === "stock").length}
+              {readCount}
             </div>
           </CardContent>
         </Card>
@@ -356,21 +347,21 @@ const Notifications = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80px]">Type</TableHead>
-              <TableHead>Notification</TableHead>
+              <TableHead className="w-[250px]">ประเภท</TableHead>
+              <TableHead>การแจ้งเตือน</TableHead>
               <TableHead
-                className="cursor-pointer w-[160px]"
+                className="cursor-pointer w-[200px]"
                 onClick={handleToggleSort}
               >
-                Date
+                วันที่
                 {sortDirection === "asc" ? (
                   <ArrowUp className="inline ml-1 h-4 w-4" />
                 ) : (
                   <ArrowDown className="inline ml-1 h-4 w-4" />
                 )}
               </TableHead>
-              <TableHead className="w-[100px]">Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="w-[100px]">สถานะ</TableHead>
+              <TableHead className="text-right">จัดการ</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -411,17 +402,17 @@ const Notifications = () => {
                       {format(notification.date, "HH:mm")}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="w-[150px]">
                     {notification.read ? (
                       <Badge
                         variant="outline"
                         className="text-green-600 border-green-200"
                       >
-                        Read
+                        อ่านแล้ว
                       </Badge>
                     ) : (
                       <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                        Unread
+                        ยังไม่อ่าน
                       </Badge>
                     )}
                   </TableCell>
@@ -434,12 +425,12 @@ const Notifications = () => {
                           onClick={() => markAsRead(notification.id)}
                         >
                           <Check size={16} className="mr-1" />
-                          Mark Read
+                          คลิกเพื่ออ่าน
                         </Button>
                       )}
                       {notification.link && (
                         <Button variant="ghost" size="sm" asChild>
-                          <a href={notification.link}>View</a>
+                          <a href={notification.link}><Eye size={16} className="mr-1"/></a>
                         </Button>
                       )}
                       <Button
@@ -459,10 +450,10 @@ const Notifications = () => {
                   <div className="flex flex-col items-center py-8">
                     <Bell size={40} className="text-muted-foreground mb-2" />
                     <h3 className="text-lg font-medium">
-                      No notifications found
+                      ไม่พบการแจ้งเตือน
                     </h3>
                     <p className="text-muted-foreground">
-                      Try adjusting your search or filter criteria
+                      ไม่พบการแจ้งเตือนที่ตรงกับเงื่อนไขที่คุณกําหนด
                     </p>
                   </div>
                 </TableCell>
@@ -478,11 +469,10 @@ const Notifications = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="text-red-600">
-                Delete Notification
+                ลบการแจ้งเตือน
               </DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete this notification? This action
-                cannot be undone.
+                คุณแน่ใจหรือไม่ว่าต้องการลบการแจ้งเตือนนี้
               </DialogDescription>
             </DialogHeader>
             <div className="py-4">
@@ -497,14 +487,14 @@ const Notifications = () => {
                 onClick={() => setShowDeleteDialog(false)}
                 disabled={isLoading}
               >
-                Cancel
+                ยกเลิก
               </Button>
               <Button
                 variant="destructive"
                 onClick={handleDeleteNotification}
                 disabled={isLoading}
               >
-                {isLoading ? "Deleting..." : "Delete"}
+                {isLoading ? "Deleting..." : "ลบการแจ้งเตือน"}
               </Button>
             </DialogFooter>
           </DialogContent>

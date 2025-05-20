@@ -327,14 +327,21 @@ export function CheckoutForm() {
             className="w-full border rounded px-3 py-2"
           />
           <input
-            type="text"
+            type="tel"
             placeholder="เบอร์ติดต่อ"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={10}
             value={shippingInfo.phone}
-            onChange={(e) =>
-              setShippingInfo({ ...shippingInfo, phone: e.target.value })
-            }
+            onChange={(e) => {
+              const onlyNumbers = e.target.value
+                .replace(/\D/g, "")
+                .slice(0, 10);
+              setShippingInfo({ ...shippingInfo, phone: onlyNumbers });
+            }}
             className="w-full border rounded px-3 py-2"
           />
+
           <input
             type="text"
             placeholder="สถานที่ บ้าน / บริษัท / โรงงาน "
@@ -442,8 +449,8 @@ export function CheckoutForm() {
             >
               {addressList.map((addr) => (
                 <option key={addr._id} value={addr._id}>
-                 ชื่อผู้รับ : {addr.Name}{" "} บ้านเลขที่ : {addr.addressLine}{" "}, {addr.city}{" "}, {addr.province}{" "}
-                  {addr.postalCode}
+                  ชื่อผู้รับ : {addr.Name} บ้านเลขที่ : {addr.addressLine} ,{" "}
+                  {addr.city} , {addr.province} {addr.postalCode}
                 </option>
               ))}
             </select>
