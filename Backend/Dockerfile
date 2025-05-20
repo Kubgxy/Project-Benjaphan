@@ -1,19 +1,15 @@
-# ========================
-# 🧠 BACKEND - EXPRESS + TS
-# ========================
 FROM node:20-alpine AS base
 WORKDIR /app
 RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 
-# 🔹 ติดตั้ง dependencies พร้อม build
 FROM base AS builder
 COPY package.json yarn.lock ./
 RUN yarn install --immutable
 
 COPY . .
+RUN yarn install --immutable
 RUN yarn build
 
-# 🔹 Runner สำหรับ Production
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
@@ -22,7 +18,6 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/yarn.lock ./yarn.lock
 
-# 🧠 ติดตั้งเฉพาะ production dependencies เท่านั้น
 RUN corepack enable && corepack prepare yarn@4.5.2 --activate && \
     yarn install --immutable --production
 
