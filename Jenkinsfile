@@ -1,6 +1,6 @@
 pipeline {
   agent {
-    label 'master' // หรือ node ที่น้องใช้
+    any
     customWorkspace '/opt/jenkins_workspace/Benjaphan-Deploy'
   }
 
@@ -84,7 +84,7 @@ pipeline {
 
     stage('🧹 Docker Cleanup') {
       steps {
-        echo '🧼 Cleaning old Docker builder cache...'
+        echo '🧼 Cleaning Docker builder cache...'
         sh 'docker builder prune -af || true'
       }
     }
