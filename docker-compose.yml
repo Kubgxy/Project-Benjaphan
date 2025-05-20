@@ -120,7 +120,8 @@ services:
 volumes:
   mongo-data:
   backend_uploads:
-  yarn_cache:
+  benjaphan-deploy_yarn_cache:
+    external: true
 
 # ========================
 # NETWORK
