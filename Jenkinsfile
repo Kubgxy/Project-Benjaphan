@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   options {
-    skipDefaultCheckout()
+    skipDefaultCheckout() // ❌ ไม่ให้ Jenkins checkout ก่อนเรา clean เอง
   }
 
   parameters {
@@ -24,27 +24,23 @@ pipeline {
 
     stage('🔐 Load Secrets') {
       steps {
-        dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
-          withCredentials([
-            string(credentialsId: 'MONGODB_URI', variable: 'MONGODB_URI'),
-            string(credentialsId: 'PORT', variable: 'PORT'),
-            string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET'),
-            string(credentialsId: 'GOOGLE_CLIENT_ID', variable: 'GOOGLE_CLIENT_ID'),
-            string(credentialsId: 'GOOGLE_CLIENT_SECRET', variable: 'GOOGLE_CLIENT_SECRET'),
-            string(credentialsId: 'FACEBOOK_CLIENT_ID', variable: 'FACEBOOK_CLIENT_ID'),
-            string(credentialsId: 'FACEBOOK_CLIENT_SECRET', variable: 'FACEBOOK_CLIENT_SECRET')
-          ]) {
-            echo '🔒 Secrets loaded into environment'
-          }
+        withCredentials([
+          string(credentialsId: 'MONGODB_URI', variable: 'MONGODB_URI'),
+          string(credentialsId: 'PORT', variable: 'PORT'),
+          string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET'),
+          string(credentialsId: 'GOOGLE_CLIENT_ID', variable: 'GOOGLE_CLIENT_ID'),
+          string(credentialsId: 'GOOGLE_CLIENT_SECRET', variable: 'GOOGLE_CLIENT_SECRET'),
+          string(credentialsId: 'FACEBOOK_CLIENT_ID', variable: 'FACEBOOK_CLIENT_ID'),
+          string(credentialsId: 'FACEBOOK_CLIENT_SECRET', variable: 'FACEBOOK_CLIENT_SECRET')
+        ]) {
+          echo '🔒 Secrets loaded into environment'
         }
       }
     }
 
     stage('♻️ Docker Down') {
       steps {
-        dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
-          sh 'docker-compose down --remove-orphans || true'
-        }
+        sh 'docker-compose down --remove-orphans || true'
       }
     }
 
@@ -52,7 +48,7 @@ pipeline {
       steps {
         dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
           script {
-            def buildCmd = params.USE_NO_CACHE ? 'docker-compose build --no-cache' : 'docker-compose build'
+            def composeCmd = params.USE_NO_CACHE ? 'docker-compose build --no-cache' : 'docker-compose build'
             withEnv([
               "MONGODB_URI=${env.MONGODB_URI}",
               "PORT=${env.PORT}",
@@ -63,7 +59,7 @@ pipeline {
               "FACEBOOK_CLIENT_SECRET=${env.FACEBOOK_CLIENT_SECRET}",
               "NODE_ENV=production"
             ]) {
-              sh buildCmd
+              sh composeCmd
             }
           }
         }
@@ -91,15 +87,14 @@ pipeline {
 
     stage('🧹 Docker Cleanup') {
       steps {
-        dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
-          echo '🧼 Cleaning Docker builder cache...'
-          sh '''
-            docker image prune -af --filter "until=24h"
-            docker builder prune -af || true
-          '''
-        }
+        echo '🧼 Cleaning old Docker images and cache...'
+        sh '''
+          docker image prune -af --filter "until=24h"
+          docker builder prune -af || true
+        '''
       }
     }
+
   }
 
   post {
