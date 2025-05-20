@@ -7,7 +7,7 @@ RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 
 FROM base AS deps
 COPY package.json yarn.lock ./
-RUN yarn install --immutable --immutable-cache
+RUN yarn install --immutable
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
