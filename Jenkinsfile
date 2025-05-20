@@ -34,10 +34,8 @@ pipeline {
 
     stage('📥 Checkout Source Code') {
       steps {
-        dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
           checkout scm
           echo '📥 Checked out source code'
-        }
       }
     }
 
