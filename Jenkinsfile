@@ -82,9 +82,9 @@ pipeline {
             "NODE_ENV=production"
           ]) {
             sh '''
-              docker-compose run --rm backend yarn install || true
-              docker-compose run --rm frontend yarn install || true
-              docker-compose run --rm dashboard yarn install || true
+              docker-compose run --rm backend sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache" || true
+              docker-compose run --rm frontend sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache" || true
+              docker-compose run --rm dashboard sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache" || true
             '''
             echo '📦 Warmed up yarn_cache'
           }
