@@ -1,8 +1,5 @@
 pipeline {
-  agent {
-    any
-    customWorkspace '/opt/jenkins_workspace/Benjaphan-Deploy'
-  }
+  agent none  // << สำคัญ!
 
   options {
     skipDefaultCheckout()
@@ -18,12 +15,20 @@ pipeline {
 
   stages {
     stage('📥 Checkout Source Code') {
+      agent {
+        label 'master'
+        customWorkspace '/opt/jenkins_workspace/Benjaphan-Deploy'
+      }
       steps {
         checkout scm
       }
     }
 
     stage('🔐 Load Secrets') {
+      agent {
+        label 'master'
+        customWorkspace '/opt/jenkins_workspace/Benjaphan-Deploy'
+      }
       steps {
         withCredentials([
           string(credentialsId: 'MONGODB_URI', variable: 'MONGODB_URI'),
@@ -40,12 +45,20 @@ pipeline {
     }
 
     stage('♻️ Docker Down') {
+      agent {
+        label 'master'
+        customWorkspace '/opt/jenkins_workspace/Benjaphan-Deploy'
+      }
       steps {
         sh 'docker-compose down --remove-orphans || true'
       }
     }
 
     stage('🐳 Docker Build') {
+      agent {
+        label 'master'
+        customWorkspace '/opt/jenkins_workspace/Benjaphan-Deploy'
+      }
       steps {
         script {
           def buildCmd = params.USE_NO_CACHE ? 'docker-compose build --no-cache' : 'docker-compose build'
@@ -66,6 +79,10 @@ pipeline {
     }
 
     stage('🚀 Docker Up') {
+      agent {
+        label 'master'
+        customWorkspace '/opt/jenkins_workspace/Benjaphan-Deploy'
+      }
       steps {
         withEnv([
           "MONGODB_URI=${env.MONGODB_URI}",
@@ -83,6 +100,10 @@ pipeline {
     }
 
     stage('🧹 Docker Cleanup') {
+      agent {
+        label 'master'
+        customWorkspace '/opt/jenkins_workspace/Benjaphan-Deploy'
+      }
       steps {
         echo '🧼 Cleaning Docker builder cache...'
         sh 'docker builder prune -af || true'
