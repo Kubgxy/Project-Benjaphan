@@ -71,6 +71,7 @@ pipeline {
     stage('📦 Warm Yarn Cache') {
       steps {
         script {
+          sh 'docker volume rm benjaphan-deploy_yarn_cache || true'
           withEnv([
             "MONGODB_URI=${env.MONGODB_URI}",
             "PORT=${env.PORT}",
@@ -82,9 +83,9 @@ pipeline {
             "NODE_ENV=production"
           ]) {
             sh '''
-              docker-compose run --rm backend sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache" || true
-              docker-compose run --rm frontend sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache" || true
-              docker-compose run --rm dashboard sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache" || true
+              docker-compose run --rm backend sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache"
+              docker-compose run --rm frontend sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache"
+              docker-compose run --rm dashboard sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache"
             '''
             echo '📦 Warmed up yarn_cache'
           }

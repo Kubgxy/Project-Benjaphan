@@ -9,13 +9,9 @@ RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 
-# Install dependencies with cache ( When first time build )
-# RUN --mount=type=cache,target=/app/.yarn/cache \
-#     yarn install --frozen-lockfile
+# Install dependencies without --mount
+RUN yarn install --immutable --immutable-cache
 
-# Install dependencies with cache
-RUN --mount=type=cache,target=/app/.yarn/cache \
-    yarn install --immutable --immutable-cache
 # Copy source code
 COPY . .
 
@@ -40,8 +36,7 @@ COPY --from=builder /app/.yarnrc.yml ./.yarnrc.yml
 COPY --from=builder /app/.yarn ./.yarn
 
 # Install only production dependencies
-RUN --mount=type=cache,target=/app/.yarn/cache \
-    yarn install --immutable --immutable-cache
+RUN yarn install --immutable --immutable-cache
 
 # Expose port
 EXPOSE 5174
