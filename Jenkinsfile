@@ -14,6 +14,12 @@ pipeline {
   }
 
   stages {
+    stage('🔄 Clean Workspace') {
+      steps {
+        deleteDir()
+      }
+    }
+
     stage('📥 Checkout Source Code') {
       steps {
         dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
@@ -37,6 +43,8 @@ pipeline {
         }
       }
     }
+
+
 
     stage('♻️ Docker Down') {
       steps {
