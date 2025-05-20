@@ -35,7 +35,6 @@ out
 build
 public/build
 
-.yarn/*
 !.yarn/cache
 !.yarn/releases
 !.yarn/plugins

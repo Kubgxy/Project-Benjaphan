@@ -1,53 +1,51 @@
-# ========================
-# 1. Build Stage Grok3
-# ========================
+# Build stage
 FROM node:20-alpine AS builder
-
-# สร้าง working directory
 WORKDIR /app
 
-# ติดตั้ง Yarn 4 ด้วย Corepack
+# Enable Corepack and prepare Yarn 4.5.2
 RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 
-# คัดลอกไฟล์ที่จำเป็นในการติดตั้ง dependency
-COPY package.json yarn.lock ./
-COPY .yarnrc.yml ./
+# Copy Yarn configuration, lock files, and local cache
+COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
+COPY .yarn/cache .yarn/cache
 
-# สร้างโฟลเดอร์สำหรับ cache
-RUN mkdir -p /app/.yarn/cache
+# Install dependencies with cache ( When first time build )
+RUN --mount=type=cache,target=/app/.yarn/cache \
+    yarn install --frozen-lockfile
 
-# ติดตั้ง dependencies โดยใช้ yarn
-RUN echo "✅ INSTALL START" && date && yarn install --immutable --immutable-cache && echo "✅ INSTALL DONE" && date
+# Install dependencies with cache
+# RUN --mount=type=cache,target=/app/.yarn/cache \
+#     yarn install --immutable --immutable-cache
 
-# คัดลอก source code ทั้งหมด
+# Copy source code
 COPY . .
 
-# สร้าง production build
-RUN echo "✅ BUILD START" && date && yarn build && echo "✅ BUILD DONE" && date
+# Build TypeScript
+RUN yarn build
 
-# ========================
-# 2. Production Stage
-# ========================
+# Production stage
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-# ติดตั้ง Yarn 4 ด้วย Corepack
+# Set production environment
+ENV NODE_ENV=production
+
+# Enable Corepack and prepare Yarn 4.5.2
 RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 
-# คัดลอกไฟล์ที่จำเป็นสำหรับ install production deps
-COPY package.json yarn.lock ./
-COPY .yarnrc.yml ./.yarnrc.yml
-COPY .yarn ./.yarn
-
-# ติดตั้ง dependencies แบบ production
-RUN yarn install --production --immutable --immutable-cache
-
-# คัดลอก build output
+# Copy build output and necessary files
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/yarn.lock ./yarn.lock
+COPY --from=builder /app/.yarnrc.yml ./.yarnrc.yml
+COPY --from=builder /app/.yarn ./.yarn
 
-# เปิด port ที่ 3000
+# Install only production dependencies
+RUN --mount=type=cache,target=/app/.yarn/cache yarn install --immutable --immutable-cache
+
+# Expose port
 EXPOSE 3000
 
-# สั่งคําสั่งเพื่อ run app
-CMD ["node", "dist/index.js"]
+# Start Express app
+CMD ["yarn", "start"]

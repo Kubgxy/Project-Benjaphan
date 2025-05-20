@@ -2,7 +2,8 @@ pipeline {
   agent any
 
   options {
-    skipDefaultCheckout() // ❌ ไม่ให้ Jenkins checkout ก่อนเรา clean เอง
+    skipDefaultCheckout() // ไม่ checkout อัตโนมัติ
+    timeout(time: 30, unit: 'MINUTES') // Timeout 30 นาที
   }
 
   parameters {
@@ -11,12 +12,23 @@ pipeline {
       defaultValue: false,
       description: 'เลือกว่าจะใช้ --no-cache หรือไม่'
     )
+    booleanParam(
+      name: 'CLEAN_VOLUMES',
+      defaultValue: false,
+      description: 'เลือกว่าจะลบ volumes หรือไม่ (ระวัง: ลบ yarn_cache และ mongo-data)'
+    )
+  }
+
+  environment {
+    COMPOSE_DOCKER_CLI_BUILD = '1'
+    DOCKER_BUILDKIT = '1'
   }
 
   stages {
     stage('🔄 Clean Workspace') {
       steps {
         deleteDir()
+        echo "🧹 Cleaned workspace at WORKSPACE"
       }
     }
 
@@ -24,6 +36,7 @@ pipeline {
       steps {
         dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
           checkout scm
+          echo '📥 Checked out source code'
         }
       }
     }
@@ -44,10 +57,15 @@ pipeline {
       }
     }
 
-
     stage('♻️ Docker Down') {
       steps {
         sh 'docker-compose down --remove-orphans || true'
+        script {
+          if (params.CLEAN_VOLUMES) {
+            sh 'docker volume rm $(docker volume ls -q) || true'
+            echo '🗑️ Cleared all Docker volumes'
+          }
+        }
       }
     }
 
@@ -55,7 +73,7 @@ pipeline {
       steps {
         dir('/opt/jenkins_workspace/Benjaphan-Deploy') {
           script {
-            def composeCmd = params.USE_NO_CACHE ? 'docker-compose build --no-cache' : 'docker-compose build'
+            def composeCmd = params.USE_NO_CACHE ? 'docker-compose build --no-cache --parallel' : 'docker-compose build --parallel'
             withEnv([
               "MONGODB_URI=${env.MONGODB_URI}",
               "PORT=${env.PORT}",
@@ -67,6 +85,7 @@ pipeline {
               "NODE_ENV=production"
             ]) {
               sh composeCmd
+              echo '🏗️ Built Docker images'
             }
           }
         }
@@ -87,6 +106,7 @@ pipeline {
             "NODE_ENV=production"
           ]) {
             sh 'docker-compose up -d'
+            echo '🚀 Started Docker containers'
           }
         }
       }
@@ -94,22 +114,26 @@ pipeline {
 
     stage('🧹 Docker Cleanup') {
       steps {
-        echo '🧼 Cleaning old Docker images and cache...'
         sh '''
-          docker image prune -af --filter "until=24h"
+          docker image prune -af --filter "until=24h" || true
           docker builder prune -af || true
+          docker volume prune -f || true
         '''
+        echo '🧼 Cleaned up Docker resources'
       }
     }
-
   }
 
   post {
     success {
-      echo '✅ Deploy สำเร็จเรียบร้อย 🎉'
+      echo '✅ Deployment completed successfully 🎉'
     }
     failure {
-      echo '❌ มีข้อผิดพลาด โปรดตรวจสอบ log ครับ'
+      echo '❌ Deployment failed. Check logs for details.'
+      sh 'docker-compose logs'
+    }
+    always {
+      echo '📝 Pipeline finished'
     }
   }
 }
