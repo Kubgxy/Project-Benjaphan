@@ -1,4 +1,4 @@
-zpipeline {
+pipeline {
   agent any
 
   options {

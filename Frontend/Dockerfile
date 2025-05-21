@@ -11,6 +11,8 @@ RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 
 # คัดลอกเฉพาะไฟล์ที่จำเป็นในการติดตั้ง dependency,
 COPY package.json yarn.lock ./
+COPY .yarn .yarn
+COPY .yarnrc.yml ./
 
 # ติดตั้ง dependencies โดยใช้ yarn,
 RUN yarn install --immutable
