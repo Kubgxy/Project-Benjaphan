@@ -68,29 +68,29 @@ pipeline {
       }
     }
 
-    stage('📦 Warm Yarn Cache') {
-      steps {
-        script {
-          withEnv([
-            "MONGODB_URI=${env.MONGODB_URI}",
-            "PORT=${env.PORT}",
-            "JWT_SECRET=${env.JWT_SECRET}",
-            "GOOGLE_CLIENT_ID=${env.GOOGLE_CLIENT_ID}",
-            "GOOGLE_CLIENT_SECRET=${env.GOOGLE_CLIENT_SECRET}",
-            "FACEBOOK_CLIENT_ID=${env.FACEBOOK_CLIENT_ID}",
-            "FACEBOOK_CLIENT_SECRET=${env.FACEBOOK_CLIENT_SECRET}",
-            "NODE_ENV=production"
-          ]) {
-            sh '''
-              docker-compose run --rm backend sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache"
-              docker-compose run --rm frontend sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache"
-              docker-compose run --rm dashboard sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache"
-            '''
-            echo '📦 Warmed up yarn_cache'
-          }
-        }
-      }
-    }
+    // stage('📦 Warm Yarn Cache') {
+    //   steps {
+    //     script {
+    //       withEnv([
+    //         "MONGODB_URI=${env.MONGODB_URI}",
+    //         "PORT=${env.PORT}",
+    //         "JWT_SECRET=${env.JWT_SECRET}",
+    //         "GOOGLE_CLIENT_ID=${env.GOOGLE_CLIENT_ID}",
+    //         "GOOGLE_CLIENT_SECRET=${env.GOOGLE_CLIENT_SECRET}",
+    //         "FACEBOOK_CLIENT_ID=${env.FACEBOOK_CLIENT_ID}",
+    //         "FACEBOOK_CLIENT_SECRET=${env.FACEBOOK_CLIENT_SECRET}",
+    //         "NODE_ENV=production"
+    //       ]) {
+    //         sh '''
+    //           docker-compose run --rm backend sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache"
+    //           docker-compose run --rm frontend sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache"
+    //           docker-compose run --rm dashboard sh -c "corepack enable && corepack prepare yarn@4.5.2 --activate && yarn install --immutable --immutable-cache"
+    //         '''
+    //         echo '📦 Warmed up yarn_cache'
+    //       }
+    //     }
+    //   }
+    // }
 
     stage('🐳 Docker Build') {
       steps {

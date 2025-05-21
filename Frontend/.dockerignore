@@ -35,6 +35,8 @@ out
 build
 public/build
 
+!.yarnrc.yml
+!.yarn/install-state.gz
 !.yarn/cache
 !.yarn/releases
 !.yarn/plugins

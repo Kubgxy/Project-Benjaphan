@@ -28,11 +28,18 @@ RUN yarn build
 # ========================
 FROM node:20-alpine AS runner
 
+# ✅ ต้องเปิด Corepack และเตรียม Yarn อีกครั้งใน production container
+RUN corepack enable && corepack prepare yarn@4.5.2 --activate
+
 # ตั้งค่า NODE_ENV ให้เป็น production
 ENV NODE_ENV=production
 
 # สร้าง directory สำหรับ app จริง
 WORKDIR /app
+
+# ✅ คัดลอก Yarn ทั้งหมดที่ต้องใช้!
+COPY --from=builder /app/.yarnrc.yml ./.yarnrc.yml
+COPY --from=builder /app/.yarn /app/.yarn
 
 # คัดลอกไฟล์ที่จำเป็นจาก build stage
 COPY --from=builder /app/public ./public
