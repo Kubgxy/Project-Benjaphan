@@ -15,7 +15,8 @@ COPY .yarn .yarn
 COPY .yarnrc.yml .yarnrc.yml
 
 # ติดตั้ง dependencies
-RUN yarn install --frozen-lockfile
+RUN yarn install --immutable --immutable-cache
+
 
 # คัดลอก source code
 COPY . .
