@@ -13,7 +13,7 @@ RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 COPY package.json yarn.lock ./
 
 # ติดตั้ง dependencies โดยใช้ yarn,
-RUN yarn install --frozen-lockfile
+RUN yarn install --immutable
 
 # คัดลอก source code ทั้งหมด,
 COPY . .
