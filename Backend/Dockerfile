@@ -1,45 +1,49 @@
-# Build stage
+# ========================
+# Build Stage
+# ========================
 FROM node:20-alpine AS builder
+
+# สร้าง directory ชื่อ /app
 WORKDIR /app
 
-# Enable Corepack and prepare Yarn 4.5.2
+# ติดตั้ง Yarn 4 ด้วย Corepack
 RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 
-# Copy Yarn configuration, lock files, and local cache
-COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn .yarn
+# คัดลอกไฟล์ที่ใช้ build ก่อน เพื่อใช้ Docker cache ให้ build เร็วขึ้น
+COPY package.json yarn.lock tsconfig.json ./
 
-# Install dependencies without --mount
-RUN yarn install --immutable --immutable-cache
+# ติดตั้ง dependencies
+RUN yarn install --frozen-lockfile
 
-# Copy source code
-COPY . .
+# คัดลอก source code ที่เหลือ
+COPY src ./src
 
-# Build TypeScript
+# Compile TypeScript → เป็น JavaScript
 RUN yarn build
 
-# Production stage
+# ========================
+# Production Stage
+# ========================
 FROM node:20-alpine AS runner
+
 WORKDIR /app
 
-# Set production environment
-ENV NODE_ENV=production
-
-# Enable Corepack and prepare Yarn 4.5.2
+# ✅ ติดตั้ง Yarn 4 ด้วย Corepack
 RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 
-# Copy build output and necessary files
+# ✅ คัดลอกไฟล์ที่จำเป็นสำหรับ install production deps
+COPY package.json yarn.lock ./
+COPY .yarn ./.yarn
+COPY .yarnrc.yml ./.yarnrc.yml
+
+# ✅ ติดตั้ง dependencies แบบ production (Yarn 4 Style)
+RUN yarn install --immutable
+
+# ✅ คัดลอก build output
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/yarn.lock ./yarn.lock
-COPY --from=builder /app/.yarnrc.yml ./.yarnrc.yml
-COPY --from=builder /app/.yarn ./.yarn
 
-# Install only production dependencies
-RUN yarn install --immutable --immutable-cache
-
-# Expose port
+# เปิด port ที่ 3000
 EXPOSE 3000
 
-# Start Express app
-CMD ["yarn", "start"]
+# สั่งคําสั่งเพื่อ run app
+CMD ["node", "dist/index.js"]

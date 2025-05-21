@@ -1,45 +1,47 @@
-# Build stage
+# ========================
+# Build Stage
+# ========================
 FROM node:20-alpine AS builder
+
+# สร้าง working directory
 WORKDIR /app
 
-# Enable Corepack and prepare Yarn 4.5.2
+# ติดตั้ง Yarn 4 ด้วย Corepack
 RUN corepack enable && corepack prepare yarn@4.5.2 --activate
 
-# Copy Yarn configuration, lock files, and local cache
-COPY package.json yarn.lock .yarnrc.yml ./
+# คัดลอกเฉพาะไฟล์ที่จำเป็นในการติดตั้ง dependency
+COPY package.json yarn.lock ./
 COPY .yarn .yarn
+COPY .yarnrc.yml .yarnrc.yml
 
-# Install dependencies without --mount
-RUN yarn install --immutable --immutable-cache
+# ติดตั้ง dependencies
+RUN yarn install --frozen-lockfile
 
-# Copy source code
+# คัดลอก source code
 COPY . .
 
-# Build Vite app
+# สร้าง production build
 RUN yarn build
 
-# Production stage
+# ========================
+# Production Stage
+# ========================
 FROM node:20-alpine AS runner
+
+# สร้าง directory สำหรับ app
 WORKDIR /app
 
-# Set production environment
-ENV NODE_ENV=production
-
-# Enable Corepack and prepare Yarn 4.5.2
-RUN corepack enable && corepack prepare yarn@4.5.2 --activate
-
-# Copy build output and necessary files
+# คัดลอก build output และ serve มา
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/yarn.lock ./yarn.lock
-COPY --from=builder /app/.yarnrc.yml ./.yarnrc.yml
-COPY --from=builder /app/.yarn ./.yarn
 
-# Install only production dependencies
-RUN yarn install --immutable --immutable-cache
+# เพิ่ม path serve จาก node_modules
+ENV PATH="/app/node_modules/.bin:$PATH"
 
-# Expose port
+# เปิดพอร์ต
 EXPOSE 5174
 
-# Serve Vite build
-CMD ["yarn", "dlx", "-p", "serve@14.2.4", "serve", "-s", "dist", "-p", "5174"]
+# สั่งเสิร์ฟไฟล์ dist ด้วย serve
+CMD ["serve", "-s", "dist", "-l", "5174"]
